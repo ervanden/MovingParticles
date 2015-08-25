@@ -3,7 +3,7 @@ import java.util.*;
 class Shape {
 
     public String label = "";
-    public java.util.List<Point> points;
+    java.util.List<Point> points;
 
     public boolean isComplexPoint = false;
     public boolean isSelected = false;
@@ -15,10 +15,12 @@ class Shape {
         points.clear();
     }
 
+    // clear() should only be alled from Drawing.clearShape,for synchronization
     public void clear() {
         points.clear();
     }
 
+    // addPoint should only be called from Drawing.addPointToShape,for synchronization
     public void addPoint(double x, double y) {
         points.add(new Point(x, y));
     }

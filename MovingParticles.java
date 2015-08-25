@@ -3,8 +3,6 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 
-// from PC
-
 public class MovingParticles implements ActionListener, MouseListener, MouseMotionListener, KeyListener, ItemListener {
 
     static Drawing Drawing = new Drawing();
@@ -26,6 +24,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
     static ComplexPlane zPlane = new ComplexPlane();
 
     Thread animateThread = null;
+    public static boolean suspendAnimation ;
 
     static int x, xprev;
     static int y, yprev;
@@ -65,11 +64,11 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
     PointShape cps;
 
     public static void repaintZplane() {
- //       zPlane.blitPaint();
+        zPlane.blitPaint();
     }
 
     public static void repaintBothWindows() {
- //       zPlane.blitPaint();
+        zPlane.blitPaint();
     }
 
     public void keyTyped(KeyEvent e) {
@@ -107,10 +106,8 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         x = e.getX();
         y = e.getY();
 
-
-            zFrame.setTitle(
-                    String.format("x=%.2f y=%.2f", zPlaneTransform.xScreenToUser(x), zPlaneTransform.yScreenToUser(y)));
-
+        zFrame.setTitle(
+                String.format("x=%.2f y=%.2f", zPlaneTransform.xScreenToUser(x), zPlaneTransform.yScreenToUser(y)));
 
         if (actionAddCircle) {
 
@@ -134,7 +131,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                     yRadius = Math.round(yRadius);
                 }
 
-                currentShape.clear();
+                Drawing.clearShape(currentShape);
 
                 radius = Math.sqrt((xRadius - xCircle) * (xRadius - xCircle) + (yRadius - yCircle) * (yRadius - yCircle));
                 gridAngle = Math.sqrt(zPlaneTransform.xScreenToUser(minPixelDist) - zPlaneTransform.xScreenToUser(0)) / radius;
@@ -143,23 +140,23 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                 }
 
                 for (double angle = 0; angle < 2 * Math.PI; angle = angle + gridAngle) {
-                    currentShape.addPoint(xCircle + radius * Math.sin(angle), yCircle + radius * Math.cos(angle));
+                    Drawing.addPointToShape(currentShape,xCircle + radius * Math.sin(angle), yCircle + radius * Math.cos(angle));
                 };
 
-                currentShape.addPoint(xCircle, yCircle + radius);
+                Drawing.addPointToShape(currentShape,xCircle, yCircle + radius);
 
                 repaintBothWindows();
 
             };
 
-        };   
+        };
 
         if (actionAddShape) {
             // add point only if sufficiently far from previous OR if it is the first point 
             if ((firstPoint) || (!firstPoint && ((x - xprev) * (x - xprev) + (y - yprev) * (y - yprev) > minPixelDistSquare))) {
                 double xUser = zPlaneTransform.xScreenToUser(x);
                 double yUser = zPlaneTransform.yScreenToUser(y);
-                currentShape.addPoint(xUser, yUser);
+                Drawing.addPointToShape(currentShape,xUser, yUser);
 
                 repaintBothWindows();
                 xprev = x;
@@ -346,7 +343,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         if (actionAddShape) {
             actionAddShape = false;
             // add terminal point
-            currentShape.addPoint(zPlaneTransform.xScreenToUser(x),
+            Drawing.addPointToShape(currentShape,zPlaneTransform.xScreenToUser(x),
                     zPlaneTransform.yScreenToUser(y));
             repaintBothWindows();
         }
@@ -391,17 +388,17 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         };
 
         actionMoveView = false;
-            actionAddPoint = false;
-            actionAddShape = false;
-            actionAddLine = false;
-            actionMovePoint = false;
-            actionMoveShape = false;
-            actionMoveSelection = false;
-            actionMoveAll = false;
-            actionDeletePoint = false;
-            actionDeleteShape = false;
-            actionSelect = false;
-            actionUnselect = false;
+        actionAddPoint = false;
+        actionAddShape = false;
+        actionAddLine = false;
+        actionMovePoint = false;
+        actionMoveShape = false;
+        actionMoveSelection = false;
+        actionMoveAll = false;
+        actionDeletePoint = false;
+        actionDeleteShape = false;
+        actionSelect = false;
+        actionUnselect = false;
 
     }
 
@@ -484,7 +481,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
         if (actionAddLine) {
             if (firstPoint) {
-                //              currentShape.addPoint(zPlaneTransform.xScreenToUser(x),
+                //              currentShapeDrawing.addPointToShape(zPlaneTransform.xScreenToUser(x),
                 //                      zPlaneTransform.yScreenToUser(y));
                 System.out.println(" add line first point " + zPlaneTransform.xScreenToUser(x) + " "
                         + zPlaneTransform.yScreenToUser(y));
@@ -511,7 +508,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                 for (int i = 0; i <= nsegments; i++) {
                     System.out.println(" segment point x= " + (xbegin + ((double) i / (double) nsegments) * (xend - xbegin))
                             + " y= " + (ybegin + ((double) i / (double) nsegments) * (yend - ybegin)));
-                    currentShape.addPoint(xbegin + ((double) i / (double) nsegments) * (xend - xbegin),
+                    Drawing.addPointToShape(currentShape,xbegin + ((double) i / (double) nsegments) * (xend - xbegin),
                             ybegin + ((double) i / (double) nsegments) * (yend - ybegin));
                 };
                 xprev = x;
@@ -536,7 +533,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                 xuser = Math.round(xuser);
                 yuser = Math.round(yuser);
             };
-            cps.addPoint(xuser, yuser);
+            Drawing.addPointToShape(cps,xuser, yuser);
 
             repaintBothWindows();
             firstPoint = true;
@@ -596,16 +593,17 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         };
 
         if (source == animateButton) {
-
+            Animate1 animation = new Animate1("rotate");
             if (e.getStateChange() == ItemEvent.SELECTED) {
+                                    suspendAnimation=false;
                 if (animateThread == null) {
-                    animateThread = new Thread(new Animate1("rotate"));
+                    animateThread = new Thread(animation);
                     animateThread.start();
+
                 }
-                animateThread.resume();
             };
             if (e.getStateChange() == ItemEvent.DESELECTED) {
-                animateThread.suspend();
+                suspendAnimation=true;
             };
         };
 
@@ -783,14 +781,14 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                 for (double x = xmin; x <= xmax; x = x + xgrid) {
                     Shape s = Drawing.addShape();
                     for (double y = ymin; y <= ymax; y = y + ygrid) {
-                        s.addPoint(x, y);
+                        Drawing.addPointToShape(s,x, y);
                     };
                 };
 
                 for (double y = ymin; y <= ymax; y = y + ygrid) {
                     Shape s = Drawing.addShape();
                     for (double x = xmin; x <= xmax; x = x + xgrid) {
-                        s.addPoint(x, y);
+                        Drawing.addPointToShape(s,x, y);
                     };
                 };
 
@@ -814,14 +812,14 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
             for (double angle = 0; angle <= 2 * Math.PI; angle = angle + gridAngle) {
                 Shape s = Drawing.addShape();
                 for (double r = gridRadius; r <= radius; r = r + gridRadius) {
-                    s.addPoint(xcenter + r * Math.sin(angle), ycenter + r * Math.cos(angle));
+                    Drawing.addPointToShape(s,xcenter + r * Math.sin(angle), ycenter + r * Math.cos(angle));
                 };
             };
 
             for (double r = gridRadius; r <= radius; r = r + gridRadius) {
                 Shape s = Drawing.addShape();
                 for (double angle = 0; angle <= 2 * Math.PI; angle = angle + gridAngle) {
-                    s.addPoint(xcenter + r * Math.sin(angle), ycenter + r * Math.cos(angle));
+                    Drawing.addPointToShape(s,xcenter + r * Math.sin(angle), ycenter + r * Math.cos(angle));
                 };
             };
 

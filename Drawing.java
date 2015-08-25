@@ -7,7 +7,7 @@ import java.util.Iterator;
 
 class Drawing {
 
-    public java.util.List<Shape> shapes;
+    private java.util.List<Shape> shapes;
 
     double areaCursorX1, areaCursorY1, areaCursorX2, areaCursorY2;
     boolean areaCursorOn = false;
@@ -29,13 +29,13 @@ class Drawing {
         shapeCounter = 1;
     }
 
-    public void clear() {
+    public synchronized void clear() {
         shapes.clear();
         complexPointCounter = 1;
         shapeCounter = 1;
     }
 
-    public void clearSelection() {
+    public synchronized void clearSelection() {
 
         Iterator<Shape> itr = shapes.iterator();
 
@@ -49,13 +49,20 @@ class Drawing {
         }
     }
 
-    public void deleteShape(Shape s) {
+    public synchronized void deleteShape(Shape s) {
         shapes.remove(s);
     }
+    
+    public synchronized void addPointToShape(Shape s, double x, double y){
+        s.addPoint(x, y);
+    }
 
+    public synchronized void clearShape(Shape s){
+        s.clear();
+    }
    
 
-    public void areaCursor(boolean cursorOn, double ax1, double ay1, double ax2, double ay2) {
+    public synchronized void areaCursor(boolean cursorOn, double ax1, double ay1, double ax2, double ay2) {
         areaCursorOn = cursorOn;
         areaCursorX1 = ax1;
         areaCursorY1 = ay1;
@@ -63,7 +70,7 @@ class Drawing {
         areaCursorY2 = ay2;
     }
 
-    public void draw(Transform t) {
+    public synchronized void draw(Transform t) {
 
         BasicStroke stroke0 = new BasicStroke();     // default dunne lijn
         BasicStroke stroke2 = new BasicStroke(2);    // dikkere lijn voor x en y as
@@ -105,24 +112,21 @@ class Drawing {
                     for (Point xy : s.points) {
                         if (xyprev != null) {
                                 t.line(xyprev.getZX(), xyprev.getZY(), xy.getZX(), xy.getZY());
-                        };
+                        }
                         xyprev = xy;
-                    };
-                };
+                    }
+                }
 
                 if (dotsVisible) {
                     for (Point xy : s.points) {
                             t.dot(xy.getZX(), xy.getZY());
-                    };
-                };
-
+                    }
+                }
             }
+        } 
+    } 
 
-        } // for
-
-    }  // draw
-
-    public void setMinMax() {
+    public synchronized void setMinMax() {
 
         xmax = Double.NEGATIVE_INFINITY;
         xmin = Double.POSITIVE_INFINITY;
@@ -150,7 +154,7 @@ class Drawing {
         }
     }
 
-    public PointShape closestPointShape(double x, double y) {
+    public synchronized PointShape closestPointShape(double x, double y) {
         PointShape psmin = null;
         double dmin = Double.POSITIVE_INFINITY;
         for (Shape s : shapes) {
@@ -169,7 +173,7 @@ class Drawing {
         return psmin;
     }
 
-    public Shape closestShape(double x, double y) {
+    public synchronized Shape closestShape(double x, double y) {
         Shape smin = null;
         double dmin = Double.POSITIVE_INFINITY;
         for (Shape s : shapes) {
@@ -191,7 +195,7 @@ class Drawing {
         return smin;
     }
 
-    public Shape addShape() {
+    public synchronized Shape addShape() {
         Shape s = new Shape();
         s.label = "shape" + shapeCounter;
         shapeCounter++;
@@ -199,7 +203,7 @@ class Drawing {
         return s;
     }
 
-    public PointShape addPointShape() {
+    public synchronized PointShape addPointShape() {
         PointShape s = new PointShape("z" + complexPointCounter);
         complexPointCounter++;
         shapes.add(s);
@@ -207,13 +211,13 @@ class Drawing {
     }
 
 
-    public void moveShapeRelative(Shape s, double dx, double dy) {
+    public synchronized void moveShapeRelative(Shape s, double dx, double dy) {
         for (Point xy : s.points) {
             xy.replaceXY(xy.getZX() + dx, xy.getZY() + dy);
         };
     }  // moveRelativeShape
 
-    public void moveShapesRelative(String l, double dx, double dy) {
+    public synchronized void moveShapesRelative(String l, double dx, double dy) {
 
 // move the shape or shapes with label l 
 // if l == "all" then move everything except parameter points
@@ -230,7 +234,7 @@ class Drawing {
     }  // moveShapesRelative
 
 
-    public int selectShapes(double x, double y, double minPixelDist) {
+    public synchronized int selectShapes(double x, double y, double minPixelDist) {
 // find points close to x,y and return their number 
 // It is also the number of shapes since very point belongs to exactly one shape
 // Select the shapes
@@ -258,7 +262,7 @@ class Drawing {
 
     }
 
-    public int unselectShapes(double x, double y, double minPixelDist) {
+    public synchronized int unselectShapes(double x, double y, double minPixelDist) {
 // find points close to x,y and return their number 
 // It is also the number of shapes since very point belongs to exactly one shape
 // Unselect the shapes
@@ -286,13 +290,13 @@ class Drawing {
 
     }
 
-    public void selectAll() {
+    public synchronized void selectAll() {
         for (Shape s : shapes) {
             s.isSelected = true;
         };
     }
 
-    public void unselectAll() {
+    public synchronized void unselectAll() {
         for (Shape s : shapes) {
             s.isSelected = false;
         };
@@ -300,7 +304,7 @@ class Drawing {
 
    
     
-     public void selectArea() {
+     public synchronized void selectArea() {
 // preSelect all shapes that have a point in the cursor area
 // preSelection is reset each time this method is called due to cursor movement
 
@@ -315,7 +319,7 @@ class Drawing {
         }
     }
      
-          public void unselectArea() {
+          public synchronized void unselectArea() {
 // preUnselect all shapes that have a point in the cursor area
 // preUnselection is reset each time this method is called due to cursor movement
 
@@ -330,7 +334,7 @@ class Drawing {
         }
     }
 
-      public void commitSelectedArea() {
+      public synchronized void commitSelectedArea() {
 // Select all shapes that were preselected. Called when area selection is final
 
         for (Shape s : shapes) {
@@ -341,7 +345,7 @@ class Drawing {
         }
     }
       
-       public void commitUnselectedArea() {
+       public synchronized void commitUnselectedArea() {
 // Select all shapes that were preselected. Called when area selection is final
 
         for (Shape s : shapes) {
@@ -351,4 +355,20 @@ class Drawing {
             }
         }
     }
-} // Drawing
+     
+       public synchronized void rotate(double alfa){
+        double cos = Math.cos(alfa);
+        double sin = Math.sin(alfa);
+
+            for (Shape s : MovingParticles.Drawing.shapes) {
+                for (Point p : s.points) {
+                    double xnew = p.x * cos - p.y * sin;
+                    double ynew = p.y * cos + p.x * sin;
+                    p.x = xnew;
+                    p.y = ynew;
+                }
+            }
+       }
+       
+} 
+
