@@ -3,6 +3,7 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 
+// from PC
 
 public class MovingParticles implements ActionListener, MouseListener, MouseMotionListener, KeyListener, ItemListener {
 
