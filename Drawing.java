@@ -52,15 +52,14 @@ class Drawing {
     public synchronized void deleteShape(Shape s) {
         shapes.remove(s);
     }
-    
-    public synchronized void addPointToShape(Shape s, double x, double y){
+
+    public synchronized void addPointToShape(Shape s, double x, double y) {
         s.addPoint(x, y);
     }
 
-    public synchronized void clearShape(Shape s){
+    public synchronized void clearShape(Shape s) {
         s.clear();
     }
-   
 
     public synchronized void areaCursor(boolean cursorOn, double ax1, double ay1, double ax2, double ay2) {
         areaCursorOn = cursorOn;
@@ -82,7 +81,7 @@ class Drawing {
 
         t.axes();
 
-        if (areaCursorOn ) {
+        if (areaCursorOn) {
             g2.setColor(Color.gray);
             t.line(areaCursorX1, areaCursorY1, areaCursorX2, areaCursorY1);
             t.line(areaCursorX2, areaCursorY1, areaCursorX2, areaCursorY2);
@@ -103,7 +102,7 @@ class Drawing {
             if (s.getClass().getName().equals("PointShape")) {
 
                 PointShape ps = (PointShape) s;
-                    t.complexPoint(ps.getName(), ps.getX(), ps.getY());
+                t.complexPoint(ps.getName(), ps.getX(), ps.getY());
 
             } else {   // not a point shape
 
@@ -111,7 +110,7 @@ class Drawing {
                     xyprev = null;
                     for (Point xy : s.points) {
                         if (xyprev != null) {
-                                t.line(xyprev.getZX(), xyprev.getZY(), xy.getZX(), xy.getZY());
+                            t.line(xyprev.getZX(), xyprev.getZY(), xy.getZX(), xy.getZY());
                         }
                         xyprev = xy;
                     }
@@ -119,12 +118,12 @@ class Drawing {
 
                 if (dotsVisible) {
                     for (Point xy : s.points) {
-                            t.dot(xy.getZX(), xy.getZY());
+                        t.dot(xy.getZX(), xy.getZY());
                     }
                 }
             }
-        } 
-    } 
+        }
+    }
 
     public synchronized void setMinMax() {
 
@@ -210,7 +209,6 @@ class Drawing {
         return s;
     }
 
-
     public synchronized void moveShapeRelative(Shape s, double dx, double dy) {
         for (Point xy : s.points) {
             xy.replaceXY(xy.getZX() + dx, xy.getZY() + dy);
@@ -232,7 +230,6 @@ class Drawing {
             };
         }
     }  // moveShapesRelative
-
 
     public synchronized int selectShapes(double x, double y, double minPixelDist) {
 // find points close to x,y and return their number 
@@ -302,14 +299,12 @@ class Drawing {
         };
     }
 
-   
-    
-     public synchronized void selectArea() {
+    public synchronized void selectArea() {
 // preSelect all shapes that have a point in the cursor area
 // preSelection is reset each time this method is called due to cursor movement
 
         for (Shape s : shapes) {
-            s.isPreSelected=false;
+            s.isPreSelected = false;
             for (Point xy : s.points) {
                 if ((xy.x >= areaCursorX1) && (xy.x <= areaCursorX2)
                         && (xy.y >= areaCursorY1) && (xy.y <= areaCursorY2)) {
@@ -318,13 +313,13 @@ class Drawing {
             }
         }
     }
-     
-          public synchronized void unselectArea() {
+
+    public synchronized void unselectArea() {
 // preUnselect all shapes that have a point in the cursor area
 // preUnselection is reset each time this method is called due to cursor movement
 
         for (Shape s : shapes) {
-            s.isPreUnselected=false;
+            s.isPreUnselected = false;
             for (Point xy : s.points) {
                 if ((xy.x >= areaCursorX1) && (xy.x <= areaCursorX2)
                         && (xy.y >= areaCursorY1) && (xy.y <= areaCursorY2)) {
@@ -334,41 +329,59 @@ class Drawing {
         }
     }
 
-      public synchronized void commitSelectedArea() {
+    public synchronized void commitSelectedArea() {
 // Select all shapes that were preselected. Called when area selection is final
 
         for (Shape s : shapes) {
             if (s.isPreSelected) {
-                s.isPreSelected=false;
-                s.isSelected=true;
+                s.isPreSelected = false;
+                s.isSelected = true;
             }
         }
     }
-      
-       public synchronized void commitUnselectedArea() {
+
+    public synchronized void commitUnselectedArea() {
 // Select all shapes that were preselected. Called when area selection is final
 
         for (Shape s : shapes) {
             if (s.isPreUnselected) {
-                s.isPreUnselected=false;
-                s.isSelected=false;
+                s.isPreUnselected = false;
+                s.isSelected = false;
             }
         }
     }
-     
-       public synchronized void rotate(double alfa){
+
+    public synchronized void rotate(double alfa) {
         double cos = Math.cos(alfa);
         double sin = Math.sin(alfa);
 
-            for (Shape s : MovingParticles.Drawing.shapes) {
-                for (Point p : s.points) {
-                    double xnew = p.x * cos - p.y * sin;
-                    double ynew = p.y * cos + p.x * sin;
-                    p.x = xnew;
-                    p.y = ynew;
-                }
+        for (Shape s : MovingParticles.Drawing.shapes) {
+            for (Point p : s.points) {
+                double xnew = p.x * cos - p.y * sin;
+                double ynew = p.y * cos + p.x * sin;
+                p.x = xnew;
+                p.y = ynew;
             }
-       }
-       
-} 
+        }
+    }
 
+    public synchronized void gravitate(double mass) {
+
+        for (Shape s : MovingParticles.Drawing.shapes) {
+            for (Point p : s.points) {
+                double rsquare = p.x * p.x + p.y * p.y;
+                double r = Math.sqrt(rsquare);
+                double force = mass / rsquare;
+                double ux=-p.x/r;  //unit vector from p to origin
+                double uy=-p.y/r;
+                p.x = p.x + p.xspeed;
+                p.y = p.y + p.yspeed;
+                System.out.println("xspeed,yspeed, force"+p.xspeed+" \t"+p.yspeed+" \t"+force);
+                
+                p.xspeed = p.xspeed + ux*force;
+                p.yspeed = p.yspeed + uy*force;
+            }
+        }
+    }
+
+}

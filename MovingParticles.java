@@ -593,7 +593,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         };
 
         if (source == animateButton) {
-            Animate1 animation = new Animate1("rotate");
+            Animate1 animation = new Animate1("gravitate");
             if (e.getStateChange() == ItemEvent.SELECTED) {
                                     suspendAnimation=false;
                 if (animateThread == null) {

@@ -13,7 +13,7 @@ public Point(double px, double py){
 x=px;
 y=py;
 xspeed=0;
-yspeed=0;
+yspeed=1.0;
 }
 
 double getZX(){
