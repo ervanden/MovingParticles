@@ -366,20 +366,35 @@ class Drawing {
     }
 
     public synchronized void gravitate(double mass) {
-
-        for (Shape s : MovingParticles.Drawing.shapes) {
-            for (Point p : s.points) {
-                double rsquare = p.x * p.x + p.y * p.y;
-                double r = Math.sqrt(rsquare);
-                double force = mass / rsquare;
-                double ux=-p.x/r;  //unit vector from p to origin
-                double uy=-p.y/r;
-                p.x = p.x + p.xspeed;
-                p.y = p.y + p.yspeed;
-                System.out.println("xspeed,yspeed, force"+p.xspeed+" \t"+p.yspeed+" \t"+force);
-                
-                p.xspeed = p.xspeed + ux*force;
-                p.yspeed = p.yspeed + uy*force;
+mass=100.0;
+double dt=0.1;
+        for (Shape s1 : MovingParticles.Drawing.shapes) {
+            for (Point p1 : s1.points) {
+                for (Shape s2 : MovingParticles.Drawing.shapes) {
+                    for (Point p2 : s2.points) {
+                        if (p1 != p2){
+                        double rsquare = (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
+                        double r = Math.sqrt(rsquare);
+ //    System.out.println("distance "+s1.label+" "+s2.label+" "+r);
+                        double force = mass*mass / rsquare;
+                        double ux = (p2.x - p1.x) / r;  //unit vector from p1 to p2
+                        double uy = (p2.y - p1.y) / r;
+                        
+                        p1.x = p1.x + p1.xspeed*dt;
+                        p1.y = p1.y + p1.yspeed*dt;
+ //                       System.out.println(s1.label + " xspeed,yspeed, force  "+p1.xspeed + " \t" + p1.yspeed + " \t" + force);
+                        p1.xspeed = p1.xspeed + ux * force/mass*dt;
+                        p1.yspeed = p1.yspeed + uy * force/mass*dt;
+                                                                     
+                        p2.x = p2.x + p2.xspeed*dt;
+                        p2.y = p2.y + p2.yspeed*dt;
+ //                        System.out.println(s2.label + " xspeed,yspeed, force  "+p2.xspeed + " \t" + p2.yspeed + " \t" + force);
+                       
+                        p2.xspeed = p2.xspeed - ux * force/mass*dt;
+                        p2.yspeed = p2.yspeed - uy * force/mass*dt;
+                        }
+                    }
+                }
             }
         }
     }

@@ -16,7 +16,7 @@ public class Animate1 implements Runnable {
             if (animation.equals("gravitate")) MovingParticles.Drawing.gravitate(10.0);
 
             try {
-                Thread.sleep(25);
+                Thread.sleep(1000);
             } catch (InterruptedException ie) {
             }
             
