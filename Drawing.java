@@ -365,38 +365,68 @@ class Drawing {
         }
     }
 
-    public synchronized void gravitate(double mass) {
-mass=100.0;
-double dt=0.1;
+    public synchronized ArrayList<Point> getParticles() {
+        ArrayList<Point> particles = new ArrayList<>();
         for (Shape s1 : MovingParticles.Drawing.shapes) {
-            for (Point p1 : s1.points) {
-                for (Shape s2 : MovingParticles.Drawing.shapes) {
-                    for (Point p2 : s2.points) {
-                        if (p1 != p2){
-                        double rsquare = (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
-                        double r = Math.sqrt(rsquare);
- //    System.out.println("distance "+s1.label+" "+s2.label+" "+r);
-                        double force = mass*mass / rsquare;
-                        double ux = (p2.x - p1.x) / r;  //unit vector from p1 to p2
-                        double uy = (p2.y - p1.y) / r;
-                        
-                        p1.x = p1.x + p1.xspeed*dt;
-                        p1.y = p1.y + p1.yspeed*dt;
- //                       System.out.println(s1.label + " xspeed,yspeed, force  "+p1.xspeed + " \t" + p1.yspeed + " \t" + force);
-                        p1.xspeed = p1.xspeed + ux * force/mass*dt;
-                        p1.yspeed = p1.yspeed + uy * force/mass*dt;
-                                                                     
-                        p2.x = p2.x + p2.xspeed*dt;
-                        p2.y = p2.y + p2.yspeed*dt;
- //                        System.out.println(s2.label + " xspeed,yspeed, force  "+p2.xspeed + " \t" + p2.yspeed + " \t" + force);
-                       
-                        p2.xspeed = p2.xspeed - ux * force/mass*dt;
-                        p2.yspeed = p2.yspeed - uy * force/mass*dt;
-                        }
-                    }
+            if (s1.points.size() == 1) {
+                for (Point p1 : s1.points) {
+                    particles.add(p1);
+                    p1.particleName=s1.label;
                 }
             }
         }
+        return particles;
     }
 
+    public synchronized void gravitate(double mass) {
+        mass = 100.0;
+        double dt = 0.001;
+        ArrayList<Point> allPoints = new ArrayList<>();
+        allPoints = getParticles();
+        /*
+         for (Shape s1 : MovingParticles.Drawing.shapes) {
+         if (s1.points.size()==1){
+         for (Point p1 : s1.points) {
+         allPoints.add(p1);
+         }
+         }
+         }
+         */
+
+        // new position of all particles
+        for (Point p : allPoints) {
+            p.xnew = p.x + p.xspeed * dt;
+            p.ynew = p.y + p.yspeed * dt;
+        }
+
+        // new speed of all particles
+        for (int i1 = 0; i1 < allPoints.size(); i1++) {
+            for (int i2 = i1 + 1; i2 < allPoints.size(); i2++) {
+                //               System.out.printf("points %d and %d\n", i1, i2);
+                Point p1 = allPoints.get(i1);
+                Point p2 = allPoints.get(i2);
+
+                double rsquare = (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
+                double r = Math.sqrt(rsquare);
+                //    System.out.println("distance "+s1.label+" "+s2.label+" "+r);
+                double force = mass * mass / rsquare;
+                double ux = (p2.x - p1.x) / r;  //unit vector from p1 to p2
+                double uy = (p2.y - p1.y) / r;
+
+                p1.xspeed = p1.xspeed + ux * force / mass * dt;
+                p1.yspeed = p1.yspeed + uy * force / mass * dt;
+                p2.xspeed = p2.xspeed - ux * force / mass * dt;
+                p2.yspeed = p2.yspeed - uy * force / mass * dt;
+            }
+        }
+
+        for (Point p : allPoints) {
+            Shape s = MovingParticles.Drawing.addShape();
+            s.addPoint(p.x, p.y);
+            s.addPoint(p.xnew, p.ynew);
+            p.x = p.xnew;
+            p.y = p.ynew;
+
+        }
+    }
 }

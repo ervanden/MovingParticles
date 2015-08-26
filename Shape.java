@@ -15,7 +15,7 @@ class Shape {
         points.clear();
     }
 
-    // clear() should only be alled from Drawing.clearShape,for synchronization
+    // clear() should only be called from Drawing.clearShape,for synchronization
     public void clear() {
         points.clear();
     }

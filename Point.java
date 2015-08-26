@@ -1,11 +1,14 @@
-import java.util.*;
-
-
-
 
 class Point {
+
 public double x;
 public double y;
+
+// gravitate
+    String particleName;
+public double mass;
+public double xnew;
+public double ynew;
 public double xspeed;
 public double yspeed;
 

@@ -2,6 +2,8 @@
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 public class MovingParticles implements ActionListener, MouseListener, MouseMotionListener, KeyListener, ItemListener {
 
@@ -23,6 +25,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
     static ComplexPlane zPlane = new ComplexPlane();
 
+    Animate1 animation = null;
     Thread animateThread = null;
     public static boolean suspendAnimation ;
 
@@ -593,17 +596,16 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         };
 
         if (source == animateButton) {
-            Animate1 animation = new Animate1("gravitate");
             if (e.getStateChange() == ItemEvent.SELECTED) {
-                                    suspendAnimation=false;
                 if (animateThread == null) {
+                    animation = new Animate1("gravitate");
                     animateThread = new Thread(animation);
                     animateThread.start();
-
                 }
+                                animation.suspended=false;
             };
             if (e.getStateChange() == ItemEvent.DESELECTED) {
-                suspendAnimation=true;
+                animation.suspended=true;
             };
         };
 
@@ -871,10 +873,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
 // populate settings frame
         Container pane = dFrame.getContentPane();
-        pane.setLayout(new BoxLayout(pane, BoxLayout.X_AXIS));
-
-        JLabel functionBoxTitle = new JLabel("functions", JLabel.CENTER);
-        pane.add(functionBoxTitle);
+        pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
 
         dotButton.setSelected(false);
         dotButton.addItemListener(this);
@@ -890,18 +889,23 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
         animateButton.setSelected(false);
         animateButton.addItemListener(this);
+                
+        JPanel editorPane = new JPanel();
+        editorPane.setLayout(new BoxLayout(editorPane, BoxLayout.LINE_AXIS));
+        editorPane.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
+        editorPane.add(Box.createRigidArea(new Dimension(40, 0)));
+        editorPane.add(dotButton);
+        editorPane.add(Box.createRigidArea(new Dimension(20, 0)));
+        editorPane.add(lineButton);
+        editorPane.add(Box.createRigidArea(new Dimension(20, 0)));
+        editorPane.add(scaleButton);
+        editorPane.add(Box.createRigidArea(new Dimension(20, 0)));
+        editorPane.add(gridButton);
+        editorPane.add(Box.createRigidArea(new Dimension(20, 0)));
+        editorPane.add(animateButton);
 
-        pane.add(Box.createRigidArea(new Dimension(40, 0)));
-        pane.add(dotButton);
-        pane.add(Box.createRigidArea(new Dimension(20, 0)));
-        pane.add(lineButton);
-        pane.add(Box.createRigidArea(new Dimension(20, 0)));
-        pane.add(scaleButton);
-        pane.add(Box.createRigidArea(new Dimension(20, 0)));
-        pane.add(gridButton);
-        pane.add(Box.createRigidArea(new Dimension(20, 0)));
-        pane.add(animateButton);
-
+        pane.add(editorPane);
+        
         dFrame.pack();
         dFrame.setVisible(true);
 
