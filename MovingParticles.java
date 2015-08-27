@@ -601,8 +601,10 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                     animation = new Animate1("gravitate");
                     animateThread = new Thread(animation);
                     animateThread.start();
+                    // thread starts suspended so that settings can be made
+                } else {
+                    animation.suspended=false;
                 }
-                                animation.suspended=false;
             };
             if (e.getStateChange() == ItemEvent.DESELECTED) {
                 animation.suspended=true;

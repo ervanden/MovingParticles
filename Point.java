@@ -7,6 +7,8 @@ public double y;
 // gravitate
     String particleName;
 public double mass;
+public double velocity;
+public double angle;
 public double xnew;
 public double ynew;
 public double xspeed;
@@ -16,7 +18,7 @@ public Point(double px, double py){
 x=px;
 y=py;
 xspeed=0;
-yspeed=1.0;
+yspeed=0;
 }
 
 double getZX(){
