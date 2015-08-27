@@ -5,10 +5,15 @@ public double x;
 public double y;
 
 // gravitate
-    String particleName;
+String particleName;
+Shape trajectory;
 public double mass;
 public double velocity;
 public double angle;
+public double x_init;
+public double y_init;
+public double xdrawn;
+public double ydrawn;
 public double xnew;
 public double ynew;
 public double xspeed;

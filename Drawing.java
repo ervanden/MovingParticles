@@ -368,7 +368,7 @@ class Drawing {
     public synchronized ArrayList<Point> getParticles() {
         ArrayList<Point> particles = new ArrayList<>();
         for (Shape s1 : MovingParticles.Drawing.shapes) {
-            if (s1.points.size() == 1) {
+            if (s1.isPoint) {
                 for (Point p1 : s1.points) {
                     particles.add(p1);
                     p1.particleName=s1.label;
@@ -380,26 +380,27 @@ class Drawing {
 
     public synchronized void gravitate(double dt) {
 
-        ArrayList<Point> allPoints = new ArrayList<>();
-        allPoints = getParticles();
+        ArrayList<Point> particles = new ArrayList<>();
+        particles = getParticles();
 
         // new position of all particles
-        for (Point p : allPoints) {
+        for (Point p : particles) {
             p.xnew = p.x + p.xspeed * dt;
             p.ynew = p.y + p.yspeed * dt;
         }
 
         // new speed of all particles
-        for (int i1 = 0; i1 < allPoints.size(); i1++) {
-            for (int i2 = i1 + 1; i2 < allPoints.size(); i2++) {
+        for (int i1 = 0; i1 < particles.size(); i1++) {
+            for (int i2 = i1 + 1; i2 < particles.size(); i2++) {
                 //               System.out.printf("points %d and %d\n", i1, i2);
-                Point p1 = allPoints.get(i1);
-                Point p2 = allPoints.get(i2);
+                Point p1 = particles.get(i1);
+                Point p2 = particles.get(i2);
 
                 double rsquare = (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
                 double r = Math.sqrt(rsquare);
                 //    System.out.println("distance "+s1.label+" "+s2.label+" "+r);
                 double force = p1.mass * p2.mass / rsquare;
+                force = r;
                 double ux = (p2.x - p1.x) / r;  //unit vector from p1 to p2
                 double uy = (p2.y - p1.y) / r;
 
@@ -410,12 +411,21 @@ class Drawing {
             }
         }
 
-        for (Point p : allPoints) {
-            Shape s = MovingParticles.Drawing.addShape();
-            s.addPoint(p.x, p.y);
-            s.addPoint(p.xnew, p.ynew);
+        for (Point p : particles) {
             p.x = p.xnew;
             p.y = p.ynew;
+            
+            Point lastDrawnPoint=p.trajectory.lastPoint();
+            double x1,x2,y1,y2;
+            x1=MovingParticles.transform.xUserToScreen(p.x);
+            y1=MovingParticles.transform.yUserToScreen(p.y);
+            x2=MovingParticles.transform.xUserToScreen(lastDrawnPoint.x);
+            y2=MovingParticles.transform.yUserToScreen(lastDrawnPoint.y);
+            double sqScreenDistance=(x2-x1)*(x2-x1)+(y2-y1)*(y2-y1);
+            if (sqScreenDistance>100){
+                p.trajectory.addPoint(p.x,p.y);
+            }
+
 
         }
     }

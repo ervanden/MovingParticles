@@ -8,7 +8,7 @@ class ComplexPlane extends Canvas {
     private static final long serialVersionUID = 1L;
     boolean zPlane = false;
 
-    Transform t = MovingParticles.zPlaneTransform;
+    Transform t = MovingParticles.transform;
 
     public void paint(Graphics g) { // never called, we set ignoreRepaint
 

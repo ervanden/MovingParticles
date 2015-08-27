@@ -29,7 +29,21 @@ public class Animate1 implements Runnable, ActionListener {
     JPanel pointPane;
     JButton goButton;
     JButton stopButton;
+    JButton resetButton;
     double timeStep = 0.001;
+
+    public Animate1(String animation) {
+        this.animation = animation;
+        particles = MovingParticles.Drawing.getParticles();
+        for (Point p : particles) {
+            p.x_init = p.x;
+            p.y_init = p.y;
+            p.trajectory = MovingParticles.Drawing.addShape();
+            MovingParticles.Drawing.addPointToShape(p.trajectory, p.x, p.y);
+        }
+
+        settingsFrame();
+    }
 
     private void settingsFrame() {
         sFrame = new JFrame("animaton settings");
@@ -48,7 +62,7 @@ public class Animate1 implements Runnable, ActionListener {
         pane.add(sliderInfo);
         pane.add(sliderMsec);
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
-        particles = MovingParticles.Drawing.getParticles();
+
         for (int i = 0; i < particles.size(); i++) {
             Point p = particles.get(i);
             pointPane = new JPanel();
@@ -56,21 +70,22 @@ public class Animate1 implements Runnable, ActionListener {
             pointPane.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
             pointPane.add(Box.createRigidArea(new Dimension(40, 0)));
             pointPane.add(new JLabel(p.particleName));
-            addTextField(i, "Mass");
-            addTextField(i, "Velocity");
-            addTextField(i, "Angle");
+            addTextField(i, "Mass", p.mass);
+            addTextField(i, "Velocity", p.velocity);
+            addTextField(i, "Angle", p.angle);
             pane.add(pointPane);
         }
 
         JPanel goPanel = new JPanel();
         goButton = new JButton("Go");
         goButton.addActionListener(this);
-        goButton.setActionCommand("Go");
         goPanel.add(goButton);
         stopButton = new JButton("Stop");
         stopButton.addActionListener(this);
-        stopButton.setActionCommand("Stop");
         goPanel.add(stopButton);
+        resetButton = new JButton("Reset");
+        resetButton.addActionListener(this);
+        goPanel.add(resetButton);
 
         pane.add(goPanel);
         sFrame.pack();
@@ -83,6 +98,15 @@ public class Animate1 implements Runnable, ActionListener {
             suspended = false;
         } else if (e.getSource().equals(stopButton)) {
             suspended = true;
+        } else if (e.getSource().equals(resetButton)) {
+            suspended = true;
+            for (Point p : particles) {
+                p.x = p.x_init;
+                p.y = p.y_init;
+                // start a new trajectory
+                p.trajectory = MovingParticles.Drawing.addShape();
+                MovingParticles.Drawing.addPointToShape(p.trajectory, p.x, p.y);
+            }
         } else {
             JTextField field = (JTextField) e.getSource();
             int particleNr = Integer.parseInt(action.split("[|]")[0]);
@@ -119,19 +143,14 @@ public class Animate1 implements Runnable, ActionListener {
 
     }
 
-    private void addTextField(int i, String label) {
+    private void addTextField(int i, String label, double value) {
         pointPane.add(Box.createRigidArea(new Dimension(20, 0)));
         pointPane.add(new JLabel(label));
         pointPane.add(Box.createRigidArea(new Dimension(20, 0)));
-        JTextField field = new JTextField();
+        JTextField field = new JTextField(String.format("%.2f", value));
         field.addActionListener(this);
         field.setActionCommand(i + "|" + label);
         pointPane.add(field);
-    }
-
-    public Animate1(String animation) {
-        this.animation = animation;
-        settingsFrame();
     }
 
     public void run() {

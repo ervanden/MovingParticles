@@ -2,13 +2,11 @@
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 public class MovingParticles implements ActionListener, MouseListener, MouseMotionListener, KeyListener, ItemListener {
 
     static Drawing Drawing = new Drawing();
-    static Transform zPlaneTransform = new Transform();
+    static Transform transform = new Transform();
 
     static GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
     static GraphicsDevice gd = ge.getDefaultScreenDevice();
@@ -97,9 +95,8 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         y = e.getY();
 
         if (plane.zPlane) {
-            zFrame.setTitle(
-                    String.format("x=%.2f y=%.2f", zPlaneTransform.xScreenToUser(x),
-                            zPlaneTransform.yScreenToUser(y)));
+            zFrame.setTitle(String.format("x=%.2f y=%.2f", transform.xScreenToUser(x),
+                            transform.yScreenToUser(y)));
         };
 
     }
@@ -109,16 +106,15 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         x = e.getX();
         y = e.getY();
 
-        zFrame.setTitle(
-                String.format("x=%.2f y=%.2f", zPlaneTransform.xScreenToUser(x), zPlaneTransform.yScreenToUser(y)));
+        zFrame.setTitle(String.format("x=%.2f y=%.2f", transform.xScreenToUser(x), transform.yScreenToUser(y)));
 
         if (actionAddCircle) {
 
             double radius, gridAngle;
 
             if (firstPoint) {
-                xCircle = zPlaneTransform.xScreenToUser(x);
-                yCircle = zPlaneTransform.yScreenToUser(y);
+                xCircle = transform.xScreenToUser(x);
+                yCircle = transform.yScreenToUser(y);
                 if (Drawing.snapToGrid) {
                     xCircle = Math.round(xCircle);
                     yCircle = Math.round(yCircle);
@@ -127,8 +123,8 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
             } else {
 
-                xRadius = zPlaneTransform.xScreenToUser(x);
-                yRadius = zPlaneTransform.yScreenToUser(y);
+                xRadius = transform.xScreenToUser(x);
+                yRadius = transform.yScreenToUser(y);
                 if (Drawing.snapToGrid) {
                     xRadius = Math.round(xRadius);
                     yRadius = Math.round(yRadius);
@@ -137,7 +133,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                 Drawing.clearShape(currentShape);
 
                 radius = Math.sqrt((xRadius - xCircle) * (xRadius - xCircle) + (yRadius - yCircle) * (yRadius - yCircle));
-                gridAngle = Math.sqrt(zPlaneTransform.xScreenToUser(minPixelDist) - zPlaneTransform.xScreenToUser(0)) / radius;
+                gridAngle = Math.sqrt(transform.xScreenToUser(minPixelDist) - transform.xScreenToUser(0)) / radius;
                 if (gridAngle > (Math.PI / 10)) {
                     gridAngle = Math.PI / 10;
                 }
@@ -157,8 +153,8 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         if (actionAddShape) {
             // add point only if sufficiently far from previous OR if it is the first point 
             if ((firstPoint) || (!firstPoint && ((x - xprev) * (x - xprev) + (y - yprev) * (y - yprev) > minPixelDistSquare))) {
-                double xUser = zPlaneTransform.xScreenToUser(x);
-                double yUser = zPlaneTransform.yScreenToUser(y);
+                double xUser = transform.xScreenToUser(x);
+                double yUser = transform.yScreenToUser(y);
                 Drawing.addPointToShape(currentShape,xUser, yUser);
 
                 repaintBothWindows();
@@ -184,8 +180,8 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                     whatToMove = "selection";
                 }
                 Drawing.moveShapesRelative(whatToMove,
-                        zPlaneTransform.xScreenToUser(x) - zPlaneTransform.xScreenToUser(xprev),
-                        zPlaneTransform.yScreenToUser(y) - zPlaneTransform.yScreenToUser(yprev));
+                        transform.xScreenToUser(x) - transform.xScreenToUser(xprev),
+                        transform.yScreenToUser(y) - transform.yScreenToUser(yprev));
                 repaintBothWindows();
                 xprev = x;
                 yprev = y;
@@ -195,8 +191,8 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         if (actionMovePoint) {
 
             if (firstPoint) {
-                double xuser = zPlaneTransform.xScreenToUser(x);
-                double yuser = zPlaneTransform.yScreenToUser(y);
+                double xuser = transform.xScreenToUser(x);
+                double yuser = transform.yScreenToUser(y);
                 cps = Drawing.closestPointShape(xuser, yuser);
                 System.out.println("closest point = " + cps.getName() + " x=" + cps.getX() + " y=" + cps.getY());
                 xuserprev = cps.getX();
@@ -212,8 +208,8 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                 };
                 firstPoint = false;
             } else {
-                double xusernew = zPlaneTransform.xScreenToUser(x);
-                double yusernew = zPlaneTransform.yScreenToUser(y);
+                double xusernew = transform.xScreenToUser(x);
+                double yusernew = transform.yScreenToUser(y);
                 if (Drawing.snapToGrid) {
                     xusernew = Math.round(xusernew);
                     yusernew = Math.round(yusernew);
@@ -244,16 +240,16 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
             if (firstPoint) {
                 xprev = x;
                 yprev = y;
-                double xuser = zPlaneTransform.xScreenToUser(x);
-                double yuser = zPlaneTransform.yScreenToUser(y);
+                double xuser = transform.xScreenToUser(x);
+                double yuser = transform.yScreenToUser(y);
                 currentShape = Drawing.closestShape(xuser, yuser);
                 firstPoint = false;
             };
 
             if (!firstPoint && (currentShape != null)) {
                 Drawing.moveShapeRelative(currentShape,
-                        zPlaneTransform.xScreenToUser(x) - zPlaneTransform.xScreenToUser(xprev),
-                        zPlaneTransform.yScreenToUser(y) - zPlaneTransform.yScreenToUser(yprev));
+                        transform.xScreenToUser(x) - transform.xScreenToUser(xprev),
+                        transform.yScreenToUser(y) - transform.yScreenToUser(yprev));
                 xprev = x;
                 yprev = y;
                 repaintBothWindows();
@@ -266,7 +262,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
             Transform planeTransform = null;
 
             if (plane.zPlane) {
-                planeTransform = zPlaneTransform;
+                planeTransform = transform;
             } else {  // impossible?
                 actionMoveView = false;
                 firstPoint = false;
@@ -302,14 +298,14 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         if ((actionSelectArea || actionUnselectArea)) {
 
             if (firstPoint) {
-                areaCursorX1 = zPlaneTransform.xScreenToUser(x);
-                areaCursorY1 = zPlaneTransform.yScreenToUser(y);
+                areaCursorX1 = transform.xScreenToUser(x);
+                areaCursorY1 = transform.yScreenToUser(y);
                 firstPoint = false;
 
             } else {
 
-                areaCursorX2 = zPlaneTransform.xScreenToUser(x);
-                areaCursorY2 = zPlaneTransform.yScreenToUser(y);
+                areaCursorX2 = transform.xScreenToUser(x);
+                areaCursorY2 = transform.yScreenToUser(y);
 
                 Drawing.areaCursor(true,
                         Math.min(areaCursorX1, areaCursorX2),
@@ -346,8 +342,8 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         if (actionAddShape) {
             actionAddShape = false;
             // add terminal point
-            Drawing.addPointToShape(currentShape,zPlaneTransform.xScreenToUser(x),
-                    zPlaneTransform.yScreenToUser(y));
+            Drawing.addPointToShape(currentShape,transform.xScreenToUser(x),
+                    transform.yScreenToUser(y));
             repaintBothWindows();
         }
 
@@ -413,8 +409,8 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
         if (actionDeletePoint) {
 
-            double xuser = zPlaneTransform.xScreenToUser(x);
-            double yuser = zPlaneTransform.yScreenToUser(y);
+            double xuser = transform.xScreenToUser(x);
+            double yuser = transform.yScreenToUser(y);
             cps = Drawing.closestPointShape(xuser, yuser);
             Drawing.deleteShape(cps);
             repaintBothWindows();
@@ -422,8 +418,8 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
         if (actionDeleteShape) {
 
-            double xuser = zPlaneTransform.xScreenToUser(x);
-            double yuser = zPlaneTransform.yScreenToUser(y);
+            double xuser = transform.xScreenToUser(x);
+            double yuser = transform.yScreenToUser(y);
             currentShape = Drawing.closestShape(xuser, yuser);
             Drawing.deleteShape(currentShape);
             repaintBothWindows();
@@ -435,14 +431,14 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
             double userx, usery;
 
             if (plane.zPlane) {
-                double xmin = zPlaneTransform.uxmin;
-                double xmax = zPlaneTransform.uxmax;
-                double ymin = zPlaneTransform.uymin;
-                double ymax = zPlaneTransform.uymax;
-                userx = zPlaneTransform.xScreenToUser(x);
-                usery = zPlaneTransform.yScreenToUser(y);
+                double xmin = transform.uxmin;
+                double xmax = transform.uxmax;
+                double ymin = transform.uymin;
+                double ymax = transform.uymax;
+                userx = transform.xScreenToUser(x);
+                usery = transform.yScreenToUser(y);
 
-                zPlaneTransform.setUserSpace(userx - (xmax - xmin) / (2 * zoomFactor),
+                transform.setUserSpace(userx - (xmax - xmin) / (2 * zoomFactor),
                         userx + (xmax - xmin) / (2 * zoomFactor),
                         usery - (ymax - ymin) / (2 * zoomFactor),
                         usery + (ymax - ymin) / (2 * zoomFactor));
@@ -459,9 +455,9 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
             // actionSelect stays active until the cursor leaves the z plane
             int nrs;
             double userx, usery;
-            userx = zPlaneTransform.xScreenToUser(e.getX());
-            usery = zPlaneTransform.yScreenToUser(e.getY());
-            nrs = Drawing.selectShapes(userx, usery, zPlaneTransform.xScreenToUser(2) - zPlaneTransform.xScreenToUser(0));
+            userx = transform.xScreenToUser(e.getX());
+            usery = transform.yScreenToUser(e.getY());
+            nrs = Drawing.selectShapes(userx, usery, transform.xScreenToUser(2) - transform.xScreenToUser(0));
 
             repaintBothWindows();
 
@@ -473,9 +469,9 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
             // actionUnselect stays active until the cursor leaves the z plane
             int nrs;
             double userx, usery;
-            userx = zPlaneTransform.xScreenToUser(e.getX());
-            usery = zPlaneTransform.yScreenToUser(e.getY());
-            nrs = Drawing.unselectShapes(userx, usery, zPlaneTransform.xScreenToUser(2) - zPlaneTransform.xScreenToUser(0));
+            userx = transform.xScreenToUser(e.getX());
+            usery = transform.yScreenToUser(e.getY());
+            nrs = Drawing.unselectShapes(userx, usery, transform.xScreenToUser(2) - transform.xScreenToUser(0));
 
             repaintBothWindows();
 
@@ -486,18 +482,18 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
             if (firstPoint) {
                 //              currentShapeDrawing.addPointToShape(zPlaneTransform.xScreenToUser(x),
                 //                      zPlaneTransform.yScreenToUser(y));
-                System.out.println(" add line first point " + zPlaneTransform.xScreenToUser(x) + " "
-                        + zPlaneTransform.yScreenToUser(y));
+                System.out.println(" add line first point " + transform.xScreenToUser(x) + " "
+                        + transform.yScreenToUser(y));
                 xprev = x;
                 yprev = y;
                 firstPoint = false;
             } else {
                 int pixelDist, nsegments;
                 double xbegin, ybegin, xend, yend, xi, yi;
-                xend = zPlaneTransform.xScreenToUser(x);
-                yend = zPlaneTransform.yScreenToUser(y);
-                xbegin = zPlaneTransform.xScreenToUser(xprev);
-                ybegin = zPlaneTransform.yScreenToUser(yprev);
+                xend = transform.xScreenToUser(x);
+                yend = transform.yScreenToUser(y);
+                xbegin = transform.xScreenToUser(xprev);
+                ybegin = transform.yScreenToUser(yprev);
                 if (Drawing.snapToGrid) {
                     xend = Math.round(xend);
                     xbegin = Math.round(xbegin);
@@ -529,8 +525,8 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
             xprev = x;
             yprev = y;
-            double xuser = zPlaneTransform.xScreenToUser(x);
-            double yuser = zPlaneTransform.yScreenToUser(y);
+            double xuser = transform.xScreenToUser(x);
+            double yuser = transform.yScreenToUser(y);
             cps = Drawing.addPointShape();
             if (Drawing.snapToGrid) {
                 xuser = Math.round(xuser);
@@ -729,14 +725,14 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
             double userx, usery;
             int zoomOutFactor = 2;
 
-            double xmin = zPlaneTransform.uxmin;
-            double xmax = zPlaneTransform.uxmax;
-            double ymin = zPlaneTransform.uymin;
-            double ymax = zPlaneTransform.uymax;
+            double xmin = transform.uxmin;
+            double xmax = transform.uxmax;
+            double ymin = transform.uymin;
+            double ymax = transform.uymax;
             userx = (xmax + xmin) / 2;
             usery = (ymax + ymin) / 2;
 
-            zPlaneTransform.setUserSpace(userx - ((xmax - xmin) / 2) * zoomOutFactor,
+            transform.setUserSpace(userx - ((xmax - xmin) / 2) * zoomOutFactor,
                     userx + ((xmax - xmin) / 2) * zoomOutFactor,
                     usery - ((ymax - ymin) / 2) * zoomOutFactor,
                     usery + ((ymax - ymin) / 2) * zoomOutFactor);
@@ -756,7 +752,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
             double ycenter = (ymin + ymax) / 2;
             double w = Math.max(xmax - xmin, ymax - ymin);
 
-            zPlaneTransform.setUserSpace(xcenter - w / 2,
+            transform.setUserSpace(xcenter - w / 2,
                     xcenter + w / 2,
                     ycenter - w / 2,
                     ycenter + w / 2);
@@ -766,10 +762,10 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
         if (buttonClicked == "Add Grid") {
 
-            double xmin = zPlaneTransform.uxmin;
-            double xmax = zPlaneTransform.uxmax;
-            double ymin = zPlaneTransform.uymin;
-            double ymax = zPlaneTransform.uymax;
+            double xmin = transform.uxmin;
+            double xmax = transform.uxmax;
+            double ymin = transform.uymin;
+            double ymax = transform.uymax;
 
             GridDialog gd = new GridDialog();
             gd.popUp(zFrame, xmin, xmax, ymin, ymax, (xmax - xmin) / 20);
@@ -802,10 +798,10 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         }; // Add Grid
 
         if (buttonClicked == "Add Polar Grid") {
-            double xmin = zPlaneTransform.uxmin;
-            double xmax = zPlaneTransform.uxmax;
-            double ymin = zPlaneTransform.uymin;
-            double ymax = zPlaneTransform.uymax;
+            double xmin = transform.uxmin;
+            double xmax = transform.uxmax;
+            double ymin = transform.uymin;
+            double ymax = transform.uymax;
 
             double radius = Math.min((xmax - xmin), (ymax - ymin)) / 2;
             double xcenter = (xmax + xmin) / 2;
@@ -842,10 +838,10 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
     private void create() {   // Create and set up the windows.
 
-        zPlane.t = zPlaneTransform;
+        zPlane.t = transform;
         zPlane.zPlane = true;
 
-        zPlaneTransform.setUserSpace(-10, 10, -10, 10);
+        transform.setUserSpace(-10, 10, -10, 10);
 
 //create zPlane and wPlane frames
 //get device screen coordinates to position both frames

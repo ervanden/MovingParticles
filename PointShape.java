@@ -4,11 +4,11 @@ import java.util.*;
 
 class PointShape extends Shape {  // shape that represents a complex point
 
-    public PointShape(String itsname){
+public PointShape(String itsname){
 points = new ArrayList<Point>();
 points.clear();
 label=itsname;
-isComplexPoint=true;
+isPoint=true;
 }
 
 public double getX() { return this.points.get(0).getZX(); }
