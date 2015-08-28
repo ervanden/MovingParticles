@@ -25,7 +25,8 @@ public class Animate1 implements Runnable, ActionListener {
     ArrayList<Point> particles;
     int sleepMilliseconds = 1000;
     JFrame sFrame;
-    JLabel sliderInfo;
+    JLabel frameDelayInfo;
+    JLabel timeStepInfo;
     JPanel pointPane;
     JButton goButton;
     JButton stopButton;
@@ -50,17 +51,30 @@ public class Animate1 implements Runnable, ActionListener {
         Container pane = sFrame.getContentPane();
         pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
 
+        frameDelayInfo = new JLabel("frame delay", JLabel.CENTER);
         final JSlider sliderMsec = new JSlider(0, 1000, 1000);
         sliderMsec.addChangeListener((new ChangeListener() {
             public void stateChanged(ChangeEvent changeEvent) {
                 sleepMilliseconds = sliderMsec.getValue();
-                sliderInfo.setText("frame delay " + sleepMilliseconds + " msec");
+                frameDelayInfo.setText("frame delay " + sleepMilliseconds + " msec");
             }
         }));
 
-        sliderInfo = new JLabel("frame delay", JLabel.CENTER);
-        pane.add(sliderInfo);
+        timeStepInfo = new JLabel("time step", JLabel.CENTER);
+        final JSlider sliderTimeStep = new JSlider(-6000, -2000, -3000);
+        sliderTimeStep.addChangeListener((new ChangeListener() {
+            public void stateChanged(ChangeEvent changeEvent) {
+                timeStep = Math.pow(10.0, (double) sliderTimeStep.getValue() / 1000);
+                String timeStepString = String.format("%f", timeStep);
+                timeStepInfo.setText("time step " + timeStepString + " sec");
+            }
+        }));
+
+        pane.add(frameDelayInfo);
         pane.add(sliderMsec);
+        pane.add(Box.createRigidArea(new Dimension(500, 20)));
+        pane.add(timeStepInfo);
+        pane.add(sliderTimeStep);
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
 
         for (int i = 0; i < particles.size(); i++) {
@@ -101,12 +115,20 @@ public class Animate1 implements Runnable, ActionListener {
         } else if (e.getSource().equals(resetButton)) {
             suspended = true;
             for (Point p : particles) {
+                // reset initial position
                 p.x = p.x_init;
                 p.y = p.y_init;
-                // start a new trajectory
+                // reset initial speed
+                p.xspeed = p.velocity * Math.cos((p.angle / 180) * Math.PI);
+                p.yspeed = p.velocity * Math.sin((p.angle / 180) * Math.PI);
+            }
+            // remove trajectories and start new ones
+            MovingParticles.Drawing.removeTrajectories();
+            for (Point p : particles) {
                 p.trajectory = MovingParticles.Drawing.addShape();
                 MovingParticles.Drawing.addPointToShape(p.trajectory, p.x, p.y);
             }
+            MovingParticles.zPlane.blitPaint();
         } else {
             JTextField field = (JTextField) e.getSource();
             int particleNr = Integer.parseInt(action.split("[|]")[0]);
@@ -134,9 +156,11 @@ public class Animate1 implements Runnable, ActionListener {
                     particles.get(particleNr).angle = value;
                     field.setBackground(Color.green);
                 }
-                for (Point p : particles) {
-                    p.xspeed = p.velocity * Math.cos((p.angle / 180) * Math.PI);
-                    p.yspeed = p.velocity * Math.sin((p.angle / 180) * Math.PI);
+                if (attribute.equals("Velocity") || attribute.equals("Angle")) {
+                    for (Point p : particles) {
+                        p.xspeed = p.velocity * Math.cos((p.angle / 180) * Math.PI);
+                        p.yspeed = p.velocity * Math.sin((p.angle / 180) * Math.PI);
+                    }
                 }
             }
         }
@@ -154,22 +178,23 @@ public class Animate1 implements Runnable, ActionListener {
     }
 
     public void run() {
-
+        boolean redraw = true;
         while (true) {
             if (!suspended) {
                 if (animation.equals("rotate")) {
-                    MovingParticles.Drawing.rotate(Math.PI / 200);
+                    redraw = MovingParticles.Drawing.rotate(Math.PI / 200);
                 }
                 if (animation.equals("gravitate")) {
-                    MovingParticles.Drawing.gravitate(timeStep);
+                    redraw = MovingParticles.Drawing.gravitate(timeStep);
                 }
 
-                try {
-                    Thread.sleep(sleepMilliseconds);
-                } catch (InterruptedException ie) {
+                if (redraw) {
+                    try {
+                        Thread.sleep(sleepMilliseconds);
+                    } catch (InterruptedException ie) {
+                    }
+                    MovingParticles.zPlane.blitPaint();
                 }
-
-                MovingParticles.zPlane.blitPaint();
             }
             while (suspended) {
                 try {

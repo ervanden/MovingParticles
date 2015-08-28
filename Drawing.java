@@ -95,7 +95,7 @@ class Drawing {
                 t.graphics.setColor(Color.RED);
                 g2.setStroke(stroke2);
             } else {
-                t.graphics.setColor(Color.BLACK);
+                t.graphics.setColor(s.color);
                 g2.setStroke(stroke0);
             };
 
@@ -273,9 +273,9 @@ class Drawing {
                 if (((xy.x - x) * (xy.x - x) + (xy.y - y) * (xy.y - y)) < minPixelDistSquare) {
                     nrs = nrs + 1;
                     s.isSelected = false;
-                };
-            };
-        };
+                }
+            }
+        }
 
         if (nrs == 0) {
             System.out.println("No shapes unselected");
@@ -290,13 +290,13 @@ class Drawing {
     public synchronized void selectAll() {
         for (Shape s : shapes) {
             s.isSelected = true;
-        };
+        }
     }
 
     public synchronized void unselectAll() {
         for (Shape s : shapes) {
             s.isSelected = false;
-        };
+        }
     }
 
     public synchronized void selectArea() {
@@ -351,7 +351,7 @@ class Drawing {
         }
     }
 
-    public synchronized void rotate(double alfa) {
+    public synchronized boolean rotate(double alfa) {
         double cos = Math.cos(alfa);
         double sin = Math.sin(alfa);
 
@@ -363,6 +363,7 @@ class Drawing {
                 p.y = ynew;
             }
         }
+        return true; // redraw
     }
 
     public synchronized ArrayList<Point> getParticles() {
@@ -371,15 +372,27 @@ class Drawing {
             if (s1.isPoint) {
                 for (Point p1 : s1.points) {
                     particles.add(p1);
-                    p1.particleName=s1.label;
+                    p1.particleName = s1.label;
                 }
             }
         }
         return particles;
     }
 
-    public synchronized void gravitate(double dt) {
+    public synchronized void removeTrajectories() {
+        Iterator<Shape> it = shapes.iterator();
+        while (it.hasNext()) {
+            if (!it.next().isPoint) {
+                it.remove();
+            }
+        }
+    }
 
+    public synchronized boolean gravitate(double dt) {
+        // This method calculates the new position of all particles after time step dt.
+        // If no points are added to any trajectory, return false, true otherwise.
+        // This to avoid redrawing the screen when nothing changed
+        boolean redraw = false;
         ArrayList<Point> particles = new ArrayList<>();
         particles = getParticles();
 
@@ -395,38 +408,49 @@ class Drawing {
                 //               System.out.printf("points %d and %d\n", i1, i2);
                 Point p1 = particles.get(i1);
                 Point p2 = particles.get(i2);
-
+                double mass1 = p1.mass;
+                double mass2 = p2.mass;
                 double rsquare = (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
                 double r = Math.sqrt(rsquare);
                 //    System.out.println("distance "+s1.label+" "+s2.label+" "+r);
-                double force = p1.mass * p2.mass / rsquare;
-                force = r;
+                double force = mass1 * mass2 / rsquare;
+                //                force = r;
                 double ux = (p2.x - p1.x) / r;  //unit vector from p1 to p2
                 double uy = (p2.y - p1.y) / r;
 
-                p1.xspeed = p1.xspeed + ux * force / p1.mass * dt;
-                p1.yspeed = p1.yspeed + uy * force / p1.mass * dt;
-                p2.xspeed = p2.xspeed - ux * force / p2.mass * dt;
-                p2.yspeed = p2.yspeed - uy * force / p2.mass * dt;
+                double vx = ux * force * dt;
+                double vy = uy * force * dt;
+
+                /*               
+                 Shape vector=MovingParticles.Drawing.addShape();
+                 vector.addPoint(p2.x, p2.y);
+                 vector.addPoint(p2.x-vx, p2.y-vy);
+                 vector.color=Color.BLUE;
+                 */
+                p1.xspeed = p1.xspeed + (ux * force / mass1) * dt;
+                p1.yspeed = p1.yspeed + (uy * force / mass1) * dt;
+                p2.xspeed = p2.xspeed - (ux * force / mass2) * dt;
+                p2.yspeed = p2.yspeed - (uy * force / mass2) * dt;
             }
         }
 
         for (Point p : particles) {
             p.x = p.xnew;
             p.y = p.ynew;
-            
-            Point lastDrawnPoint=p.trajectory.lastPoint();
-            double x1,x2,y1,y2;
-            x1=MovingParticles.transform.xUserToScreen(p.x);
-            y1=MovingParticles.transform.yUserToScreen(p.y);
-            x2=MovingParticles.transform.xUserToScreen(lastDrawnPoint.x);
-            y2=MovingParticles.transform.yUserToScreen(lastDrawnPoint.y);
-            double sqScreenDistance=(x2-x1)*(x2-x1)+(y2-y1)*(y2-y1);
-            if (sqScreenDistance>100){
-                p.trajectory.addPoint(p.x,p.y);
+
+            Point lastDrawnPoint = p.trajectory.lastPoint();
+            double x1, x2, y1, y2;
+            x1 = MovingParticles.transform.xUserToScreen(p.x);
+            y1 = MovingParticles.transform.yUserToScreen(p.y);
+            x2 = MovingParticles.transform.xUserToScreen(lastDrawnPoint.x);
+            y2 = MovingParticles.transform.yUserToScreen(lastDrawnPoint.y);
+            double sqScreenDistance = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
+            if (sqScreenDistance > 100) {
+                p.trajectory.addPoint(p.x, p.y);
+                redraw = true;
             }
 
-
         }
+        return redraw;
     }
 }
