@@ -1,4 +1,7 @@
 
+import java.util.ArrayList;
+
+
 class Point {
 
 public double x;
@@ -19,11 +22,16 @@ public double ynew;
 public double xspeed;
 public double yspeed;
 
+// elastic
+ArrayList<Point> neighbours;
+
 public Point(double px, double py){
 x=px;
 y=py;
 xspeed=0;
 yspeed=0;
+mass=1;
+neighbours=new ArrayList<>();
 }
 
 double getZX(){

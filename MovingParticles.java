@@ -23,7 +23,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
     static ComplexPlane zPlane = new ComplexPlane();
 
-    Animate1 animation = null;
+    Animate animation = null;
     Thread animateThread = null;
     public static boolean suspendAnimation ;
 
@@ -594,7 +594,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         if (source == animateButton) {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 if (animateThread == null) {
-                    animation = new Animate1("gravitate");
+                    animation = new Animate("gravitate");
                     animateThread = new Thread(animation);
                     animateThread.start();
                     // thread starts suspended so that settings can be made
