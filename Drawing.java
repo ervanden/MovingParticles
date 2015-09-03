@@ -493,23 +493,34 @@ class Drawing {
         public Elasticity() {
 
             for (Shape s : MovingParticles.Drawing.getShapes()) {
-                
+
+                s.color = Color.MAGENTA;
+                s.isSelected = true;
+
                 // populate 'particles'
-                int c=1;
+                int c = 1;
                 for (Point p : s.points) {
                     particles.add(p);
                     p.mass = 10.0;
                     p.velocity = 0;
                     p.angle = 0;
-                    p.particleName = s.label+"-"+c; c++;
+                    p.particleName = s.label + "-" + c;
+                    c++;
                     p.x_init = p.x;
                     p.y_init = p.y;
-                    p.trajectory = MovingParticles.Drawing.addShape();
-                    MovingParticles.Drawing.addPointToShape(p.trajectory, p.x, p.y);
+                    p.xLastDrawn=p.x;
+                    p.yLastDrawn=p.y;
+                    p.trajectory = null;
+                    /*
+                     p.trajectory = MovingParticles.Drawing.addShape();
+                     MovingParticles.Drawing.addPointToShape(p.trajectory, p.x, p.y);
+                     p.trajectory.color=Color.ORANGE;
+                     */
                 }
-                
+
                 // populate extremities
-                
+                System.out.println("init shape " + s.label);
+
                 Point pe;
                 pe = s.points.get(0);
                 extremities.add(pe);
@@ -517,19 +528,19 @@ class Drawing {
                 pe = s.points.get(s.points.size() - 1);
                 extremities.add(pe);
                 pe.particleName = s.label + "-end";
-                
-                //populate 'neighbours' of all particles
+
+                // populate 'neighbours' of all particles
                 // assuming there is only 1 shape, all the particles belong to this shape
-        for (int i = 0; i < particles.size(); i++) {
-            if (i > 0) {
-                Point p = particles.get(i);
-                p.neighbours.add(particles.get(i - 1));
-            }
-            if (i < particles.size() - 1) {
-                particles.get(i).neighbours.add(particles.get(i + 1));
-            }
-            System.out.println("particle " + i + " has " + particles.get(i).neighbours.size() + " neighbours");
-        }
+                for (int i = 0; i < particles.size(); i++) {
+                    if (i > 0) {
+                        Point p = particles.get(i);
+                        p.neighbours.add(particles.get(i - 1));
+                    }
+                    if (i < particles.size() - 1) {
+                        particles.get(i).neighbours.add(particles.get(i + 1));
+                    }
+                    System.out.println("particle " + particles.get(i).particleName + " has " + particles.get(i).neighbours.size() + " neighbours");
+                }
             }
 
             Container pane = getContentPane();
@@ -599,25 +610,38 @@ class Drawing {
                     validValue = false;
                 }
                 if (validValue) {
+                    String pName = extremities.get(particleNr).particleName;
                     field.setBackground(Color.white);
-                    System.out.println(particleNr + "." + attribute + "=" + value);
+
                     if (attribute.equals("Mass")) {
-                        particles.get(particleNr).mass = value;
+                        extremities.get(particleNr).mass = value;
+                        System.out.println(pName + "." + attribute + "=" + value);
+
                         field.setBackground(Color.green);
                     }
                     if (attribute.equals("Velocity")) {
-                        particles.get(particleNr).velocity = value;
+                        extremities.get(particleNr).velocity = value;
+                        System.out.println(pName + "." + attribute + "=" + value);
                         field.setBackground(Color.green);
                     }
                     if (attribute.equals("Angle")) {
-                        particles.get(particleNr).angle = value;
+                        extremities.get(particleNr).angle = value;
+                        System.out.println(pName + "." + attribute + "=" + value);
                         field.setBackground(Color.green);
                     }
                     if (attribute.equals("Velocity") || attribute.equals("Angle")) {
                         for (Point p : particles) {
                             p.xspeed = p.velocity * Math.cos((p.angle / 180) * Math.PI);
                             p.yspeed = p.velocity * Math.sin((p.angle / 180) * Math.PI);
+                            System.out.println(p.particleName + ".xspeed=" + p.xspeed);
+                            System.out.println(p.particleName + ".yspeed=" + p.yspeed);
+
                         }
+                    }
+
+                    System.out.println("==================");
+                    for (Point p : particles) {
+                        System.out.println(p.particleName + " mass " + p.mass + " xspeed " + p.xspeed + " yspeed " + p.yspeed);
                     }
                 }
             }
@@ -631,31 +655,6 @@ class Drawing {
     Gravity gravity = null;
     Elasticity elasticity = null;
     Rotation rotation = null;
-
-    public synchronized void initializeAnimation(String animation) {
-
-        if (animation.equals("gravitate")) {
-            gravity = new Gravity();
-
-        }
-        if (animation.equals("elastic")) {
-            Shape s=MovingParticles.Drawing.addShape();
-            s.addPoint(1,1);
-                        s.addPoint(2,1);
-            elasticity = new Elasticity();
-
-        }
-    }
-
-    public synchronized void resetAnimation(String animation) {
-
-        if (animation.equals("gravitate")) {
-            gravity.reset();
-        }
-        if (animation.equals("elastic")) {
-            elasticity.reset();
-        }
-    }
 
     public synchronized boolean rotate(double alfa) {
         double cos = Math.cos(alfa);
@@ -759,12 +758,12 @@ class Drawing {
                 double rsquare = (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
                 double r = Math.sqrt(rsquare);
                 double r0square = (p1.x_init - p2.x_init) * (p1.x_init - p2.x_init)
-                                + (p1.y_init - p2.y_init) * (p1.y_init - p2.y_init);
+                        + (p1.y_init - p2.y_init) * (p1.y_init - p2.y_init);
                 double r0 = Math.sqrt(r0square);
-                
-                double force = 10*(r-r0);
-System.out.println(p1.particleName+" "+p2.particleName+"  force "+force);
- 
+
+                double force = 10 * (r - r0);
+                //            System.out.println(p1.particleName + " " + p2.particleName + "  force " + force);
+
                 double ux = (p2.x - p1.x) / r;  //unit vector from p1 to p2
                 double uy = (p2.y - p1.y) / r;
 
@@ -775,30 +774,60 @@ System.out.println(p1.particleName+" "+p2.particleName+"  force "+force);
             }
 
         }
- //                   try{Thread.sleep(1000);}catch (Exception e){};
+        //                   try{Thread.sleep(1000);}catch (Exception e){};
 
         for (Point p : particles) {
             p.x = p.xnew;
             p.y = p.ynew;
 
-            if (p.trajectory == null) {
-                p.trajectory = MovingParticles.Drawing.addShape();
-                MovingParticles.Drawing.addPointToShape(p.trajectory, p.x_init, p.y_init);
-            }
-
-            Point lastDrawnPoint = p.trajectory.lastPoint();
             double x1, x2, y1, y2;
             x1 = MovingParticles.transform.xUserToScreen(p.x);
             y1 = MovingParticles.transform.yUserToScreen(p.y);
-            x2 = MovingParticles.transform.xUserToScreen(lastDrawnPoint.x);
-            y2 = MovingParticles.transform.yUserToScreen(lastDrawnPoint.y);
+            x2 = MovingParticles.transform.xUserToScreen(p.xLastDrawn);
+            y2 = MovingParticles.transform.yUserToScreen(p.yLastDrawn);
             double sqScreenDistance = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
             if (sqScreenDistance > 100) {
-                p.trajectory.addPoint(p.x, p.y);
-              redraw = true;
+                if (p.trajectory != null) {
+                    p.trajectory.addPoint(p.x, p.y);
+                }
+                redraw = true;
+                p.xLastDrawn=p.x;
+                p.yLastDrawn=p.y;
             }
+        }
+        return redraw;
+    }
+
+    public synchronized void initializeAnimation(String animation) {
+
+        if (animation.equals("gravitate")) {
+            gravity = new Gravity();
 
         }
-        return true; // return redraw;
+        if (animation.equals("elastic")) {
+            /*
+             Shape s = MovingParticles.Drawing.addShape();         
+             s.addPoint(1, 1);
+             s.addPoint(2, 1);
+             s.addPoint(3, 1);
+             s.addPoint(4, 1);
+             s.addPoint(5, 1);
+             s.color=Color.MAGENTA;
+             s.isSelected=true;
+             */
+            elasticity = new Elasticity();
+
+        }
     }
+
+    public synchronized void resetAnimation(String animation) {
+
+        if (animation.equals("gravitate")) {
+            gravity.reset();
+        }
+        if (animation.equals("elastic")) {
+            elasticity.reset();
+        }
+    }
+
 }
