@@ -1,25 +1,24 @@
 
-import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
-import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-public class Animate implements Runnable, ActionListener, ChangeListener {
+public class AnimationRunner implements Runnable, ActionListener, ChangeListener {
 
-    String animation;
+    String animationType;
+    Animation a;
+
     public boolean suspended = true;
     double timeStep = 0.001;
     int sleepMilliseconds = 1000;
@@ -32,17 +31,20 @@ public class Animate implements Runnable, ActionListener, ChangeListener {
     JButton resetButton;
     JSlider sliderMsec;
     JSlider sliderTimeStep;
+    JComboBox animationBox;
 
-    public Animate(String animation) {
-        animation = "gravitate";
-        animation = "elastic";
-        this.animation = animation;
-
-        MovingParticles.Drawing.initializeAnimation(animation);
+    public AnimationRunner() {
 
         sFrame = new JFrame("animaton settings");
         Container pane = sFrame.getContentPane();
         pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
+
+        String[] animationTypes = {"rotation", "gravity", "elastic"};
+
+        animationBox = new JComboBox(animationTypes);
+        animationBox.setSelectedIndex(2);
+        animationType = (String) animationBox.getSelectedItem();
+        animationBox.addActionListener(this);
 
         frameDelayInfo = new JLabel("frame delay", JLabel.CENTER);
         sliderMsec = new JSlider(0, 1000, 1000);
@@ -52,6 +54,8 @@ public class Animate implements Runnable, ActionListener, ChangeListener {
         sliderTimeStep = new JSlider(-6000, -1000, -3000);
         sliderTimeStep.addChangeListener(this);
 
+        pane.add(animationBox);
+        pane.add(Box.createRigidArea(new Dimension(500, 20)));
         pane.add(frameDelayInfo);
         pane.add(sliderMsec);
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
@@ -60,10 +64,10 @@ public class Animate implements Runnable, ActionListener, ChangeListener {
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
 
         JPanel goPanel = new JPanel();
-        goButton = new JButton("Go");
+        goButton = new JButton("Initialize");
         goButton.addActionListener(this);
         goPanel.add(goButton);
-        stopButton = new JButton("Stop");
+        stopButton = new JButton("Go/Suspend");
         stopButton.addActionListener(this);
         goPanel.add(stopButton);
         resetButton = new JButton("Reset");
@@ -87,31 +91,41 @@ public class Animate implements Runnable, ActionListener, ChangeListener {
     }
 
     public void actionPerformed(ActionEvent e) {
-        String action = e.getActionCommand();
-        if (e.getSource().equals(goButton)) {
-            suspended = false;
-        } else if (e.getSource().equals(stopButton)) {
+        
+        if (e.getSource().equals(animationBox)) {
+            animationType = (String) animationBox.getSelectedItem();
+        } else if (e.getSource().equals(goButton)) {
+            if (animationType.equals("rotation")) {
+                a = new Rotation();
+            }
+            if (animationType.equals("gravity")) {
+                a = new Gravity();
+            }
+            if (animationType.equals("elastic")) {
+                a = new Elasticity();
+            }
             suspended = true;
+            goButton.setEnabled(false);
+        } else if (e.getSource().equals(stopButton)) {
+            suspended = !suspended;
         } else if (e.getSource().equals(resetButton)) {
-            suspended=true;
-            MovingParticles.Drawing.resetAnimation(animation);
+            suspended = true;
+            a.reset();
         }
     }
 
     public void run() {
         boolean redraw = true;
+        double time=0;
+        int steps=0;
         while (true) {
             if (!suspended) {
-                if (animation.equals("rotate")) {
-                    redraw = MovingParticles.Drawing.rotate(Math.PI / 200);
-                }
-                if (animation.equals("gravitate")) {
-                    redraw = MovingParticles.Drawing.gravitate(timeStep);
-                }
 
-                if (animation.equals("elastic")) {
-                    redraw = MovingParticles.Drawing.elastic(timeStep);
-                }
+                redraw = a.step(timeStep);
+                
+                time=time+timeStep;
+                steps=steps+1;
+                sFrame.setTitle("time: "+time+" steps: "+steps);
 
                 if (redraw) {
                     try {
