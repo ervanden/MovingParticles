@@ -24,6 +24,7 @@ class Elasticity extends JFrame implements Animation, ActionListener, ChangeList
     double k = 1;  // elasticity constant  F = k * delta(x)
     JSlider sliderK;
     JLabel kInfo;
+    Shape centerOfGravity;
 
     public Elasticity() {
 
@@ -76,6 +77,11 @@ class Elasticity extends JFrame implements Animation, ActionListener, ChangeList
                 System.out.println("particle " + particles.get(i).particleName + " has " + particles.get(i).neighbours.size() + " neighbours");
             }
         }
+
+        centerOfGravity = MovingParticles.Drawing.addPointShape();
+        MovingParticles.Drawing.addPointToShape(centerOfGravity, 0, 0);
+        centerOfGravity.color = Color.BLUE;
+        centerOfGravity.label="CoG";
 
         Container pane = getContentPane();
         pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
@@ -164,7 +170,7 @@ class Elasticity extends JFrame implements Animation, ActionListener, ChangeList
                         p.xspeed = p.velocity * Math.cos((p.angle / 180) * Math.PI);
                         p.yspeed = p.velocity * Math.sin((p.angle / 180) * Math.PI);
  //                       System.out.println(p.particleName + ".xspeed=" + p.xspeed);
- //                       System.out.println(p.particleName + ".yspeed=" + p.yspeed);
+                        //                       System.out.println(p.particleName + ".yspeed=" + p.yspeed);
 
                     }
                 }
@@ -177,6 +183,8 @@ class Elasticity extends JFrame implements Animation, ActionListener, ChangeList
         }
 
     }
+    
+    public void trajectory(boolean on){}
 
     public void reset() {
 
@@ -214,8 +222,12 @@ class Elasticity extends JFrame implements Animation, ActionListener, ChangeList
                     p.yspeed
             );
         }
-        if (p1!=null) System.out.println("== p1 " + p1.particleName);
-        if (p2!=null) System.out.println("== p2 " + p2.particleName);
+        if (p1 != null) {
+            System.out.println("== p1 " + p1.particleName);
+        }
+        if (p2 != null) {
+            System.out.println("== p2 " + p2.particleName);
+        }
     }
 
     int steps = 0;
@@ -225,10 +237,13 @@ class Elasticity extends JFrame implements Animation, ActionListener, ChangeList
         // If no points are added to any trajectory, return false, true otherwise.
         // This to avoid redrawing the screen when nothing changed
         boolean redraw = false;
+        double xCenterOfGravity = 0;
+        double yCenterOfGravity = 0;
+        double totalMass=0;
 
         if (steps == 0) {
             System.out.println("\n\nSTEP 0");
-            dump_state(null,null);
+            dump_state(null, null);
             System.out.println();
         };
         steps++;
@@ -237,7 +252,12 @@ class Elasticity extends JFrame implements Animation, ActionListener, ChangeList
         for (Point p : particles) {
             p.xnew = p.x + p.xspeed * dt;
             p.ynew = p.y + p.yspeed * dt;
+            xCenterOfGravity = xCenterOfGravity + p.mass*p.xnew;
+            yCenterOfGravity = yCenterOfGravity + p.mass*p.ynew;
+            totalMass=totalMass+p.mass;
         }
+        centerOfGravity.points.get(0).x = xCenterOfGravity / totalMass;
+        centerOfGravity.points.get(0).y = yCenterOfGravity / totalMass;
 
         // new speed of all particles
         for (Point p1 : particles) {
@@ -289,7 +309,7 @@ class Elasticity extends JFrame implements Animation, ActionListener, ChangeList
                 p.yLastDrawn = p.y;
             }
         }
-        return redraw;
+        return true; // return redraw;
     }
 
 }

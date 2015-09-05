@@ -6,6 +6,9 @@ class Rotation implements Animation {
     public void reset() {
     }
 
+    public void trajectory(boolean on) {
+    }
+
     public boolean step(double dt) {
         double alfa;
 

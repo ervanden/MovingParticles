@@ -20,15 +20,17 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
     Animation a;
 
     public boolean suspended = true;
+    boolean trajectoryOn=false;
     double timeStep = 0.001;
     int sleepMilliseconds = 1000;
 
     JFrame sFrame;
     JLabel frameDelayInfo;
     JLabel timeStepInfo;
-    JButton goButton;
-    JButton stopButton;
+    JButton initializeButton;
+    JButton goSuspendButton;
     JButton resetButton;
+    JButton trajectoryButton;
     JSlider sliderMsec;
     JSlider sliderTimeStep;
     JComboBox animationBox;
@@ -64,15 +66,22 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
 
         JPanel goPanel = new JPanel();
-        goButton = new JButton("Initialize");
-        goButton.addActionListener(this);
-        goPanel.add(goButton);
-        stopButton = new JButton("Go/Suspend");
-        stopButton.addActionListener(this);
-        goPanel.add(stopButton);
+        initializeButton = new JButton("Initialize");
+        initializeButton.addActionListener(this);
+        goPanel.add(initializeButton);
+        goSuspendButton = new JButton("Go/Suspend");
+        goSuspendButton.addActionListener(this);
+        goPanel.add(goSuspendButton);
         resetButton = new JButton("Reset");
         resetButton.addActionListener(this);
         goPanel.add(resetButton);
+        trajectoryButton = new JButton("Trajectory on/off");
+        trajectoryButton.addActionListener(this);
+        goPanel.add(trajectoryButton);
+        
+                    resetButton.setEnabled(false);
+            trajectoryButton.setEnabled(false);
+            goSuspendButton.setEnabled(false);
 
         pane.add(goPanel);
         sFrame.pack();
@@ -94,7 +103,7 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
         
         if (e.getSource().equals(animationBox)) {
             animationType = (String) animationBox.getSelectedItem();
-        } else if (e.getSource().equals(goButton)) {
+        } else if (e.getSource().equals(initializeButton)) {
             if (animationType.equals("rotation")) {
                 a = new Rotation();
             }
@@ -105,12 +114,18 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
                 a = new Elasticity();
             }
             suspended = true;
-            goButton.setEnabled(false);
-        } else if (e.getSource().equals(stopButton)) {
+            initializeButton.setEnabled(false);
+            resetButton.setEnabled(true);
+            trajectoryButton.setEnabled(true);
+            goSuspendButton.setEnabled(true);
+        } else if (e.getSource().equals(goSuspendButton)) {
             suspended = !suspended;
         } else if (e.getSource().equals(resetButton)) {
             suspended = true;
             a.reset();
+        }else if (e.getSource().equals(trajectoryButton)) {
+            trajectoryOn=!trajectoryOn;
+            a.trajectory(trajectoryOn);
         }
     }
 
@@ -127,7 +142,7 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
                 
                 time=time+timeStep;
                 steps=steps+1;
-                sFrame.setTitle("time: "+time+" steps: "+steps);
+                sFrame.setTitle(String.format("time: %6.2f steps %d",time,steps));
 
                 if (redraw) {
                     try {

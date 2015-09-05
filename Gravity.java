@@ -13,129 +13,163 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-    class Gravity extends JFrame implements Animation, ActionListener {
+class Gravity extends JFrame implements Animation, ActionListener {
 
-        JPanel pointPane;
-        ArrayList<Point> particles = new ArrayList<>();
+    JPanel pointPane;
+    ArrayList<Point> particles = new ArrayList<>();
+    boolean trajectoryOn = true;
+    Shape centerOfGravity;
 
-        public Gravity() {
+    public Gravity() {
 
-            for (Shape s : MovingParticles.Drawing.getShapes()) {
-                if (s.isPoint) {
-                    for (Point p : s.points) {
-                        particles.add(p);
-                        p.particleName = s.label;
-                        p.x_init = p.x;
-                        p.y_init = p.y;
-                        p.trajectory = MovingParticles.Drawing.addShape();
-                        MovingParticles.Drawing.addPointToShape(p.trajectory, p.x, p.y);
-                    }
+        for (Shape s : MovingParticles.Drawing.getShapes()) {
+            if (s.isPoint) {
+                System.out.println("Shape " + s.label);
+                for (Point p : s.points) {
+                    System.out.println("  point " + s.label);
+                    particles.add(p);
+                    p.particleName = s.label;
+                    p.x_init = p.x;
+                    p.y_init = p.y;
+                    p.xLastDrawn = p.x;
+                    p.yLastDrawn = p.y;
+                    trajectory(trajectoryOn);
                 }
             }
-
-            Container pane = getContentPane();
-            pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
-            pane.add(Box.createRigidArea(new Dimension(500, 20)));
-
-            for (int i = 0; i < particles.size(); i++) {
-                Point p = particles.get(i);
-                pointPane = new JPanel();
-                pointPane.setLayout(new BoxLayout(pointPane, BoxLayout.LINE_AXIS));
-                pointPane.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
-                pointPane.add(Box.createRigidArea(new Dimension(40, 0)));
-                pointPane.add(new JLabel(p.particleName));
-                addTextField(i, "Mass", p.mass);
-                addTextField(i, "Velocity", p.velocity);
-                addTextField(i, "Angle", p.angle);
-                pane.add(pointPane);
-
-            }
-            pack();
-            setVisible(true);
-
         }
 
-        private void addTextField(int i, String label, double value) {
-            pointPane.add(Box.createRigidArea(new Dimension(20, 0)));
-            pointPane.add(new JLabel(label));
-            pointPane.add(Box.createRigidArea(new Dimension(20, 0)));
-            JTextField field = new JTextField(String.format("%.2f", value));
-            field.addActionListener(this);
-            field.setActionCommand(i + "|" + label);
-            pointPane.add(field);
+        centerOfGravity = MovingParticles.Drawing.addPointShape();
+        MovingParticles.Drawing.addPointToShape(centerOfGravity, 0, 0);
+        centerOfGravity.color = Color.BLUE;
+        centerOfGravity.label = "CoG";
+
+        Container pane = getContentPane();
+        pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
+        pane.add(Box.createRigidArea(new Dimension(500, 20)));
+
+        for (int i = 0; i < particles.size(); i++) {
+            Point p = particles.get(i);
+            pointPane = new JPanel();
+            pointPane.setLayout(new BoxLayout(pointPane, BoxLayout.LINE_AXIS));
+            pointPane.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
+            pointPane.add(Box.createRigidArea(new Dimension(40, 0)));
+            pointPane.add(new JLabel(p.particleName));
+            addTextField(i, "Mass", p.mass);
+            addTextField(i, "Velocity", p.velocity);
+            addTextField(i, "Angle", p.angle);
+            pane.add(pointPane);
+
         }
+        pack();
+        setVisible(true);
 
-        public void reset() {
+    }
 
-            for (Point p : particles) {
-                // reset initial position
-                p.x = p.x_init;
-                p.y = p.y_init;
-                // reset initial speed
-                p.xspeed = p.velocity * Math.cos((p.angle / 180) * Math.PI);
-                p.yspeed = p.velocity * Math.sin((p.angle / 180) * Math.PI);
-            }
-            // remove trajectories and start new ones
+    private void addTextField(int i, String label, double value) {
+        pointPane.add(Box.createRigidArea(new Dimension(20, 0)));
+        pointPane.add(new JLabel(label));
+        pointPane.add(Box.createRigidArea(new Dimension(20, 0)));
+        JTextField field = new JTextField(String.format("%.2f", value));
+        field.addActionListener(this);
+        field.setActionCommand(i + "|" + label);
+        pointPane.add(field);
+    }
 
-            for (Point p : particles) {
+    public void trajectory(boolean on) {
+        for (Point p : particles) {
+            if (p.trajectory != null) {
                 p.trajectory.clear();
+            }
+            // trajectory is now null or empty
+            if (on) {
+                if (p.trajectory == null) {
+                    p.trajectory = MovingParticles.Drawing.addShape();
+                }
                 MovingParticles.Drawing.addPointToShape(p.trajectory, p.x, p.y);
             }
-            MovingParticles.zPlane.blitPaint();
+        }
+        trajectoryOn = on;
+    }
 
+    public void reset() {
+
+        for (Point p : particles) {
+            // reset initial position
+            p.x = p.x_init;
+            p.y = p.y_init;
+            // reset initial speed
+            p.xspeed = p.velocity * Math.cos((p.angle / 180) * Math.PI);
+            p.yspeed = p.velocity * Math.sin((p.angle / 180) * Math.PI);
         }
 
-        public void actionPerformed(ActionEvent e) {
-            {
-                JTextField field = (JTextField) e.getSource();
-                String action = e.getActionCommand();
-                int particleNr = Integer.parseInt(action.split("[|]")[0]);
-                String attribute = action.split("[|]")[1];
-                boolean validValue = true;
-                double value = 0d;
-                try {
-                    value = Double.valueOf(field.getText());
-                } catch (Exception ex) {
-                    field.setBackground(Color.yellow);
-                    validValue = false;
+        if (trajectoryOn) {
+            trajectory(false); // wipe out trajectories
+            trajectory(true);  // create new ones
+        }
+
+        MovingParticles.zPlane.blitPaint();
+
+    }
+
+    public void actionPerformed(ActionEvent e) {
+        {
+            JTextField field = (JTextField) e.getSource();
+            String action = e.getActionCommand();
+            int particleNr = Integer.parseInt(action.split("[|]")[0]);
+            String attribute = action.split("[|]")[1];
+            boolean validValue = true;
+            double value = 0d;
+            try {
+                value = Double.valueOf(field.getText());
+            } catch (Exception ex) {
+                field.setBackground(Color.yellow);
+                validValue = false;
+            }
+            if (validValue) {
+                field.setBackground(Color.white);
+                System.out.println(particleNr + "." + attribute + "=" + value);
+                if (attribute.equals("Mass")) {
+                    particles.get(particleNr).mass = value;
+                    field.setBackground(Color.green);
                 }
-                if (validValue) {
-                    field.setBackground(Color.white);
-                    System.out.println(particleNr + "." + attribute + "=" + value);
-                    if (attribute.equals("Mass")) {
-                        particles.get(particleNr).mass = value;
-                        field.setBackground(Color.green);
-                    }
-                    if (attribute.equals("Velocity")) {
-                        particles.get(particleNr).velocity = value;
-                        field.setBackground(Color.green);
-                    }
-                    if (attribute.equals("Angle")) {
-                        particles.get(particleNr).angle = value;
-                        field.setBackground(Color.green);
-                    }
-                    if (attribute.equals("Velocity") || attribute.equals("Angle")) {
-                        for (Point p : particles) {
-                            p.xspeed = p.velocity * Math.cos((p.angle / 180) * Math.PI);
-                            p.yspeed = p.velocity * Math.sin((p.angle / 180) * Math.PI);
-                        }
+                if (attribute.equals("Velocity")) {
+                    particles.get(particleNr).velocity = value;
+                    field.setBackground(Color.green);
+                }
+                if (attribute.equals("Angle")) {
+                    particles.get(particleNr).angle = value;
+                    field.setBackground(Color.green);
+                }
+                if (attribute.equals("Velocity") || attribute.equals("Angle")) {
+                    for (Point p : particles) {
+                        p.xspeed = p.velocity * Math.cos((p.angle / 180) * Math.PI);
+                        p.yspeed = p.velocity * Math.sin((p.angle / 180) * Math.PI);
                     }
                 }
             }
-
         }
-        
-           public  boolean step(double dt) {
+
+    }
+
+    public boolean step(double dt) {
         // This method calculates the new position of all particles after time step dt.
         // If no points are added to any trajectory, return false, true otherwise.
         // This to avoid redrawing the screen when nothing changed
         boolean redraw = false;
- //       ArrayList<Point> particles = gravity.particles;
+        double xCenterOfGravity = 0;
+        double yCenterOfGravity = 0;
+        double totalMass = 0;
+
         // new position of all particles
         for (Point p : particles) {
             p.xnew = p.x + p.xspeed * dt;
             p.ynew = p.y + p.yspeed * dt;
+            xCenterOfGravity = xCenterOfGravity + p.mass * p.xnew;
+            yCenterOfGravity = yCenterOfGravity + p.mass * p.ynew;
+            totalMass = totalMass + p.mass;
         }
+        centerOfGravity.points.get(0).x = xCenterOfGravity / totalMass;
+        centerOfGravity.points.get(0).y = yCenterOfGravity / totalMass;
 
         // new speed of all particles
         for (int i1 = 0; i1 < particles.size(); i1++) {
@@ -173,21 +207,23 @@ import javax.swing.JTextField;
             p.x = p.xnew;
             p.y = p.ynew;
 
-            Point lastDrawnPoint = p.trajectory.lastPoint();
             double x1, x2, y1, y2;
             x1 = MovingParticles.transform.xUserToScreen(p.x);
             y1 = MovingParticles.transform.yUserToScreen(p.y);
-            x2 = MovingParticles.transform.xUserToScreen(lastDrawnPoint.x);
-            y2 = MovingParticles.transform.yUserToScreen(lastDrawnPoint.y);
+            x2 = MovingParticles.transform.xUserToScreen(p.xLastDrawn);
+            y2 = MovingParticles.transform.yUserToScreen(p.yLastDrawn);
             double sqScreenDistance = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
             if (sqScreenDistance > 100) {
-                p.trajectory.addPoint(p.x, p.y);
+                if (trajectoryOn) {
+                    p.trajectory.addPoint(p.x, p.y);
+                }
                 redraw = true;
+                p.xLastDrawn = p.x;
+                p.yLastDrawn = p.y;
             }
 
         }
-        return redraw;
-    }
-           
+        return true;
     }
 
+}
