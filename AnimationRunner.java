@@ -115,6 +115,8 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
     }
 
     public void run() {
+        System.out.println("run() suspended="+suspended);
+        
         boolean redraw = true;
         double time=0;
         int steps=0;

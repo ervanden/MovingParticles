@@ -25,7 +25,6 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
     AnimationRunner animation = null;
     Thread animateThread = null;
-    public static boolean suspendAnimation ;
 
     static int x, xprev;
     static int y, yprev;

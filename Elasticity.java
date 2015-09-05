@@ -63,7 +63,7 @@ class Elasticity extends JFrame implements Animation, ActionListener, ChangeList
             extremities.add(pe);
             pe.particleName = s.label + "-end";
 
-                // populate 'neighbours' of all particles
+            // populate 'neighbours' of all particles
             // assuming there is only 1 shape, all the particles belong to this shape
             for (int i = 0; i < particles.size(); i++) {
                 if (i > 0) {
@@ -125,28 +125,6 @@ class Elasticity extends JFrame implements Animation, ActionListener, ChangeList
         pointPane.add(field);
     }
 
-    public void reset() {
-
-        for (Point p : particles) {
-            // reset initial position
-            p.x = p.x_init;
-            p.y = p.y_init;
-            // reset initial speed
-            p.xspeed = p.velocity * Math.cos((p.angle / 180) * Math.PI);
-            p.yspeed = p.velocity * Math.sin((p.angle / 180) * Math.PI);
-        }
-        // remove trajectories and start new ones
-
-        for (Point p : particles) {
-            if (p.trajectory != null) {
-                p.trajectory.clear();
-                MovingParticles.Drawing.addPointToShape(p.trajectory, p.x, p.y);
-            }
-        }
-        MovingParticles.zPlane.blitPaint();
-
-    }
-
     public void actionPerformed(ActionEvent e) {
         {
             JTextField field = (JTextField) e.getSource();
@@ -185,32 +163,77 @@ class Elasticity extends JFrame implements Animation, ActionListener, ChangeList
                     for (Point p : particles) {
                         p.xspeed = p.velocity * Math.cos((p.angle / 180) * Math.PI);
                         p.yspeed = p.velocity * Math.sin((p.angle / 180) * Math.PI);
-                        System.out.println(p.particleName + ".xspeed=" + p.xspeed);
-                        System.out.println(p.particleName + ".yspeed=" + p.yspeed);
+ //                       System.out.println(p.particleName + ".xspeed=" + p.xspeed);
+ //                       System.out.println(p.particleName + ".yspeed=" + p.yspeed);
 
                     }
                 }
 
-                System.out.println("==================");
-                for (Point p : particles) {
-                    System.out.println(p.particleName + " mass " + p.mass + " xspeed " + p.xspeed + " yspeed " + p.yspeed);
-                }
+//                System.out.println("==================");
+//                for (Point p : particles) {
+//                    System.out.println(p.particleName + " mass " + p.mass + " xspeed " + p.xspeed + " yspeed " + p.yspeed);
+//                }
             }
         }
 
     }
+
+    public void reset() {
+
+        for (Point p : particles) {
+            // reset initial position
+            p.x = p.x_init;
+            p.y = p.y_init;
+            // reset initial speed
+            p.xspeed = p.velocity * Math.cos((p.angle / 180) * Math.PI);
+            p.yspeed = p.velocity * Math.sin((p.angle / 180) * Math.PI);
+        }
+        // remove trajectories and start new ones
+
+        for (Point p : particles) {
+            if (p.trajectory != null) {
+                p.trajectory.clear();
+                MovingParticles.Drawing.addPointToShape(p.trajectory, p.x, p.y);
+            }
+        }
+        MovingParticles.zPlane.blitPaint();
+
+    }
+
+    private void dump_state(Point p1, Point p2) {
+        System.out.println("== state of all particles");
+        for (Point p : particles) {
+            System.out.printf("%s mass=%5f x=%5f x_init=%5f y=%5f y_init=%5f vx=%5f vy=%5f\n",
+                    p.particleName,
+                    p.mass,
+                    p.x,
+                    p.x_init,
+                    p.y,
+                    p.y_init,
+                    p.xspeed,
+                    p.yspeed
+            );
+        }
+        if (p1!=null) System.out.println("== p1 " + p1.particleName);
+        if (p2!=null) System.out.println("== p2 " + p2.particleName);
+    }
+
+    int steps = 0;
 
     public boolean step(double dt) {
         // This method calculates the new position of all particles after time step dt.
         // If no points are added to any trajectory, return false, true otherwise.
         // This to avoid redrawing the screen when nothing changed
         boolean redraw = false;
-//        ArrayList<Point> particles = elasticity.particles;
-        //       System.out.println("elastic moving particles " + particles.size());
+
+        if (steps == 0) {
+            System.out.println("\n\nSTEP 0");
+            dump_state(null,null);
+            System.out.println();
+        };
+        steps++;
 
         // new position of all particles
-            System.out.println();
-            
         for (Point p : particles) {
             p.xnew = p.x + p.xspeed * dt;
             p.ynew = p.y + p.yspeed * dt;
@@ -228,8 +251,13 @@ class Elasticity extends JFrame implements Animation, ActionListener, ChangeList
                         + (p1.y_init - p2.y_init) * (p1.y_init - p2.y_init);
                 double r0 = Math.sqrt(r0square);
 
-                double force = k * (r - r0);
- //          System.out.printf("%s %s %5f %5f %5f\n",p1.particleName,p2.particleName,r,r0,force);
+                Double force = k * (r - r0);
+
+                if (force.equals(Double.NaN)) {
+                    System.out.printf("STEP=%d p1=%s p2=%s r=%5f r0=%5f force=%5f\n", steps, p1.particleName, p2.particleName, r, r0, force);
+                    dump_state(p1, p2);
+
+                };
 
                 double ux = (p2.x - p1.x) / r;  //unit vector from p1 to p2
                 double uy = (p2.y - p1.y) / r;
