@@ -2,7 +2,7 @@
 import java.util.ArrayList;
 
 
-class Point {
+public class Point {
 
 public double x;
 public double y;

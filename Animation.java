@@ -1,6 +1,11 @@
 
+import java.util.ArrayList;
+import javax.swing.JPanel;
+
 public interface Animation {
-   public void reset();
-   public  boolean step(double dt);
-   public void trajectory(boolean on);
+
+    public ArrayList<Point> getParticles();
+    public JPanel getPane();
+    public boolean step(double dt);
+
 }

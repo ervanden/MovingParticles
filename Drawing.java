@@ -363,38 +363,10 @@ class Drawing {
 
     
     
-    Gravity gravity = null;
-    Elasticity elasticity = null;
-    Rotation rotation = null;
+ //   Gravity gravity = null;
+ //   Elasticity elasticity = null;
+ //   Rotation rotation = null;
 
     
-
-    public synchronized void resetAnimation(String animation) {
-
-        if (animation.equals("rotation")) {
-            rotation.reset();
-        }
-        if (animation.equals("gravitate")) {
-            gravity.reset();
-        }
-        if (animation.equals("elastic")) {
-            elasticity.reset();
-        }
-    }
-    
-    public boolean stepAnimation(String animation, double timeStep){
-    
-                    if (animation.equals("rotation")) {
-                    return MovingParticles.Drawing.rotation.step(timeStep);
-                }
-                if (animation.equals("gravitate")) {
-                    return MovingParticles.Drawing.gravity.step(timeStep);
-                }
-
-                if (animation.equals("elastic")) {
-                    return MovingParticles.Drawing.elasticity.step(timeStep);
-                }
-                return false;  // can not occur
-    }
 
 }

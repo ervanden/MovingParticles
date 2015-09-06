@@ -1,6 +1,5 @@
 
 import java.awt.Color;
-import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -8,16 +7,16 @@ import java.util.ArrayList;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-class Gravity extends JFrame implements Animation, ActionListener {
+class Gravity implements Animation, ActionListener {
 
     JPanel pointPane;
+    JPanel pane;
+    
     ArrayList<Point> particles = new ArrayList<>();
-    boolean trajectoryOn = true;
     Shape centerOfGravity;
 
     public Gravity() {
@@ -33,7 +32,7 @@ class Gravity extends JFrame implements Animation, ActionListener {
                     p.y_init = p.y;
                     p.xLastDrawn = p.x;
                     p.yLastDrawn = p.y;
-                    trajectory(trajectoryOn);
+                    p.trajectory=null;
                 }
             }
         }
@@ -43,10 +42,10 @@ class Gravity extends JFrame implements Animation, ActionListener {
         centerOfGravity.color = Color.BLUE;
         centerOfGravity.label = "CoG";
 
-        Container pane = getContentPane();
-        pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
-        pane.add(Box.createRigidArea(new Dimension(500, 20)));
 
+        pane = new JPanel();
+        pane.add(Box.createRigidArea(new Dimension(500, 20)));
+        pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
         for (int i = 0; i < particles.size(); i++) {
             Point p = particles.get(i);
             pointPane = new JPanel();
@@ -60,8 +59,6 @@ class Gravity extends JFrame implements Animation, ActionListener {
             pane.add(pointPane);
 
         }
-        pack();
-        setVisible(true);
 
     }
 
@@ -75,41 +72,14 @@ class Gravity extends JFrame implements Animation, ActionListener {
         pointPane.add(field);
     }
 
-    public void trajectory(boolean on) {
-        for (Point p : particles) {
-            if (p.trajectory != null) {
-                p.trajectory.clear();
-            }
-            // trajectory is now null or empty
-            if (on) {
-                if (p.trajectory == null) {
-                    p.trajectory = MovingParticles.Drawing.addShape();
-                }
-                MovingParticles.Drawing.addPointToShape(p.trajectory, p.x, p.y);
-            }
-        }
-        trajectoryOn = on;
+        public JPanel getPane(){
+        return pane;
+    }
+        
+    public ArrayList<Point> getParticles() {
+        return new ArrayList<Point>(particles);
     }
 
-    public void reset() {
-
-        for (Point p : particles) {
-            // reset initial position
-            p.x = p.x_init;
-            p.y = p.y_init;
-            // reset initial speed
-            p.xspeed = p.velocity * Math.cos((p.angle / 180) * Math.PI);
-            p.yspeed = p.velocity * Math.sin((p.angle / 180) * Math.PI);
-        }
-
-        if (trajectoryOn) {
-            trajectory(false); // wipe out trajectories
-            trajectory(true);  // create new ones
-        }
-
-        MovingParticles.zPlane.blitPaint();
-
-    }
 
     public void actionPerformed(ActionEvent e) {
         {
@@ -214,7 +184,7 @@ class Gravity extends JFrame implements Animation, ActionListener {
             y2 = MovingParticles.transform.yUserToScreen(p.yLastDrawn);
             double sqScreenDistance = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
             if (sqScreenDistance > 100) {
-                if (trajectoryOn) {
+                if (p.trajectory!=null) {
                     p.trajectory.addPoint(p.x, p.y);
                 }
                 redraw = true;

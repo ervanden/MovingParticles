@@ -1,6 +1,5 @@
 
 import java.awt.Color;
-import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -8,7 +7,6 @@ import java.util.ArrayList;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
@@ -16,9 +14,11 @@ import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-class Elasticity extends JFrame implements Animation, ActionListener, ChangeListener {
+class Elasticity  implements Animation, ActionListener, ChangeListener {
 
     JPanel pointPane;
+    JPanel pane;
+    
     ArrayList<Point> particles = new ArrayList<>();
     ArrayList<Point> extremities = new ArrayList<>();
     double k = 1;  // elasticity constant  F = k * delta(x)
@@ -46,11 +46,6 @@ class Elasticity extends JFrame implements Animation, ActionListener, ChangeList
                 p.xLastDrawn = p.x;
                 p.yLastDrawn = p.y;
                 p.trajectory = null;
-                /*
-                 p.trajectory = MovingParticles.Drawing.addShape();
-                 MovingParticles.Drawing.addPointToShape(p.trajectory, p.x, p.y);
-                 p.trajectory.color=Color.ORANGE;
-                 */
             }
 
             // populate extremities
@@ -81,9 +76,10 @@ class Elasticity extends JFrame implements Animation, ActionListener, ChangeList
         centerOfGravity = MovingParticles.Drawing.addPointShape();
         MovingParticles.Drawing.addPointToShape(centerOfGravity, 0, 0);
         centerOfGravity.color = Color.BLUE;
-        centerOfGravity.label="CoG";
+        centerOfGravity.label = "CoG";
 
-        Container pane = getContentPane();
+        pane = new JPanel();
+        pane.add(Box.createRigidArea(new Dimension(500, 20)));
         pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
 
         kInfo = new JLabel("elasticity constant", JLabel.CENTER);
@@ -108,8 +104,6 @@ class Elasticity extends JFrame implements Animation, ActionListener, ChangeList
             pane.add(pointPane);
 
         }
-        pack();
-        setVisible(true);
 
     }
 
@@ -169,7 +163,7 @@ class Elasticity extends JFrame implements Animation, ActionListener, ChangeList
                     for (Point p : particles) {
                         p.xspeed = p.velocity * Math.cos((p.angle / 180) * Math.PI);
                         p.yspeed = p.velocity * Math.sin((p.angle / 180) * Math.PI);
- //                       System.out.println(p.particleName + ".xspeed=" + p.xspeed);
+                        //                       System.out.println(p.particleName + ".xspeed=" + p.xspeed);
                         //                       System.out.println(p.particleName + ".yspeed=" + p.yspeed);
 
                     }
@@ -184,30 +178,15 @@ class Elasticity extends JFrame implements Animation, ActionListener, ChangeList
 
     }
     
-    public void trajectory(boolean on){}
-
-    public void reset() {
-
-        for (Point p : particles) {
-            // reset initial position
-            p.x = p.x_init;
-            p.y = p.y_init;
-            // reset initial speed
-            p.xspeed = p.velocity * Math.cos((p.angle / 180) * Math.PI);
-            p.yspeed = p.velocity * Math.sin((p.angle / 180) * Math.PI);
-        }
-        // remove trajectories and start new ones
-
-        for (Point p : particles) {
-            if (p.trajectory != null) {
-                p.trajectory.clear();
-                MovingParticles.Drawing.addPointToShape(p.trajectory, p.x, p.y);
-            }
-        }
-        MovingParticles.zPlane.blitPaint();
-
+    public JPanel getPane(){
+        return pane;
     }
 
+    public ArrayList<Point> getParticles() {
+        return new ArrayList<Point>(particles);
+    }
+
+  
     private void dump_state(Point p1, Point p2) {
         System.out.println("== state of all particles");
         for (Point p : particles) {
@@ -239,7 +218,7 @@ class Elasticity extends JFrame implements Animation, ActionListener, ChangeList
         boolean redraw = false;
         double xCenterOfGravity = 0;
         double yCenterOfGravity = 0;
-        double totalMass=0;
+        double totalMass = 0;
 
         if (steps == 0) {
             System.out.println("\n\nSTEP 0");
@@ -252,9 +231,9 @@ class Elasticity extends JFrame implements Animation, ActionListener, ChangeList
         for (Point p : particles) {
             p.xnew = p.x + p.xspeed * dt;
             p.ynew = p.y + p.yspeed * dt;
-            xCenterOfGravity = xCenterOfGravity + p.mass*p.xnew;
-            yCenterOfGravity = yCenterOfGravity + p.mass*p.ynew;
-            totalMass=totalMass+p.mass;
+            xCenterOfGravity = xCenterOfGravity + p.mass * p.xnew;
+            yCenterOfGravity = yCenterOfGravity + p.mass * p.ynew;
+            totalMass = totalMass + p.mass;
         }
         centerOfGravity.points.get(0).x = xCenterOfGravity / totalMass;
         centerOfGravity.points.get(0).y = yCenterOfGravity / totalMass;

@@ -20,7 +20,7 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
     Animation a;
 
     public boolean suspended = true;
-    boolean trajectoryOn=false;
+    boolean trajectoryOn = false;
     double timeStep = 0.001;
     int sleepMilliseconds = 1000;
 
@@ -78,10 +78,10 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
         trajectoryButton = new JButton("Trajectory on/off");
         trajectoryButton.addActionListener(this);
         goPanel.add(trajectoryButton);
-        
-                    resetButton.setEnabled(false);
-            trajectoryButton.setEnabled(false);
-            goSuspendButton.setEnabled(false);
+
+        resetButton.setEnabled(false);
+        trajectoryButton.setEnabled(false);
+        goSuspendButton.setEnabled(false);
 
         pane.add(goPanel);
         sFrame.pack();
@@ -99,8 +99,46 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
         }
     }
 
+    private void wipeTrajectory(Point p) {                 // trajectory is set to null 
+        if (p.trajectory != null) {
+            p.trajectory.clear();
+            p.trajectory = null;
+        }
+    }
+
+    private void createTrajectory(Point p) {
+        if (p.trajectory == null) {
+            p.trajectory = MovingParticles.Drawing.addShape();
+        } else {
+            System.out.println("createTrajectory() : trajectory already exists");
+        }
+        MovingParticles.Drawing.addPointToShape(p.trajectory, p.x, p.y);
+    }
+
+    public void reset() {
+
+        for (Point p : a.getParticles()) {
+
+            wipeTrajectory(p);
+
+            // reset initial position
+            p.x = p.x_init;
+            p.y = p.y_init;
+            // reset initial speed
+            p.xspeed = p.velocity * Math.cos((p.angle / 180) * Math.PI);
+            p.yspeed = p.velocity * Math.sin((p.angle / 180) * Math.PI);
+
+            if (trajectoryOn) {
+                createTrajectory(p);
+            }
+        }
+
+        MovingParticles.zPlane.blitPaint();
+
+    }
+
     public void actionPerformed(ActionEvent e) {
-        
+
         if (e.getSource().equals(animationBox)) {
             animationType = (String) animationBox.getSelectedItem();
         } else if (e.getSource().equals(initializeButton)) {
@@ -118,31 +156,48 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
             resetButton.setEnabled(true);
             trajectoryButton.setEnabled(true);
             goSuspendButton.setEnabled(true);
+
+            if (a.getPane() != null) {
+                sFrame.getContentPane().add(a.getPane());
+                sFrame.pack();
+                sFrame.setVisible(true);
+            }
+
         } else if (e.getSource().equals(goSuspendButton)) {
+            
             suspended = !suspended;
+            
         } else if (e.getSource().equals(resetButton)) {
+            
             suspended = true;
-            a.reset();
-        }else if (e.getSource().equals(trajectoryButton)) {
-            trajectoryOn=!trajectoryOn;
-            a.trajectory(trajectoryOn);
+            reset();
+            
+        } else if (e.getSource().equals(trajectoryButton)) {
+            
+            trajectoryOn = !trajectoryOn;
+            for (Point p : a.getParticles()) {
+                wipeTrajectory(p);
+                if (trajectoryOn) {
+                    createTrajectory(p);
+                }
+            }
         }
     }
 
     public void run() {
-        System.out.println("run() suspended="+suspended);
-        
+        System.out.println("run() suspended=" + suspended);
+
         boolean redraw = true;
-        double time=0;
-        int steps=0;
+        double time = 0;
+        int steps = 0;
         while (true) {
             if (!suspended) {
 
                 redraw = a.step(timeStep);
-                
-                time=time+timeStep;
-                steps=steps+1;
-                sFrame.setTitle(String.format("time: %6.2f steps %d",time,steps));
+
+                time = time + timeStep;
+                steps = steps + 1;
+                sFrame.setTitle(String.format("time: %6.2f steps %d", time, steps));
 
                 if (redraw) {
                     try {

@@ -1,9 +1,17 @@
 
+import java.util.ArrayList;
+import javax.swing.JPanel;
+
 class Rotation implements Animation {
 
     double omega = 2 * Math.PI;    // 1 revolution/sec
 
-    public void reset() {
+    public JPanel getPane(){
+        return null;
+    }
+        
+    public ArrayList<Point> getParticles() {
+        return null;
     }
 
     public void trajectory(boolean on) {
