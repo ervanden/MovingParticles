@@ -120,6 +120,7 @@ class Gravity implements Animation, ActionListener {
         }
 
     }
+   
 
     public boolean step(double dt) {
         // This method calculates the new position of all particles after time step dt.
@@ -194,6 +195,12 @@ class Gravity implements Animation, ActionListener {
 
         }
         return true;
+    }
+    
+    public void cleanup(){
+        if (centerOfGravity!=null){
+        MovingParticles.Drawing.deleteShape(centerOfGravity);
+        }
     }
 
 }

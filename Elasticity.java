@@ -168,11 +168,6 @@ class Elasticity  implements Animation, ActionListener, ChangeListener {
 
                     }
                 }
-
-//                System.out.println("==================");
-//                for (Point p : particles) {
-//                    System.out.println(p.particleName + " mass " + p.mass + " xspeed " + p.xspeed + " yspeed " + p.yspeed);
-//                }
             }
         }
 
@@ -227,6 +222,16 @@ class Elasticity  implements Animation, ActionListener, ChangeListener {
         };
         steps++;
 
+         for (Point p : particles) {
+             Double px=p.x;
+             Double py=p.y;
+                        if ((px.equals(Double.NaN)) || 
+                            (py.equals(Double.NaN))) {
+                    System.out.printf("\nBEGIN OF STEP=%d \n\n",steps);
+                    dump_state(null,null);
+                }
+         }
+                
         // new position of all particles
         for (Point p : particles) {
             p.xnew = p.x + p.xspeed * dt;
@@ -255,7 +260,6 @@ class Elasticity  implements Animation, ActionListener, ChangeListener {
                 if (force.equals(Double.NaN)) {
                     System.out.printf("STEP=%d p1=%s p2=%s r=%5f r0=%5f force=%5f\n", steps, p1.particleName, p2.particleName, r, r0, force);
                     dump_state(p1, p2);
-
                 };
 
                 double ux = (p2.x - p1.x) / r;  //unit vector from p1 to p2
@@ -288,7 +292,23 @@ class Elasticity  implements Animation, ActionListener, ChangeListener {
                 p.yLastDrawn = p.y;
             }
         }
+        
+                 for (Point p : particles) {
+             Double px=p.x;
+             Double py=p.y;
+                        if ((px.equals(Double.NaN)) || 
+                            (py.equals(Double.NaN))) {
+                    System.out.printf("\nEND OF STEP=%d \n\n",steps);
+                    dump_state(null,null);
+                }
+         }
         return true; // return redraw;
+    }
+    
+        public void cleanup(){
+        if (centerOfGravity!=null){
+        MovingParticles.Drawing.deleteShape(centerOfGravity);
+        }
     }
 
 }

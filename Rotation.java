@@ -14,7 +14,7 @@ class Rotation implements Animation {
         return null;
     }
 
-    public void trajectory(boolean on) {
+    public void cleanup() {
     }
 
     public boolean step(double dt) {

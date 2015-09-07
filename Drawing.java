@@ -5,7 +5,6 @@ import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-
 class Drawing {
 
     private java.util.List<Shape> shapes;
@@ -181,6 +180,22 @@ class Drawing {
         }; // for
         return psmin;
     }
+    
+        public synchronized Point closestPoint(double x, double y) {
+        Point psmin = null;
+        double dmin = Double.POSITIVE_INFINITY;
+        for (Shape s : shapes) {
+            for (Point ps : s.points){
+                double x1 = ps.x;
+                double y1 = ps.y;
+                if ((x - x1) * (x - x1) + (y - y1) * (y - y1) < dmin) {
+                    dmin = (x - x1) * (x - x1) + (y - y1) * (y - y1);
+                    psmin = ps;
+                }
+            }
+        } 
+        return psmin;
+    }
 
     public synchronized Shape closestShape(double x, double y) {
         Shape smin = null;
@@ -223,7 +238,12 @@ class Drawing {
         for (Point xy : s.points) {
             xy.replaceXY(xy.getZX() + dx, xy.getZY() + dy);
         };
-    }  // moveRelativeShape
+    }
+
+    public synchronized void movePointRelative(Point p, double dx, double dy) {
+        p.x=p.x + dx;
+        p.y=p.y + dy;
+    }
 
     public synchronized void moveShapesRelative(String l, double dx, double dy) {
 
@@ -360,13 +380,5 @@ class Drawing {
             }
         }
     }
-
-    
-    
- //   Gravity gravity = null;
- //   Elasticity elasticity = null;
- //   Rotation rotation = null;
-
-    
 
 }

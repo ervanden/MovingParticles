@@ -62,6 +62,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
     double xRadius = 0, yRadius = 0; // clicked point to mark radius
 
     PointShape cps;
+    Point cp;
 
     public static void repaintZplane() {
         zPlane.blitPaint();
@@ -95,7 +96,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
         if (plane.zPlane) {
             zFrame.setTitle(String.format("x=%.2f y=%.2f", transform.xScreenToUser(x),
-                            transform.yScreenToUser(y)));
+                    transform.yScreenToUser(y)));
         };
 
     }
@@ -138,10 +139,10 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                 }
 
                 for (double angle = 0; angle < 2 * Math.PI; angle = angle + gridAngle) {
-                    Drawing.addPointToShape(currentShape,xCircle + radius * Math.sin(angle), yCircle + radius * Math.cos(angle));
+                    Drawing.addPointToShape(currentShape, xCircle + radius * Math.sin(angle), yCircle + radius * Math.cos(angle));
                 };
 
-                Drawing.addPointToShape(currentShape,xCircle, yCircle + radius);
+                Drawing.addPointToShape(currentShape, xCircle, yCircle + radius);
 
                 repaintBothWindows();
 
@@ -154,7 +155,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
             if ((firstPoint) || (!firstPoint && ((x - xprev) * (x - xprev) + (y - yprev) * (y - yprev) > minPixelDistSquare))) {
                 double xUser = transform.xScreenToUser(x);
                 double yUser = transform.yScreenToUser(y);
-                Drawing.addPointToShape(currentShape,xUser, yUser);
+                Drawing.addPointToShape(currentShape, xUser, yUser);
 
                 repaintBothWindows();
                 xprev = x;
@@ -192,16 +193,14 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
             if (firstPoint) {
                 double xuser = transform.xScreenToUser(x);
                 double yuser = transform.yScreenToUser(y);
-                cps = Drawing.closestPointShape(xuser, yuser);
-                System.out.println("closest point = " + cps.getName() + " x=" + cps.getX() + " y=" + cps.getY());
-                xuserprev = cps.getX();
-                yuserprev = cps.getY();
+                cp = Drawing.closestPoint(xuser, yuser);
+                xuserprev = cp.x;
+                yuserprev = cp.y;
                 if (Drawing.snapToGrid) {
-                    System.out.println(" snap to grid active");
                     // move point to closest grid point
                     double xusernew = Math.round(xuserprev);
                     double yusernew = Math.round(yuserprev);
-                    Drawing.moveShapeRelative(cps, xusernew - xuserprev, yusernew - yuserprev);
+                    Drawing.movePointRelative(cp, xusernew - xuserprev, yusernew - yuserprev);
                     xuserprev = xusernew;
                     yuserprev = yusernew;
                 };
@@ -213,21 +212,17 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                     xusernew = Math.round(xusernew);
                     yusernew = Math.round(yusernew);
                 };
-//        System.out.println("xuserprev = " + xuserprev + " yuserprev= " + yuserprev);
-//        System.out.println("xusernew = " + xusernew + " yusernew= " + yusernew);
-
                 // if coordinates are snapped to grid, they increment with 0,1,2,...
                 // Do not move the drawing if the mouse did not move enough to go to another grid point
                 if (!Drawing.snapToGrid
                         || (Drawing.snapToGrid
                         && (Math.abs(xusernew - xuserprev) > 0.5 || Math.abs(yusernew - yuserprev) > 0.5))) {
 
-                    Drawing.moveShapeRelative(cps, xusernew - xuserprev, yusernew - yuserprev);
+                    Drawing.movePointRelative(cp, xusernew - xuserprev, yusernew - yuserprev);
 
                     repaintBothWindows();
                 }
 
-                // if cps is a parameter point then re-evaluate the complex function for the entire drawing
                 xuserprev = xusernew;
                 yuserprev = yusernew;
 
@@ -341,7 +336,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         if (actionAddShape) {
             actionAddShape = false;
             // add terminal point
-            Drawing.addPointToShape(currentShape,transform.xScreenToUser(x),
+            Drawing.addPointToShape(currentShape, transform.xScreenToUser(x),
                     transform.yScreenToUser(y));
             repaintBothWindows();
         }
@@ -506,7 +501,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                 for (int i = 0; i <= nsegments; i++) {
                     System.out.println(" segment point x= " + (xbegin + ((double) i / (double) nsegments) * (xend - xbegin))
                             + " y= " + (ybegin + ((double) i / (double) nsegments) * (yend - ybegin)));
-                    Drawing.addPointToShape(currentShape,xbegin + ((double) i / (double) nsegments) * (xend - xbegin),
+                    Drawing.addPointToShape(currentShape, xbegin + ((double) i / (double) nsegments) * (xend - xbegin),
                             ybegin + ((double) i / (double) nsegments) * (yend - ybegin));
                 };
                 xprev = x;
@@ -531,7 +526,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                 xuser = Math.round(xuser);
                 yuser = Math.round(yuser);
             };
-            Drawing.addPointToShape(cps,xuser, yuser);
+            Drawing.addPointToShape(cps, xuser, yuser);
 
             repaintBothWindows();
             firstPoint = true;
@@ -596,14 +591,15 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                     animation = new AnimationRunner();
                     animateThread = new Thread(animation);
                     animateThread.start();
-                    // thread starts suspended so that settings can be made
-                } else {
-                    animation.suspended=false;
+                    // thread starts, but suspended
                 }
-            };
+            }
             if (e.getStateChange() == ItemEvent.DESELECTED) {
-                animation.suspended=true;
-            };
+                if (animateThread != null) {
+                    animation.exitRequested = true;
+                    animateThread = null;
+                }
+            }
         };
 
     }
@@ -780,14 +776,14 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                 for (double x = xmin; x <= xmax; x = x + xgrid) {
                     Shape s = Drawing.addShape();
                     for (double y = ymin; y <= ymax; y = y + ygrid) {
-                        Drawing.addPointToShape(s,x, y);
+                        Drawing.addPointToShape(s, x, y);
                     };
                 };
 
                 for (double y = ymin; y <= ymax; y = y + ygrid) {
                     Shape s = Drawing.addShape();
                     for (double x = xmin; x <= xmax; x = x + xgrid) {
-                        Drawing.addPointToShape(s,x, y);
+                        Drawing.addPointToShape(s, x, y);
                     };
                 };
 
@@ -811,14 +807,14 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
             for (double angle = 0; angle <= 2 * Math.PI; angle = angle + gridAngle) {
                 Shape s = Drawing.addShape();
                 for (double r = gridRadius; r <= radius; r = r + gridRadius) {
-                    Drawing.addPointToShape(s,xcenter + r * Math.sin(angle), ycenter + r * Math.cos(angle));
+                    Drawing.addPointToShape(s, xcenter + r * Math.sin(angle), ycenter + r * Math.cos(angle));
                 };
             };
 
             for (double r = gridRadius; r <= radius; r = r + gridRadius) {
                 Shape s = Drawing.addShape();
                 for (double angle = 0; angle <= 2 * Math.PI; angle = angle + gridAngle) {
-                    Drawing.addPointToShape(s,xcenter + r * Math.sin(angle), ycenter + r * Math.cos(angle));
+                    Drawing.addPointToShape(s, xcenter + r * Math.sin(angle), ycenter + r * Math.cos(angle));
                 };
             };
 
@@ -886,7 +882,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
         animateButton.setSelected(false);
         animateButton.addItemListener(this);
-                
+
         JPanel editorPane = new JPanel();
         editorPane.setLayout(new BoxLayout(editorPane, BoxLayout.LINE_AXIS));
         editorPane.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
@@ -902,7 +898,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         editorPane.add(animateButton);
 
         pane.add(editorPane);
-        
+
         dFrame.pack();
         dFrame.setVisible(true);
 

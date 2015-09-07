@@ -20,6 +20,7 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
     Animation a;
 
     public boolean suspended = true;
+    public boolean exitRequested = false;
     boolean trajectoryOn = false;
     double timeStep = 0.001;
     int sleepMilliseconds = 1000;
@@ -164,16 +165,16 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
             }
 
         } else if (e.getSource().equals(goSuspendButton)) {
-            
+
             suspended = !suspended;
-            
+
         } else if (e.getSource().equals(resetButton)) {
-            
+
             suspended = true;
             reset();
-            
+
         } else if (e.getSource().equals(trajectoryButton)) {
-            
+
             trajectoryOn = !trajectoryOn;
             for (Point p : a.getParticles()) {
                 wipeTrajectory(p);
@@ -190,8 +191,8 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
         boolean redraw = true;
         double time = 0;
         int steps = 0;
-        while (true) {
-            if (!suspended) {
+        while (!exitRequested) {
+            if (!suspended && !exitRequested) {
 
                 redraw = a.step(timeStep);
 
@@ -207,7 +208,7 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
                     MovingParticles.zPlane.blitPaint();
                 }
             }
-            while (suspended) {
+            while (suspended && !exitRequested) {
                 try {
                     Thread.sleep(25);
                 } catch (InterruptedException ie) {
@@ -215,5 +216,13 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
             }
 
         }
+
+        System.out.println("exit request for  animation runner...");
+        for (Point p : a.getParticles()) {
+            wipeTrajectory(p);
+        }
+        sFrame.dispose();
+        a.cleanup();
+        System.out.println("exited.");
     }
 }

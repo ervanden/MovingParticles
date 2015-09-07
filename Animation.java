@@ -7,5 +7,6 @@ public interface Animation {
     public ArrayList<Point> getParticles();
     public JPanel getPane();
     public boolean step(double dt);
+    public void cleanup();
 
 }
