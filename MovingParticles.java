@@ -442,7 +442,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
             firstPoint = false;  // from now on, exiting the window = terminate zoomIn
 
-        }; // Move View
+        };
 
         if (actionSelect) {
 

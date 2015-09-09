@@ -15,9 +15,9 @@ class Gravity implements Animation, ActionListener {
 
     JPanel pointPane;
     JPanel pane;
-    
+
     ArrayList<Point> particles = new ArrayList<>();
-    Shape centerOfGravity;
+
 
     public Gravity() {
 
@@ -32,15 +32,11 @@ class Gravity implements Animation, ActionListener {
                     p.y_init = p.y;
                     p.xLastDrawn = p.x;
                     p.yLastDrawn = p.y;
-                    p.trajectory=null;
+                    p.trajectory = null;
                 }
             }
         }
 
-        centerOfGravity = MovingParticles.Drawing.addPointShape();
-        MovingParticles.Drawing.addPointToShape(centerOfGravity, 0, 0);
-        centerOfGravity.color = Color.BLUE;
-        centerOfGravity.label = "CoG";
 
 
         pane = new JPanel();
@@ -72,14 +68,13 @@ class Gravity implements Animation, ActionListener {
         pointPane.add(field);
     }
 
-        public JPanel getPane(){
+    public JPanel getPane() {
         return pane;
     }
-        
+
     public ArrayList<Point> getParticles() {
         return new ArrayList<Point>(particles);
     }
-
 
     public void actionPerformed(ActionEvent e) {
         {
@@ -120,27 +115,20 @@ class Gravity implements Animation, ActionListener {
         }
 
     }
-   
+
+
 
     public boolean step(double dt) {
         // This method calculates the new position of all particles after time step dt.
         // If no points are added to any trajectory, return false, true otherwise.
         // This to avoid redrawing the screen when nothing changed
         boolean redraw = false;
-        double xCenterOfGravity = 0;
-        double yCenterOfGravity = 0;
-        double totalMass = 0;
-
+        
         // new position of all particles
         for (Point p : particles) {
             p.xnew = p.x + p.vx * dt;
             p.ynew = p.y + p.vy * dt;
-            xCenterOfGravity = xCenterOfGravity + p.mass * p.xnew;
-            yCenterOfGravity = yCenterOfGravity + p.mass * p.ynew;
-            totalMass = totalMass + p.mass;
         }
-        centerOfGravity.points.get(0).x = xCenterOfGravity / totalMass;
-        centerOfGravity.points.get(0).y = yCenterOfGravity / totalMass;
 
         // new speed of all particles
         for (int i1 = 0; i1 < particles.size(); i1++) {
@@ -158,15 +146,6 @@ class Gravity implements Animation, ActionListener {
                 double ux = (p2.x - p1.x) / r;  //unit vector from p1 to p2
                 double uy = (p2.y - p1.y) / r;
 
-                double vx = ux * force * dt;
-                double vy = uy * force * dt;
-
-                /*               
-                 Shape vector=MovingParticles.Drawing.addShape();
-                 vector.addPoint(p2.x, p2.y);
-                 vector.addPoint(p2.x-vx, p2.y-vy);
-                 vector.color=Color.BLUE;
-                 */
                 p1.vx = p1.vx + (ux * force / mass1) * dt;
                 p1.vy = p1.vy + (uy * force / mass1) * dt;
                 p2.vx = p2.vx - (ux * force / mass2) * dt;
@@ -185,7 +164,7 @@ class Gravity implements Animation, ActionListener {
             y2 = MovingParticles.transform.yUserToScreen(p.yLastDrawn);
             double sqScreenDistance = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
             if (sqScreenDistance > 100) {
-                if (p.trajectory!=null) {
+                if (p.trajectory != null) {
                     p.trajectory.addPoint(p.x, p.y);
                 }
                 redraw = true;
@@ -196,11 +175,9 @@ class Gravity implements Animation, ActionListener {
         }
         return true;
     }
-    
-    public void cleanup(){
-        if (centerOfGravity!=null){
-        MovingParticles.Drawing.deleteShape(centerOfGravity);
-        }
+
+    public void cleanup() {
+
     }
 
 }

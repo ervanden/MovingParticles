@@ -1,11 +1,16 @@
 
+import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.util.ArrayList;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -14,16 +19,22 @@ import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-public class AnimationRunner implements Runnable, ActionListener, ChangeListener {
+public class AnimationRunner implements Runnable, ActionListener, ChangeListener, ItemListener {
+
+    Transform transform = MovingParticles.transform;
 
     String animationType;
     Animation a;
+
+    ArrayList<Point> particles = null;
+    Shape centerOfGravity = null;
 
     public boolean suspended = true;
     public boolean exitRequested = false;
     boolean trajectoryOn = false;
     double timeStep = 0.001;
     int sleepMilliseconds = 1000;
+    boolean centerCog = false;
 
     JFrame sFrame;
     JLabel frameDelayInfo;
@@ -31,10 +42,12 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
     JButton initializeButton;
     JButton goSuspendButton;
     JButton resetButton;
-    JButton trajectoryButton;
+    JButton followCogButton;
     JSlider sliderMsec;
     JSlider sliderTimeStep;
     JComboBox animationBox;
+    JCheckBox trajectoryBox;
+    JCheckBox cogBox;
 
     public AnimationRunner() {
 
@@ -57,6 +70,13 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
         sliderTimeStep = new JSlider(-6000, -1000, -3000);
         sliderTimeStep.addChangeListener(this);
 
+        trajectoryBox = new JCheckBox("Show trajectories");
+        cogBox = new JCheckBox("Show center of gravity");
+        trajectoryBox.addItemListener(this);
+        cogBox.addItemListener(this);
+        cogBox.setEnabled(false);
+        trajectoryBox.setEnabled(false);
+
         pane.add(animationBox);
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
         pane.add(frameDelayInfo);
@@ -65,6 +85,10 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
         pane.add(timeStepInfo);
         pane.add(sliderTimeStep);
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
+
+        JPanel showPanel = new JPanel();
+        showPanel.add(trajectoryBox);
+        showPanel.add(cogBox);
 
         JPanel goPanel = new JPanel();
         initializeButton = new JButton("Initialize");
@@ -76,15 +100,19 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
         resetButton = new JButton("Reset");
         resetButton.addActionListener(this);
         goPanel.add(resetButton);
-        trajectoryButton = new JButton("Trajectory on/off");
-        trajectoryButton.addActionListener(this);
-        goPanel.add(trajectoryButton);
+        followCogButton = new JButton("Center CoG");
+        followCogButton.addActionListener(this);
+        goPanel.add(followCogButton);
 
         resetButton.setEnabled(false);
-        trajectoryButton.setEnabled(false);
+        followCogButton.setEnabled(false);
         goSuspendButton.setEnabled(false);
 
+        pane.add(Box.createRigidArea(new Dimension(500, 20)));
+        pane.add(showPanel);
+        pane.add(Box.createRigidArea(new Dimension(500, 20)));
         pane.add(goPanel);
+
         sFrame.pack();
         sFrame.setVisible(true);
     }
@@ -98,6 +126,52 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
             String timeStepString = String.format("%f", timeStep);
             timeStepInfo.setText("time step " + timeStepString + " sec");
         }
+    }
+
+    public void itemStateChanged(ItemEvent e) {
+
+        Object source = e.getItemSelectable();
+
+        if (source == trajectoryBox) {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                trajectoryOn = true;
+            };
+            if (e.getStateChange() == ItemEvent.DESELECTED) {
+                trajectoryOn = false;
+            };
+            System.out.println("trajectories " + trajectoryOn);
+            for (Point p : particles) {
+                wipeTrajectory(p);
+                if (trajectoryOn) {
+                    createTrajectory(p);
+                }
+            }
+        }
+
+        if (source == cogBox) {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                if (centerOfGravity == null) {
+                    centerOfGravity = MovingParticles.Drawing.addPointShape();
+                    MovingParticles.Drawing.addPointToShape(centerOfGravity, 0, 0);
+                    centerOfGravity.color = Color.BLUE;
+                    centerOfGravity.label = "CoG";
+                }
+            };
+            if (e.getStateChange() == ItemEvent.DESELECTED) {
+                if (centerOfGravity != null) {
+                    MovingParticles.Drawing.deleteShape(centerOfGravity);
+                    centerOfGravity = null;
+                }
+            };
+
+            if (centerOfGravity != null) {
+                System.out.println("cog ON");
+            } else {
+                System.out.println("cog OFF");
+            }
+
+        }
+
     }
 
     private void wipeTrajectory(Point p) {                 // trajectory is set to null 
@@ -116,9 +190,24 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
         MovingParticles.Drawing.addPointToShape(p.trajectory, p.x, p.y);
     }
 
+    public Point updateCenterOfGravity() {
+        double xCenterOfGravity = 0;
+        double yCenterOfGravity = 0;
+        double totalMass = 0;
+
+        for (Point p : particles) {
+            xCenterOfGravity = xCenterOfGravity + p.mass * p.x;
+            yCenterOfGravity = yCenterOfGravity + p.mass * p.y;
+            totalMass = totalMass + p.mass;
+        }
+        centerOfGravity.points.get(0).x = xCenterOfGravity / totalMass;
+        centerOfGravity.points.get(0).y = yCenterOfGravity / totalMass;
+        return centerOfGravity.points.get(0);
+    }
+
     public void reset() {
 
-        for (Point p : a.getParticles()) {
+        for (Point p : particles) {
 
             wipeTrajectory(p);
 
@@ -131,6 +220,10 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
 
             if (trajectoryOn) {
                 createTrajectory(p);
+            }
+
+            if (centerOfGravity != null) {
+                updateCenterOfGravity();
             }
         }
 
@@ -152,11 +245,16 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
             if (animationType.equals("elastic")) {
                 a = new Elasticity();
             }
+
+            particles = a.getParticles(); // particles can not change once animation is initialized
+
             suspended = true;
             initializeButton.setEnabled(false);
             resetButton.setEnabled(true);
-            trajectoryButton.setEnabled(true);
+            followCogButton.setEnabled(true);
             goSuspendButton.setEnabled(true);
+            cogBox.setEnabled(true);
+            trajectoryBox.setEnabled(true);
 
             if (a.getPane() != null) {
                 sFrame.getContentPane().add(a.getPane());
@@ -173,16 +271,24 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
             suspended = true;
             reset();
 
-        } else if (e.getSource().equals(trajectoryButton)) {
-
-            trajectoryOn = !trajectoryOn;
-            for (Point p : a.getParticles()) {
-                wipeTrajectory(p);
-                if (trajectoryOn) {
-                    createTrajectory(p);
-                }
-            }
+        } else if (e.getSource().equals(followCogButton)) {
+            centerCog = true;
         }
+    }
+
+    void moveCenterToCog() {
+        Point cog = updateCenterOfGravity();
+        double xmin = transform.uxmin;
+        double xmax = transform.uxmax;
+        double ymin = transform.uymin;
+        double ymax = transform.uymax;
+        double xcenter = (xmax + xmin) / 2;
+        double ycenter = (ymax + ymin) / 2;
+        double xdelta = cog.x - xcenter;
+        double ydelta = cog.y - ycenter;
+//System.out.printf("%5f %5f %5f %5f\n", xmin, xmax, ymin, ymax);
+//System.out.printf("xcenter=%5f ycenter=%5f cogx=%5f cogy=%5f xdelta=%5f ydelta=%5f\n",xcenter, ycenter,cog.x,cog.y,xdelta,ydelta);
+        transform.setUserSpace(xmin + xdelta, xmax + xdelta, ymin + ydelta, ymax + ydelta);
     }
 
     public void run() {
@@ -205,6 +311,14 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
                         Thread.sleep(sleepMilliseconds);
                     } catch (InterruptedException ie) {
                     }
+                    if (centerOfGravity != null) {
+                        updateCenterOfGravity();
+                        if (centerCog) {
+                            moveCenterToCog();
+                            centerCog = false;
+                        }
+                    }
+
                     MovingParticles.zPlane.blitPaint();
                 }
             }
@@ -218,11 +332,13 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
         }
 
         System.out.println("exit request for  animation runner...");
-        for (Point p : a.getParticles()) {
+        for (Point p : particles) {
             wipeTrajectory(p);
         }
+        if (centerOfGravity != null) {
+            MovingParticles.Drawing.deleteShape(centerOfGravity);
+        }
         sFrame.dispose();
-        a.cleanup();
         System.out.println("exited.");
     }
 }

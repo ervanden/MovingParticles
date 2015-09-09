@@ -30,7 +30,6 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
     double k = 1;  // elasticity constant  F = k * delta(x)
     JSlider sliderK;
     JLabel kInfo;
-    Shape centerOfGravity;
 
     class Link {
 
@@ -91,7 +90,6 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
         }
 
         // populate extremities
-
         Point pe;
         pe = shape.points.get(0);
         extremities.add(pe);
@@ -103,20 +101,13 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
         // populate 'neighbours' of all particles
         // assuming there is only 1 shape, all the particles belong to this shape
         for (int i = 0; i < particles.size(); i++) {
-            
-             Point p = particles.get(i);
-             
+            Point p = particles.get(i);
             if (i < particles.size() - 1) {
                 Point pn = particles.get(i + 1);
                 links.add(new Link(p, pn));
 //                System.out.printf("added link %s - %s\n",p.particleName ,pn.particleName);
             }
         }
-
-        centerOfGravity = MovingParticles.Drawing.addPointShape();
-        MovingParticles.Drawing.addPointToShape(centerOfGravity, 0, 0);
-        centerOfGravity.color = Color.BLUE;
-        centerOfGravity.label = "CoG";
 
         pane = new JPanel();
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
@@ -209,6 +200,7 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
         }
 
     }
+   
 
     public JPanel getPane() {
         return pane;
@@ -247,51 +239,44 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
         // If no points are added to any trajectory, return false, true otherwise.
         // This to avoid redrawing the screen when nothing changed
         boolean redraw = false;
-        double xCenterOfGravity = 0;
-        double yCenterOfGravity = 0;
-        double totalMass = 0;
 
-        // CoG, potential and kinetic energy with positions and speeds at the beginning of this step
-        // new position of all particles
-        for (Point p : particles) {
+        potentialEnergy = 0;
+        kineticEnergy = 0;
+
+        // CoG, potential and kinetic energy are calculated at the beginning of this step
+        for (Point p : particles) {  // new position of all particles
             p.xnew = p.x + p.vx * dt;
             p.ynew = p.y + p.vy * dt;
-            xCenterOfGravity = xCenterOfGravity + p.mass * p.x;
-            yCenterOfGravity = yCenterOfGravity + p.mass * p.y;
-            totalMass = totalMass + p.mass;
         }
-        centerOfGravity.points.get(0).x = xCenterOfGravity / totalMass;
-        centerOfGravity.points.get(0).y = yCenterOfGravity / totalMass;
 
         // new speed of all particles
-        for (Point p1 : particles) {
-            kineticEnergy = kineticEnergy + 0.5 * p1.mass * (p1.vx * p1.vx + p1.vy * p1.vy);  
+        for (Point p : particles) {
+            kineticEnergy = kineticEnergy + 0.5 * p.mass * (p.vx * p.vx + p.vy * p.vy);
         }
-        
 
         for (Link link : links) {
-            Point p1=link.p1;
-            Point p2=link.p2;
- //               System.out.printf("points %s and %s\n", p1.particleName, p2.particleName);
-                double mass1 = p1.mass;
-                double mass2 = p2.mass;
-                double rsquare = (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
-                double r = Math.sqrt(rsquare);
-                double r0square = (p1.x_init - p2.x_init) * (p1.x_init - p2.x_init)
-                        + (p1.y_init - p2.y_init) * (p1.y_init - p2.y_init);
-                double r0 = Math.sqrt(r0square);
+            Point p1 = link.p1;
+            Point p2 = link.p2;
+            // System.out.printf("points %s and %s\n", p1.particleName, p2.particleName);
+            double mass1 = p1.mass;
+            double mass2 = p2.mass;
+            double rsquare = (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
+            double r = Math.sqrt(rsquare);
+            double r0square = (p1.x_init - p2.x_init) * (p1.x_init - p2.x_init)
+                    + (p1.y_init - p2.y_init) * (p1.y_init - p2.y_init);
+            double r0 = Math.sqrt(r0square);
 
-                Double force = k * (r - r0);
+            Double force = k * (r - r0);
 
-                potentialEnergy = potentialEnergy + 0.5 * k * (r - r0) * (r - r0);
+            potentialEnergy = potentialEnergy + 0.5 * k * (r - r0) * (r - r0);
 
-                double ux = (p2.x - p1.x) / r;  //unit vector from p1 to p2
-                double uy = (p2.y - p1.y) / r;
+            double ux = (p2.x - p1.x) / r;  //unit vector from p1 to p2
+            double uy = (p2.y - p1.y) / r;
 
-                p1.vx = p1.vx + (ux * force / mass1) * dt;
-                p1.vy = p1.vy + (uy * force / mass1) * dt;
-                p2.vx = p2.vx - (ux * force / mass2) * dt;
-                p2.vy = p2.vy - (uy * force / mass2) * dt;
+            p1.vx = p1.vx + (ux * force / mass1) * dt;
+            p1.vy = p1.vy + (uy * force / mass1) * dt;
+            p2.vx = p2.vx - (ux * force / mass2) * dt;
+            p2.vy = p2.vy - (uy * force / mass2) * dt;
         }
 
         for (Point p : particles) {
@@ -313,14 +298,11 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
                 p.yLastDrawn = p.y;
             }
         }
-
+//System.out.printf("Energy P=%10f K=%10f, P+K=%10f\n ",potentialEnergy,kineticEnergy,potentialEnergy+kineticEnergy);
         return true; // return redraw;
     }
 
     public void cleanup() {
-        if (centerOfGravity != null) {
-            MovingParticles.Drawing.deleteShape(centerOfGravity);
-        }
     }
 
 }

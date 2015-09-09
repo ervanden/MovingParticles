@@ -6,10 +6,14 @@ class Rotation implements Animation {
 
     double omega = 2 * Math.PI;    // 1 revolution/sec
 
-    public JPanel getPane(){
+    public Point updateCenterOfGravity() {
         return null;
     }
-        
+
+    public JPanel getPane() {
+        return null;
+    }
+
     public ArrayList<Point> getParticles() {
         return null;
     }
