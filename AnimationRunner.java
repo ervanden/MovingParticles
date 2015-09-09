@@ -126,8 +126,8 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
             p.x = p.x_init;
             p.y = p.y_init;
             // reset initial speed
-            p.xspeed = p.velocity * Math.cos((p.angle / 180) * Math.PI);
-            p.yspeed = p.velocity * Math.sin((p.angle / 180) * Math.PI);
+            p.vx = p.velocity * Math.cos((p.angle / 180) * Math.PI);
+            p.vy = p.velocity * Math.sin((p.angle / 180) * Math.PI);
 
             if (trajectoryOn) {
                 createTrajectory(p);

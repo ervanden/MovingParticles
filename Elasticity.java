@@ -14,62 +14,102 @@ import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-class Elasticity  implements Animation, ActionListener, ChangeListener {
+class Elasticity implements Animation, ActionListener, ChangeListener {
+
+    Shape shape;
+    double kineticEnergy;
+    double potentialEnergy;
 
     JPanel pointPane;
     JPanel pane;
-    
+
     ArrayList<Point> particles = new ArrayList<>();
     ArrayList<Point> extremities = new ArrayList<>();
+    ArrayList<Link> links = new ArrayList<>();
+
     double k = 1;  // elasticity constant  F = k * delta(x)
     JSlider sliderK;
     JLabel kInfo;
     Shape centerOfGravity;
 
+    class Link {
+
+        public Point p1, p2;
+
+        public Link(Point p_1, Point p_2) {
+            p1 = p_1;
+            p2 = p_2;
+        }
+    }
+
     public Elasticity() {
 
+        // create a new shape with only particles that are sufficiently apart 
+        ArrayList<Point> newPoints = new ArrayList<>();
         for (Shape s : MovingParticles.Drawing.getShapes()) {
-
-            s.color = Color.MAGENTA;
-            s.isSelected = true;
-
-            // populate 'particles'
-            int c = 1;
+            boolean first = true;
+            double xprev = 0;
+            double yprev = 0;
             for (Point p : s.points) {
-                particles.add(p);
-                p.velocity = 0;
-                p.angle = 0;
-                p.particleName = s.label + "-" + c;
-                c++;
-                p.x_init = p.x;
-                p.y_init = p.y;
-                p.xLastDrawn = p.x;
-                p.yLastDrawn = p.y;
-                p.trajectory = null;
+                if (first || (((p.x - xprev) * (p.x - xprev) + (p.y - yprev) * (p.y - yprev)) > 10e-6)) {
+                    newPoints.add(new Point(p.x, p.y));
+                    xprev = p.x;
+                    yprev = p.y;
+                    first = false;
+                }
             }
+        }
+        MovingParticles.Drawing.clear();
 
-            // populate extremities
-            System.out.println("init shape " + s.label);
+        if (newPoints.size() <= 1) {
+            System.out.println("All points too close. Shape is removed");
+            shape = null;
+            return;
+        } else {
+            shape = MovingParticles.Drawing.addShape();
+            for (Point p : newPoints) {
+                MovingParticles.Drawing.addPointToShape(shape, p.x, p.y);
+            }
+            System.out.printf("\nShape %s with %d points\n\n", shape.label, shape.points.size());
+        }
 
-            Point pe;
-            pe = s.points.get(0);
-            extremities.add(pe);
-            pe.particleName = s.label + "-begin";
-            pe = s.points.get(s.points.size() - 1);
-            extremities.add(pe);
-            pe.particleName = s.label + "-end";
+        shape.isSelected = true;
 
-            // populate 'neighbours' of all particles
-            // assuming there is only 1 shape, all the particles belong to this shape
-            for (int i = 0; i < particles.size(); i++) {
-                if (i > 0) {
-                    Point p = particles.get(i);
-                    p.neighbours.add(particles.get(i - 1));
-                }
-                if (i < particles.size() - 1) {
-                    particles.get(i).neighbours.add(particles.get(i + 1));
-                }
-                System.out.println("particle " + particles.get(i).particleName + " has " + particles.get(i).neighbours.size() + " neighbours");
+        // populate 'particles'
+        int c = 1;
+        for (Point p : shape.points) {
+            particles.add(p);
+            p.velocity = 0;
+            p.angle = 0;
+            p.particleName = shape.label + "-" + c;
+            c++;
+            p.x_init = p.x;
+            p.y_init = p.y;
+            p.xLastDrawn = p.x;
+            p.yLastDrawn = p.y;
+            p.trajectory = null;
+        }
+
+        // populate extremities
+
+        Point pe;
+        pe = shape.points.get(0);
+        extremities.add(pe);
+        pe.particleName = shape.label + "-begin";
+        pe = shape.points.get(shape.points.size() - 1);
+        extremities.add(pe);
+        pe.particleName = shape.label + "-end";
+
+        // populate 'neighbours' of all particles
+        // assuming there is only 1 shape, all the particles belong to this shape
+        for (int i = 0; i < particles.size(); i++) {
+            
+             Point p = particles.get(i);
+             
+            if (i < particles.size() - 1) {
+                Point pn = particles.get(i + 1);
+                links.add(new Link(p, pn));
+//                System.out.printf("added link %s - %s\n",p.particleName ,pn.particleName);
             }
         }
 
@@ -161,19 +201,16 @@ class Elasticity  implements Animation, ActionListener, ChangeListener {
                 }
                 if (attribute.equals("Velocity") || attribute.equals("Angle")) {
                     for (Point p : particles) {
-                        p.xspeed = p.velocity * Math.cos((p.angle / 180) * Math.PI);
-                        p.yspeed = p.velocity * Math.sin((p.angle / 180) * Math.PI);
-                        //                       System.out.println(p.particleName + ".xspeed=" + p.xspeed);
-                        //                       System.out.println(p.particleName + ".yspeed=" + p.yspeed);
-
+                        p.vx = p.velocity * Math.cos((p.angle / 180) * Math.PI);
+                        p.vy = p.velocity * Math.sin((p.angle / 180) * Math.PI);
                     }
                 }
             }
         }
 
     }
-    
-    public JPanel getPane(){
+
+    public JPanel getPane() {
         return pane;
     }
 
@@ -181,7 +218,6 @@ class Elasticity  implements Animation, ActionListener, ChangeListener {
         return new ArrayList<Point>(particles);
     }
 
-  
     private void dump_state(Point p1, Point p2) {
         System.out.println("== state of all particles");
         for (Point p : particles) {
@@ -192,8 +228,8 @@ class Elasticity  implements Animation, ActionListener, ChangeListener {
                     p.x_init,
                     p.y,
                     p.y_init,
-                    p.xspeed,
-                    p.yspeed
+                    p.vx,
+                    p.vy
             );
         }
         if (p1 != null) {
@@ -215,29 +251,13 @@ class Elasticity  implements Animation, ActionListener, ChangeListener {
         double yCenterOfGravity = 0;
         double totalMass = 0;
 
-        if (steps == 0) {
-            System.out.println("\n\nSTEP 0");
-            dump_state(null, null);
-            System.out.println();
-        };
-        steps++;
-
-         for (Point p : particles) {
-             Double px=p.x;
-             Double py=p.y;
-                        if ((px.equals(Double.NaN)) || 
-                            (py.equals(Double.NaN))) {
-                    System.out.printf("\nBEGIN OF STEP=%d \n\n",steps);
-                    dump_state(null,null);
-                }
-         }
-                
+        // CoG, potential and kinetic energy with positions and speeds at the beginning of this step
         // new position of all particles
         for (Point p : particles) {
-            p.xnew = p.x + p.xspeed * dt;
-            p.ynew = p.y + p.yspeed * dt;
-            xCenterOfGravity = xCenterOfGravity + p.mass * p.xnew;
-            yCenterOfGravity = yCenterOfGravity + p.mass * p.ynew;
+            p.xnew = p.x + p.vx * dt;
+            p.ynew = p.y + p.vy * dt;
+            xCenterOfGravity = xCenterOfGravity + p.mass * p.x;
+            yCenterOfGravity = yCenterOfGravity + p.mass * p.y;
             totalMass = totalMass + p.mass;
         }
         centerOfGravity.points.get(0).x = xCenterOfGravity / totalMass;
@@ -245,8 +265,14 @@ class Elasticity  implements Animation, ActionListener, ChangeListener {
 
         // new speed of all particles
         for (Point p1 : particles) {
-            for (Point p2 : p1.neighbours) {
-                //               System.out.printf("points %d and %d\n", i1, i2);
+            kineticEnergy = kineticEnergy + 0.5 * p1.mass * (p1.vx * p1.vx + p1.vy * p1.vy);  
+        }
+        
+
+        for (Link link : links) {
+            Point p1=link.p1;
+            Point p2=link.p2;
+ //               System.out.printf("points %s and %s\n", p1.particleName, p2.particleName);
                 double mass1 = p1.mass;
                 double mass2 = p2.mass;
                 double rsquare = (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
@@ -257,21 +283,16 @@ class Elasticity  implements Animation, ActionListener, ChangeListener {
 
                 Double force = k * (r - r0);
 
-                if (force.equals(Double.NaN)) {
-                    System.out.printf("STEP=%d p1=%s p2=%s r=%5f r0=%5f force=%5f\n", steps, p1.particleName, p2.particleName, r, r0, force);
-                    dump_state(p1, p2);
-                };
+                potentialEnergy = potentialEnergy + 0.5 * k * (r - r0) * (r - r0);
 
                 double ux = (p2.x - p1.x) / r;  //unit vector from p1 to p2
                 double uy = (p2.y - p1.y) / r;
 
-                p1.xspeed = p1.xspeed + (ux * force / mass1) * dt;
-                p1.yspeed = p1.yspeed + (uy * force / mass1) * dt;
-                p2.xspeed = p2.xspeed - (ux * force / mass2) * dt;
-                p2.yspeed = p2.yspeed - (uy * force / mass2) * dt;
-            }
+                p1.vx = p1.vx + (ux * force / mass1) * dt;
+                p1.vy = p1.vy + (uy * force / mass1) * dt;
+                p2.vx = p2.vx - (ux * force / mass2) * dt;
+                p2.vy = p2.vy - (uy * force / mass2) * dt;
         }
-        //                   try{Thread.sleep(1000);}catch (Exception e){};
 
         for (Point p : particles) {
             p.x = p.xnew;
@@ -292,22 +313,13 @@ class Elasticity  implements Animation, ActionListener, ChangeListener {
                 p.yLastDrawn = p.y;
             }
         }
-        
-                 for (Point p : particles) {
-             Double px=p.x;
-             Double py=p.y;
-                        if ((px.equals(Double.NaN)) || 
-                            (py.equals(Double.NaN))) {
-                    System.out.printf("\nEND OF STEP=%d \n\n",steps);
-                    dump_state(null,null);
-                }
-         }
+
         return true; // return redraw;
     }
-    
-        public void cleanup(){
-        if (centerOfGravity!=null){
-        MovingParticles.Drawing.deleteShape(centerOfGravity);
+
+    public void cleanup() {
+        if (centerOfGravity != null) {
+            MovingParticles.Drawing.deleteShape(centerOfGravity);
         }
     }
 

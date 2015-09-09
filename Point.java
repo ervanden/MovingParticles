@@ -1,13 +1,12 @@
 
-import java.util.ArrayList;
-
 
 public class Point {
 
 public double x;
 public double y;
+public double vx;
+public double vy;
 
-// gravitate
 String particleName;
 Shape trajectory;
 public double mass;
@@ -19,19 +18,13 @@ public double xLastDrawn;
 public double yLastDrawn;
 public double xnew;
 public double ynew;
-public double xspeed;
-public double yspeed;
-
-// elastic
-ArrayList<Point> neighbours;
 
 public Point(double px, double py){
 x=px;
 y=py;
-xspeed=0;
-yspeed=0;
+vx=0;
+vy=0;
 mass=1;
-neighbours=new ArrayList<>();
 }
 
 double getZX(){

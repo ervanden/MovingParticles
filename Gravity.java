@@ -112,8 +112,8 @@ class Gravity implements Animation, ActionListener {
                 }
                 if (attribute.equals("Velocity") || attribute.equals("Angle")) {
                     for (Point p : particles) {
-                        p.xspeed = p.velocity * Math.cos((p.angle / 180) * Math.PI);
-                        p.yspeed = p.velocity * Math.sin((p.angle / 180) * Math.PI);
+                        p.vx = p.velocity * Math.cos((p.angle / 180) * Math.PI);
+                        p.vy = p.velocity * Math.sin((p.angle / 180) * Math.PI);
                     }
                 }
             }
@@ -133,8 +133,8 @@ class Gravity implements Animation, ActionListener {
 
         // new position of all particles
         for (Point p : particles) {
-            p.xnew = p.x + p.xspeed * dt;
-            p.ynew = p.y + p.yspeed * dt;
+            p.xnew = p.x + p.vx * dt;
+            p.ynew = p.y + p.vy * dt;
             xCenterOfGravity = xCenterOfGravity + p.mass * p.xnew;
             yCenterOfGravity = yCenterOfGravity + p.mass * p.ynew;
             totalMass = totalMass + p.mass;
@@ -167,10 +167,10 @@ class Gravity implements Animation, ActionListener {
                  vector.addPoint(p2.x-vx, p2.y-vy);
                  vector.color=Color.BLUE;
                  */
-                p1.xspeed = p1.xspeed + (ux * force / mass1) * dt;
-                p1.yspeed = p1.yspeed + (uy * force / mass1) * dt;
-                p2.xspeed = p2.xspeed - (ux * force / mass2) * dt;
-                p2.yspeed = p2.yspeed - (uy * force / mass2) * dt;
+                p1.vx = p1.vx + (ux * force / mass1) * dt;
+                p1.vy = p1.vy + (uy * force / mass1) * dt;
+                p2.vx = p2.vx - (ux * force / mass2) * dt;
+                p2.vy = p2.vy - (uy * force / mass2) * dt;
             }
         }
 
