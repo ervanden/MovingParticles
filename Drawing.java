@@ -4,10 +4,14 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 class Drawing {
 
-    private java.util.List<Shape> shapes;
+    private List<Shape> shapes;
+    private ArrayList<String> strings;
+    
+    int stringsMaxLength=0;
 
     double areaCursorX1, areaCursorY1, areaCursorX2, areaCursorY2;
     boolean areaCursorOn = false;
@@ -19,19 +23,22 @@ class Drawing {
 
     public double xmin, xmax, ymin, ymax; // calculated by method setMinMAx()
 
-    int complexPointCounter; // used to construct names z1, z2, ...
+    int pointCounter; // used to construct names z1, z2, ...
     int shapeCounter;  // used to construct names shape1, shape2,...
 
     public Drawing() {
         shapes = new ArrayList<>();
+        strings = new ArrayList<>();
         shapes.clear();
-        complexPointCounter = 1;
+        strings.clear();
+        pointCounter = 1;
         shapeCounter = 1;
     }
 
     public synchronized void clear() {
         shapes.clear();
-        complexPointCounter = 1;
+        strings.clear();
+        pointCounter = 1;
         shapeCounter = 1;
     }
 
@@ -48,6 +55,12 @@ class Drawing {
 
         }
     }
+    
+   public void setString(int position, String s){
+       if (position>strings.size()-1) strings.add(s);
+       strings.set(position,s);
+       if (s.length()>stringsMaxLength) stringsMaxLength=s.length();
+   } 
 
     public synchronized void deleteShape(Shape s) {
         shapes.remove(s);
@@ -97,7 +110,9 @@ class Drawing {
             t.line(areaCursorX2, areaCursorY2, areaCursorX1, areaCursorY2);
             t.line(areaCursorX1, areaCursorY2, areaCursorX1, areaCursorY1);
         }
-
+        
+        t.strings(strings);
+        
         Point xyprev;
         for (Shape s : shapes) {
             if ((s.isSelected || s.isPreSelected) && !s.isPreUnselected) {
@@ -228,8 +243,8 @@ class Drawing {
     }
 
     public synchronized PointShape addPointShape() {
-        PointShape s = new PointShape("z" + complexPointCounter);
-        complexPointCounter++;
+        PointShape s = new PointShape("p" + pointCounter);
+        pointCounter++;
         shapes.add(s);
         return s;
     }

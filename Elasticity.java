@@ -17,8 +17,6 @@ import javax.swing.event.ChangeListener;
 class Elasticity implements Animation, ActionListener, ChangeListener {
 
     Shape shape;
-    double kineticEnergy;
-    double potentialEnergy;
 
     JPanel pointPane;
     JPanel pane;
@@ -200,7 +198,6 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
         }
 
     }
-   
 
     public JPanel getPane() {
         return pane;
@@ -240,8 +237,8 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
         // This to avoid redrawing the screen when nothing changed
         boolean redraw = false;
 
-        potentialEnergy = 0;
-        kineticEnergy = 0;
+        double potentialEnergy = 0;
+        double kineticEnergy = 0;
 
         // CoG, potential and kinetic energy are calculated at the beginning of this step
         for (Point p : particles) {  // new position of all particles
@@ -298,8 +295,11 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
                 p.yLastDrawn = p.y;
             }
         }
-//System.out.printf("Energy P=%10f K=%10f, P+K=%10f\n ",potentialEnergy,kineticEnergy,potentialEnergy+kineticEnergy);
-        return true; // return redraw;
+        MovingParticles.Drawing.setString(0, String.format("K=%f", kineticEnergy));
+        MovingParticles.Drawing.setString(1, String.format("P=%f", potentialEnergy));
+        MovingParticles.Drawing.setString(2, String.format("T=%f", kineticEnergy + potentialEnergy));
+ //        return redraw;
+        return true;
     }
 
     public void cleanup() {

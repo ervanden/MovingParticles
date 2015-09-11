@@ -2,6 +2,7 @@ import java.awt.BasicStroke;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Color;
+import java.util.ArrayList;
 import scalemarkers.*;
 
 class Transform {
@@ -148,8 +149,21 @@ class Transform {
         ycenter = yUserToScreen(y);
         graphics.fillOval(xcenter - 4, ycenter - 4, 8, 8);
         graphics.drawString(s, xcenter + 4, ycenter - 4);
+ //                  System.out.printf("point %s at %d,%d\n",s,xcenter + 4, ycenter - 4);
     }
 
+        public void strings(ArrayList<String> l) {
+        int xo, yo;
+        xo = 10;
+        yo = 20;
+        int position=0;
+        for (String s : l){
+        graphics.drawString(s, xo, yo+ position*15);
+        position++;
+        }
+    }
+        
+        
     public void axes() {
         
         graphics.setColor(Color.black);

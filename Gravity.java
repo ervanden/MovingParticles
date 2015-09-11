@@ -18,8 +18,10 @@ class Gravity implements Animation, ActionListener {
 
     ArrayList<Point> particles = new ArrayList<>();
 
-
     public Gravity() {
+
+        MovingParticles.Drawing.setString(0, "string2");
+        MovingParticles.Drawing.setString(1, "string3xyz");
 
         for (Shape s : MovingParticles.Drawing.getShapes()) {
             if (s.isPoint) {
@@ -36,8 +38,6 @@ class Gravity implements Animation, ActionListener {
                 }
             }
         }
-
-
 
         pane = new JPanel();
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
@@ -116,14 +116,19 @@ class Gravity implements Animation, ActionListener {
 
     }
 
-
-
     public boolean step(double dt) {
         // This method calculates the new position of all particles after time step dt.
         // If no points are added to any trajectory, return false, true otherwise.
         // This to avoid redrawing the screen when nothing changed
         boolean redraw = false;
-        
+
+        double potentialEnergy = 0;
+        double kineticEnergy = 0;
+
+        for (Point p : particles) {
+            kineticEnergy = kineticEnergy + 0.5 * p.mass * (p.vx * p.vx + p.vy * p.vy);
+        }
+
         // new position of all particles
         for (Point p : particles) {
             p.xnew = p.x + p.vx * dt;
@@ -142,7 +147,9 @@ class Gravity implements Animation, ActionListener {
                 double r = Math.sqrt(rsquare);
                 //    System.out.println("distance "+s1.label+" "+s2.label+" "+r);
                 double force = mass1 * mass2 / rsquare;
-                //                force = r;
+
+                potentialEnergy = potentialEnergy - mass1 * mass2 / r;
+
                 double ux = (p2.x - p1.x) / r;  //unit vector from p1 to p2
                 double uy = (p2.y - p1.y) / r;
 
@@ -173,6 +180,11 @@ class Gravity implements Animation, ActionListener {
             }
 
         }
+
+        MovingParticles.Drawing.setString(0, String.format("K=%.1f", kineticEnergy));
+        MovingParticles.Drawing.setString(1, String.format("P=%.1f", potentialEnergy));
+        MovingParticles.Drawing.setString(2, String.format("T=%.1f", kineticEnergy + potentialEnergy));
+
         return true;
     }
 
