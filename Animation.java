@@ -8,7 +8,7 @@ public interface Animation {
 
     public JPanel getPane();
 
-    public boolean step(double dt);
+    public boolean step(double dt, int resolution);
 
     public void cleanup();
 

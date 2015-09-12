@@ -16,8 +16,6 @@ import javax.swing.event.ChangeListener;
 
 class Elasticity implements Animation, ActionListener, ChangeListener {
 
-    Shape shape;
-
     JPanel pointPane;
     JPanel pane;
 
@@ -41,6 +39,13 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
 
     public Elasticity() {
 
+        Shape shape;
+        shape = MovingParticles.Drawing.addShape();
+        MovingParticles.Drawing.addPointToShape(shape, 1, 4);
+        MovingParticles.Drawing.addPointToShape(shape, 1,3);
+        MovingParticles.Drawing.addPointToShape(shape, 1,2);
+         MovingParticles.Drawing.addPointToShape(shape, 1,1);
+         
         // create a new shape with only particles that are sufficiently apart 
         ArrayList<Point> newPoints = new ArrayList<>();
         for (Shape s : MovingParticles.Drawing.getShapes()) {
@@ -231,7 +236,7 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
 
     int steps = 0;
 
-    public boolean step(double dt) {
+    public boolean step(double dt, int resolution) {
         // This method calculates the new position of all particles after time step dt.
         // If no points are added to any trajectory, return false, true otherwise.
         // This to avoid redrawing the screen when nothing changed
@@ -243,8 +248,8 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
         // CoG, potential and kinetic energy are calculated at the beginning of this step
         for (Point p : particles) {
             kineticEnergy = kineticEnergy + 0.5 * p.mass * (p.vx * p.vx + p.vy * p.vy);
-            p.vxnew=p.vx;
-            p.vynew=p.vy;
+            p.vxnew = p.vx;
+            p.vynew = p.vy;
         }
 
         for (Link link : links) {
@@ -272,6 +277,11 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
             p2.vynew = p2.vynew - (uy * force / mass2) * dt;
         }
 
+        // extra gravity
+ //        for (Point p : particles) {
+ //           p.vynew = p.vynew - 10 * dt;
+ //       }       
+        
         // new position and speed of all particles
         for (Point p : particles) {
             p.x = p.x + ((p.vx + p.vxnew) / 2) * dt;
@@ -288,7 +298,7 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
             x2 = MovingParticles.transform.xUserToScreen(p.xLastDrawn);
             y2 = MovingParticles.transform.yUserToScreen(p.yLastDrawn);
             double sqScreenDistance = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
-            if (sqScreenDistance > 100) {
+            if (sqScreenDistance > resolution * resolution) {
                 if (p.trajectory != null) {
                     p.trajectory.addPoint(p.x, p.y);
                 }

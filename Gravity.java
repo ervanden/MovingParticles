@@ -116,7 +116,7 @@ class Gravity implements Animation, ActionListener {
 
     }
 
-    public boolean step(double dt) {
+    public boolean step(double dt, int resolution) {
         // This method calculates the new position of all particles after time step dt.
         // If no points are added to any trajectory, return false, true otherwise.
         // This to avoid redrawing the screen when nothing changed
@@ -174,7 +174,7 @@ class Gravity implements Animation, ActionListener {
             x2 = MovingParticles.transform.xUserToScreen(p.xLastDrawn);
             y2 = MovingParticles.transform.yUserToScreen(p.yLastDrawn);
             double sqScreenDistance = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
-            if (sqScreenDistance > 10) {
+            if (sqScreenDistance > resolution*resolution) {
                 if (p.trajectory != null) {
                     p.trajectory.addPoint(p.x, p.y);
                 }

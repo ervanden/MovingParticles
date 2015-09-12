@@ -1,3 +1,4 @@
+
 import java.awt.BasicStroke;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -149,23 +150,25 @@ class Transform {
         ycenter = yUserToScreen(y);
         graphics.fillOval(xcenter - 4, ycenter - 4, 8, 8);
         graphics.drawString(s, xcenter + 4, ycenter - 4);
- //                  System.out.printf("point %s at %d,%d\n",s,xcenter + 4, ycenter - 4);
+        //                  System.out.printf("point %s at %d,%d\n",s,xcenter + 4, ycenter - 4);
     }
 
-        public void strings(ArrayList<String> l) {
+    public void strings(ArrayList<String> l) {
         int xo, yo;
         xo = 10;
         yo = 20;
-        int position=0;
-        for (String s : l){
-        graphics.drawString(s, xo, yo+ position*15);
-        position++;
+        int position = 0;
+        for (String s : l) {
+            if (s == null) {
+                s = "null";
+            }
+            graphics.drawString(s, xo, yo + position * 15);
+            position++;
         }
     }
-        
-        
+
     public void axes() {
-        
+
         graphics.setColor(Color.black);
         BasicStroke stroke0 = new BasicStroke();     // default dunne lijn
         BasicStroke stroke3 = new BasicStroke(3);    // dikkere lijn voor x en y as
@@ -222,15 +225,15 @@ class Transform {
 
         graphics.setColor(Color.gray);
 
-        for (int i = (int) Math.round(yScreenToUser((int)symin_real))-1; i < Math.round(yScreenToUser((int)symax_real)+1); i++) {
+        for (int i = (int) Math.round(yScreenToUser((int) symin_real)) - 1; i < Math.round(yScreenToUser((int) symax_real) + 1); i++) {
             graphics.drawLine((int) sxmin_real,
                     yUserToScreen(i),
                     (int) sxmax_real,
                     yUserToScreen(i)
             );
         };
-        
-        for (int i = (int) Math.round(xScreenToUser((int)sxmin_real))-1; i < Math.round(xScreenToUser((int)sxmax_real)+1); i++) {
+
+        for (int i = (int) Math.round(xScreenToUser((int) sxmin_real)) - 1; i < Math.round(xScreenToUser((int) sxmax_real) + 1); i++) {
             graphics.drawLine(xUserToScreen(i),
                     (int) symin_real,
                     xUserToScreen(i),

@@ -25,6 +25,8 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
 
     String animationType;
     Animation a;
+    double time = 0;
+    int steps = 0;
 
     ArrayList<Point> particles = null;
     Shape centerOfGravity = null;
@@ -33,18 +35,21 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
     public boolean exitRequested = false;
     boolean trajectoryOn = false;
     double timeStep = 0.001;
+    int resolution = 5;
     int sleepMilliseconds = 1000;
     boolean centerCog = false;
 
     JFrame sFrame;
     JLabel frameDelayInfo;
     JLabel timeStepInfo;
+    JLabel resolutionInfo;
     JButton initializeButton;
     JButton goSuspendButton;
     JButton resetButton;
     JButton followCogButton;
-    JSlider sliderMsec;
+    JSlider sliderFrameDelay;
     JSlider sliderTimeStep;
+    JSlider sliderResolution;
     JComboBox animationBox;
     JCheckBox trajectoryBox;
     JCheckBox cogBox;
@@ -63,12 +68,16 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
         animationBox.addActionListener(this);
 
         frameDelayInfo = new JLabel("frame delay", JLabel.CENTER);
-        sliderMsec = new JSlider(0, 1000, 1000);
-        sliderMsec.addChangeListener(this);
+        sliderFrameDelay = new JSlider(0, 1000, 1000);
+        sliderFrameDelay.addChangeListener(this);
 
         timeStepInfo = new JLabel("time step", JLabel.CENTER);
         sliderTimeStep = new JSlider(-6000, -1000, -3000);
         sliderTimeStep.addChangeListener(this);
+
+        resolutionInfo = new JLabel("drawing resolution", JLabel.CENTER);
+        sliderResolution = new JSlider(1, 15, 5);
+        sliderResolution.addChangeListener(this);
 
         trajectoryBox = new JCheckBox("Show trajectories");
         cogBox = new JCheckBox("Show center of gravity");
@@ -77,13 +86,17 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
         cogBox.setEnabled(false);
         trajectoryBox.setEnabled(false);
 
+        pane.add(Box.createRigidArea(new Dimension(500, 20)));
         pane.add(animationBox);
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
         pane.add(frameDelayInfo);
-        pane.add(sliderMsec);
+        pane.add(sliderFrameDelay);
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
         pane.add(timeStepInfo);
         pane.add(sliderTimeStep);
+        pane.add(Box.createRigidArea(new Dimension(500, 20)));
+        pane.add(resolutionInfo);
+        pane.add(sliderResolution);
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
 
         JPanel showPanel = new JPanel();
@@ -118,13 +131,17 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
     }
 
     public void stateChanged(ChangeEvent e) {
-        if (e.getSource().equals(sliderMsec)) {
-            sleepMilliseconds = sliderMsec.getValue();
+        if (e.getSource().equals(sliderFrameDelay)) {
+            sleepMilliseconds = sliderFrameDelay.getValue();
             frameDelayInfo.setText("frame delay " + sleepMilliseconds + " msec");
         } else if (e.getSource().equals(sliderTimeStep)) {
             timeStep = Math.pow(10.0, (double) sliderTimeStep.getValue() / 1000);
             String timeStepString = String.format("%f", timeStep);
             timeStepInfo.setText("time step " + timeStepString + " sec");
+        } else if (e.getSource().equals(sliderResolution)) {
+            resolution = sliderResolution.getValue();
+            String resolutionString = String.format("%d", resolution);
+            resolutionInfo.setText("resolution " + resolutionString + " pixels");
         }
     }
 
@@ -226,6 +243,8 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
                 updateCenterOfGravity();
             }
         }
+        time = 0;
+        steps = 0;
 
         MovingParticles.zPlane.blitPaint();
 
@@ -272,7 +291,7 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
             reset();
 
         } else if (e.getSource().equals(followCogButton)) {
-            centerCog = true;
+            centerCog = !centerCog;
         }
     }
 
@@ -295,12 +314,11 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
         System.out.println("run() suspended=" + suspended);
 
         boolean redraw = true;
-        double time = 0;
-        int steps = 0;
+
         while (!exitRequested) {
             if (!suspended && !exitRequested) {
 
-                redraw = a.step(timeStep);
+                redraw = a.step(timeStep, resolution);
 
                 time = time + timeStep;
                 steps = steps + 1;
@@ -314,7 +332,6 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
                         updateCenterOfGravity();
                         if (centerCog) {
                             moveCenterToCog();
-                            centerCog = false;  // toggle button
                         }
                     }
                     sFrame.setTitle(String.format("time: %6.2f steps %d", time, steps));

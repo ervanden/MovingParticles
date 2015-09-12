@@ -21,7 +21,7 @@ class Rotation implements Animation {
     public void cleanup() {
     }
 
-    public boolean step(double dt) {
+    public boolean step(double dt, int resolution) {
         double alfa;
 
         alfa = omega * dt;
