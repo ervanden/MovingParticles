@@ -127,12 +127,8 @@ class Gravity implements Animation, ActionListener {
 
         for (Point p : particles) {
             kineticEnergy = kineticEnergy + 0.5 * p.mass * (p.vx * p.vx + p.vy * p.vy);
-        }
-
-        // new position of all particles
-        for (Point p : particles) {
-            p.xnew = p.x + p.vx * dt;
-            p.ynew = p.y + p.vy * dt;
+            p.vxnew=p.vx;
+            p.vynew=p.vy;
         }
 
         // new speed of all particles
@@ -153,16 +149,24 @@ class Gravity implements Animation, ActionListener {
                 double ux = (p2.x - p1.x) / r;  //unit vector from p1 to p2
                 double uy = (p2.y - p1.y) / r;
 
-                p1.vx = p1.vx + (ux * force / mass1) * dt;
-                p1.vy = p1.vy + (uy * force / mass1) * dt;
-                p2.vx = p2.vx - (ux * force / mass2) * dt;
-                p2.vy = p2.vy - (uy * force / mass2) * dt;
+                p1.vxnew = p1.vxnew + (ux * force / mass1) * dt;
+                p1.vynew = p1.vynew + (uy * force / mass1) * dt;
+                p2.vxnew = p2.vxnew - (ux * force / mass2) * dt;
+                p2.vynew = p2.vynew - (uy * force / mass2) * dt;
             }
+        }
+        
+        // new position and speed of all particles
+        for (Point p : particles) {
+           p.x = p.x + ((p.vx+p.vxnew)/2) * dt;
+           p.y = p.y + ((p.vy+p.vynew)/2) * dt;
+ //          p.x = p.x + p.vx * dt;
+ //          p.y = p.y + p.vy * dt;
+            p.vx=p.vxnew;
+            p.vy=p.vynew;
         }
 
         for (Point p : particles) {
-            p.x = p.xnew;
-            p.y = p.ynew;
 
             double x1, x2, y1, y2;
             x1 = MovingParticles.transform.xUserToScreen(p.x);
@@ -170,7 +174,7 @@ class Gravity implements Animation, ActionListener {
             x2 = MovingParticles.transform.xUserToScreen(p.xLastDrawn);
             y2 = MovingParticles.transform.yUserToScreen(p.yLastDrawn);
             double sqScreenDistance = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
-            if (sqScreenDistance > 100) {
+            if (sqScreenDistance > 10) {
                 if (p.trajectory != null) {
                     p.trajectory.addPoint(p.x, p.y);
                 }
@@ -185,7 +189,7 @@ class Gravity implements Animation, ActionListener {
         MovingParticles.Drawing.setString(1, String.format("P=%.1f", potentialEnergy));
         MovingParticles.Drawing.setString(2, String.format("T=%.1f", kineticEnergy + potentialEnergy));
 
-        return true;
+        return redraw;
     }
 
     public void cleanup() {

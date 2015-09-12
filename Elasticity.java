@@ -241,14 +241,10 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
         double kineticEnergy = 0;
 
         // CoG, potential and kinetic energy are calculated at the beginning of this step
-        for (Point p : particles) {  // new position of all particles
-            p.xnew = p.x + p.vx * dt;
-            p.ynew = p.y + p.vy * dt;
-        }
-
-        // new speed of all particles
         for (Point p : particles) {
             kineticEnergy = kineticEnergy + 0.5 * p.mass * (p.vx * p.vx + p.vy * p.vy);
+            p.vxnew=p.vx;
+            p.vynew=p.vy;
         }
 
         for (Link link : links) {
@@ -270,15 +266,21 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
             double ux = (p2.x - p1.x) / r;  //unit vector from p1 to p2
             double uy = (p2.y - p1.y) / r;
 
-            p1.vx = p1.vx + (ux * force / mass1) * dt;
-            p1.vy = p1.vy + (uy * force / mass1) * dt;
-            p2.vx = p2.vx - (ux * force / mass2) * dt;
-            p2.vy = p2.vy - (uy * force / mass2) * dt;
+            p1.vxnew = p1.vxnew + (ux * force / mass1) * dt;
+            p1.vynew = p1.vynew + (uy * force / mass1) * dt;
+            p2.vxnew = p2.vxnew - (ux * force / mass2) * dt;
+            p2.vynew = p2.vynew - (uy * force / mass2) * dt;
+        }
+
+        // new position and speed of all particles
+        for (Point p : particles) {
+            p.x = p.x + ((p.vx + p.vxnew) / 2) * dt;
+            p.y = p.y + ((p.vy + p.vynew) / 2) * dt;
+            p.vx = p.vxnew;
+            p.vy = p.vynew;
         }
 
         for (Point p : particles) {
-            p.x = p.xnew;
-            p.y = p.ynew;
 
             double x1, x2, y1, y2;
             x1 = MovingParticles.transform.xUserToScreen(p.x);
@@ -298,8 +300,8 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
         MovingParticles.Drawing.setString(0, String.format("K=%f", kineticEnergy));
         MovingParticles.Drawing.setString(1, String.format("P=%f", potentialEnergy));
         MovingParticles.Drawing.setString(2, String.format("T=%f", kineticEnergy + potentialEnergy));
- //        return redraw;
-        return true;
+        //        return redraw;
+        return redraw;
     }
 
     public void cleanup() {

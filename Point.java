@@ -18,6 +18,8 @@ public double xLastDrawn;
 public double yLastDrawn;
 public double xnew;
 public double ynew;
+public double vxnew;
+public double vynew;
 
 public Point(double px, double py){
 x=px;

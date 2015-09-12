@@ -304,7 +304,6 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
 
                 time = time + timeStep;
                 steps = steps + 1;
-                sFrame.setTitle(String.format("time: %6.2f steps %d", time, steps));
 
                 if (redraw) {
                     try {
@@ -315,10 +314,10 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
                         updateCenterOfGravity();
                         if (centerCog) {
                             moveCenterToCog();
-                            centerCog = false;
+                            centerCog = false;  // toggle button
                         }
                     }
-
+                    sFrame.setTitle(String.format("time: %6.2f steps %d", time, steps));
                     MovingParticles.zPlane.blitPaint();
                 }
             }
