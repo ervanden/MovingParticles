@@ -46,6 +46,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
     boolean actionMoveAll = false;
 
     boolean actionDeletePoint = false;
+    boolean actionFixPoint = false;
     boolean actionDeleteShape = false;
     boolean actionUnselect = false;
     boolean actionSelect = false;
@@ -389,6 +390,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         actionMoveSelection = false;
         actionMoveAll = false;
         actionDeletePoint = false;
+        actionFixPoint = false;
         actionDeleteShape = false;
         actionSelect = false;
         actionUnselect = false;
@@ -400,6 +402,17 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         x = e.getX();
         y = e.getY();
         saySomething("Mouse pressed (" + x + "," + y + ") (# of clicks: " + e.getClickCount() + ")", e);
+
+        if (actionFixPoint) {
+
+            double xuser = transform.xScreenToUser(x);
+            double yuser = transform.yScreenToUser(y);
+            cp = Drawing.closestPoint(xuser, yuser);
+            if (cp != null) {
+                cp.fixed = true;
+            }
+            repaintBothWindows();
+        }
 
         if (actionDeletePoint) {
 
@@ -655,6 +668,11 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
         if (buttonClicked == "Move All") {
             actionMoveAll = true;
+            firstPoint = true;
+        };
+
+        if (buttonClicked == "Fix Point") {
+            actionFixPoint = true;
             firstPoint = true;
         };
 
@@ -936,6 +954,10 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         AddMenuItem(menuDelete, "Shape", "Delete Shape");
         AddMenuItem(menuDelete, "Selection", "Delete Selection");
         AddMenuItem(menuDelete, "All", "Delete All");
+        
+                JMenu menuFix = new JMenu("Fix");
+        zMenuBar.add(menuFix);
+        AddMenuItem(menuFix, "Point", "Fix Point");
 
         JMenu menuZplane = new JMenu("View");
         zMenuBar.add(menuZplane);

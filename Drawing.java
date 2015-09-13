@@ -10,8 +10,8 @@ class Drawing {
 
     private List<Shape> shapes;
     private ArrayList<String> strings;
-    
-    int stringsMaxLength=0;
+
+    int stringsMaxLength = 0;
 
     double areaCursorX1, areaCursorY1, areaCursorX2, areaCursorY2;
     boolean areaCursorOn = false;
@@ -55,12 +55,16 @@ class Drawing {
 
         }
     }
-    
-   public void setString(int position, String s){
-       if (position>strings.size()-1) strings.add(s);
-       strings.set(position,s);
-       if (s.length()>stringsMaxLength) stringsMaxLength=s.length();
-   } 
+
+    public void setString(int position, String s) {
+        if (position > strings.size() - 1) {
+            strings.add(s);
+        }
+        strings.set(position, s);
+        if (s.length() > stringsMaxLength) {
+            stringsMaxLength = s.length();
+        }
+    }
 
     public synchronized void deleteShape(Shape s) {
         shapes.remove(s);
@@ -110,9 +114,9 @@ class Drawing {
             t.line(areaCursorX2, areaCursorY2, areaCursorX1, areaCursorY2);
             t.line(areaCursorX1, areaCursorY2, areaCursorX1, areaCursorY1);
         }
-        
+
         t.strings(strings);
-        
+
         Point xyprev;
         for (Shape s : shapes) {
             if ((s.isSelected || s.isPreSelected) && !s.isPreUnselected) {
@@ -127,6 +131,9 @@ class Drawing {
 
                 PointShape ps = (PointShape) s;
                 t.complexPoint(ps.getName(), ps.getX(), ps.getY());
+                if (ps.getPoint().fixed) {
+                    t.fix(ps.getPoint().x, ps.getPoint().y);
+                }
 
             } else {   // not a point shape
 
@@ -136,13 +143,16 @@ class Drawing {
                         if (xyprev != null) {
                             t.line(xyprev.getZX(), xyprev.getZY(), xy.getZX(), xy.getZY());
                         }
+                        if (xy.fixed) {
+                            t.fix(xy.x, xy.y);
+                        }
                         xyprev = xy;
                     }
                 }
 
                 if (dotsVisible) {
                     for (Point xy : s.points) {
-                        t.dot(xy.getZX(), xy.getZY());
+                        t.dot(xy.x, xy.y);
                     }
                 }
             }
@@ -195,12 +205,12 @@ class Drawing {
         }; // for
         return psmin;
     }
-    
-        public synchronized Point closestPoint(double x, double y) {
+
+    public synchronized Point closestPoint(double x, double y) {
         Point psmin = null;
         double dmin = Double.POSITIVE_INFINITY;
         for (Shape s : shapes) {
-            for (Point ps : s.points){
+            for (Point ps : s.points) {
                 double x1 = ps.x;
                 double y1 = ps.y;
                 if ((x - x1) * (x - x1) + (y - y1) * (y - y1) < dmin) {
@@ -208,7 +218,7 @@ class Drawing {
                     psmin = ps;
                 }
             }
-        } 
+        }
         return psmin;
     }
 
@@ -256,8 +266,8 @@ class Drawing {
     }
 
     public synchronized void movePointRelative(Point p, double dx, double dy) {
-        p.x=p.x + dx;
-        p.y=p.y + dy;
+        p.x = p.x + dx;
+        p.y = p.y + dy;
     }
 
     public synchronized void moveShapesRelative(String l, double dx, double dy) {

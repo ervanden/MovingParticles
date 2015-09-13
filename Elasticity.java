@@ -40,21 +40,27 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
     public Elasticity() {
 
         Shape shape;
+       
         shape = MovingParticles.Drawing.addShape();
         MovingParticles.Drawing.addPointToShape(shape, 1, 4);
-        MovingParticles.Drawing.addPointToShape(shape, 1,3);
-        MovingParticles.Drawing.addPointToShape(shape, 1,2);
-         MovingParticles.Drawing.addPointToShape(shape, 1,1);
-         
+        shape.lastPoint().fixed=true;
+        MovingParticles.Drawing.addPointToShape(shape, 1, 3);
+        MovingParticles.Drawing.addPointToShape(shape, 1, 2);
+//        MovingParticles.Drawing.addPointToShape(shape, 1, 1);
+
+        
         // create a new shape with only particles that are sufficiently apart 
         ArrayList<Point> newPoints = new ArrayList<>();
+        Point newPoint=null;
         for (Shape s : MovingParticles.Drawing.getShapes()) {
             boolean first = true;
             double xprev = 0;
             double yprev = 0;
             for (Point p : s.points) {
                 if (first || (((p.x - xprev) * (p.x - xprev) + (p.y - yprev) * (p.y - yprev)) > 10e-6)) {
-                    newPoints.add(new Point(p.x, p.y));
+                    newPoint = new Point(p.x, p.y);
+                    newPoints.add(newPoint);
+                    newPoint.fixed=p.fixed;
                     xprev = p.x;
                     yprev = p.y;
                     first = false;
@@ -71,6 +77,7 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
             shape = MovingParticles.Drawing.addShape();
             for (Point p : newPoints) {
                 MovingParticles.Drawing.addPointToShape(shape, p.x, p.y);
+                shape.lastPoint().fixed=p.fixed;
             }
             System.out.printf("\nShape %s with %d points\n\n", shape.label, shape.points.size());
         }
@@ -117,7 +124,7 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
         pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
 
         kInfo = new JLabel("elasticity constant", JLabel.CENTER);
-        sliderK = new JSlider(-2000, 2000, 0);
+        sliderK = new JSlider(-2000, 10000, 0);
         sliderK.addChangeListener(this);
 
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
@@ -278,33 +285,37 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
         }
 
         // extra gravity
- //        for (Point p : particles) {
- //           p.vynew = p.vynew - 10 * dt;
- //       }       
+        for (Point p : particles) {
+           p.vynew = p.vynew - 10 * dt;
+           potentialEnergy=potentialEnergy+p.mass*p.y*10;
+       } 
         
         // new position and speed of all particles
         for (Point p : particles) {
-            p.x = p.x + ((p.vx + p.vxnew) / 2) * dt;
-            p.y = p.y + ((p.vy + p.vynew) / 2) * dt;
-            p.vx = p.vxnew;
-            p.vy = p.vynew;
+            if (!p.fixed) {
+                p.x = p.x + ((p.vx + p.vxnew) / 2) * dt;
+                p.y = p.y + ((p.vy + p.vynew) / 2) * dt;
+                p.vx = p.vxnew;
+                p.vy = p.vynew;
+            }
         }
 
         for (Point p : particles) {
-
-            double x1, x2, y1, y2;
-            x1 = MovingParticles.transform.xUserToScreen(p.x);
-            y1 = MovingParticles.transform.yUserToScreen(p.y);
-            x2 = MovingParticles.transform.xUserToScreen(p.xLastDrawn);
-            y2 = MovingParticles.transform.yUserToScreen(p.yLastDrawn);
-            double sqScreenDistance = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
-            if (sqScreenDistance > resolution * resolution) {
-                if (p.trajectory != null) {
-                    p.trajectory.addPoint(p.x, p.y);
+            if (!p.fixed) {
+                double x1, x2, y1, y2;
+                x1 = MovingParticles.transform.xUserToScreen(p.x);
+                y1 = MovingParticles.transform.yUserToScreen(p.y);
+                x2 = MovingParticles.transform.xUserToScreen(p.xLastDrawn);
+                y2 = MovingParticles.transform.yUserToScreen(p.yLastDrawn);
+                double sqScreenDistance = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
+                if (sqScreenDistance > resolution * resolution) {
+                    if (p.trajectory != null) {
+                        p.trajectory.addPoint(p.x, p.y);
+                    }
+                    redraw = true;
+                    p.xLastDrawn = p.x;
+                    p.yLastDrawn = p.y;
                 }
-                redraw = true;
-                p.xLastDrawn = p.x;
-                p.yLastDrawn = p.y;
             }
         }
         MovingParticles.Drawing.setString(0, String.format("K=%f", kineticEnergy));

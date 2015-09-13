@@ -6,6 +6,7 @@ public double x;
 public double y;
 public double vx;
 public double vy;
+public boolean fixed;
 
 String particleName;
 Shape trajectory;
@@ -26,6 +27,7 @@ x=px;
 y=py;
 vx=0;
 vy=0;
+fixed=false;
 mass=1;
 }
 

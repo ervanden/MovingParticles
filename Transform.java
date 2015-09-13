@@ -153,6 +153,18 @@ class Transform {
         //                  System.out.printf("point %s at %d,%d\n",s,xcenter + 4, ycenter - 4);
     }
 
+    public void fix(double x, double y) {
+        int xcenter, ycenter;
+        xcenter = xUserToScreen(x);
+        ycenter = yUserToScreen(y);
+        int w=4;
+        graphics.drawLine(xcenter - w, ycenter - w, xcenter - w, ycenter + w);
+        graphics.drawLine(xcenter - w, ycenter + w, xcenter + w, ycenter + w);
+        graphics.drawLine(xcenter + w, ycenter + w, xcenter + w, ycenter - w);
+        graphics.drawLine(xcenter + w, ycenter - w, xcenter - w, ycenter - w);
+    }
+    
+
     public void strings(ArrayList<String> l) {
         int xo, yo;
         xo = 10;
