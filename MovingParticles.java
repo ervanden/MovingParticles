@@ -267,9 +267,11 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                 xprev = x;
                 yprev = y;
                 firstPoint = false;
+                System.out.println("move view first point");
             }
 
             if (!firstPoint) {
+                                System.out.println("move view second point");
                 userDeltaX = planeTransform.xScreenToUser(x) - planeTransform.xScreenToUser(xprev);
                 userDeltaY = planeTransform.yScreenToUser(y) - planeTransform.yScreenToUser(yprev);
                 xprev = x;
@@ -288,7 +290,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
             }
 
-        } // Move View
+        } 
 
         if ((actionSelectArea || actionUnselectArea)) {
 
@@ -507,9 +509,8 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                     yend = Math.round(yend);
                     ybegin = Math.round(ybegin);
                 };
-//                pixelDist = (x - xprev) * (x - xprev) + (y - yprev) * (y - yprev);
-//                nsegments = Math.round((int) Math.sqrt((double) pixelDist) / minPixelDist);
-                nsegments = 10;
+
+                nsegments = 1;
                 // create nsegments intermediate points
                 for (int i = 0; i <= nsegments; i++) {
                     System.out.println(" segment point x= " + (xbegin + ((double) i / (double) nsegments) * (xend - xbegin))
@@ -517,6 +518,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                     Drawing.addPointToShape(currentShape, xbegin + ((double) i / (double) nsegments) * (xend - xbegin),
                             ybegin + ((double) i / (double) nsegments) * (yend - ybegin));
                 };
+
                 xprev = x;
                 yprev = y;
                 repaintBothWindows();
@@ -526,7 +528,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                 actionAddLine = false;
             };
         }
-        ; // Add Line
+        ;
 
         if (actionAddPoint) {
 
@@ -620,7 +622,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
     public void actionPerformed(ActionEvent ae) {
 
         lastButtonClicked = ae.getActionCommand();
-        //       System.out.println(lastButtonClicked + " pressed!");
+//       System.out.println(lastButtonClicked + " pressed!");
         this.executeAction(lastButtonClicked);
 
     }

@@ -23,9 +23,12 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
     ArrayList<Point> extremities = new ArrayList<>();
     ArrayList<Link> links = new ArrayList<>();
 
-    double k = 1;  // elasticity constant  F = k * delta(x)
-    JSlider sliderK;
-    JLabel kInfo;
+    double k1 = 1;  // elasticity constant  F = k * delta(x)
+    double k2 = 1;
+    JSlider sliderK1;
+    JSlider sliderK2;
+    JLabel k1Info;
+    JLabel k2Info;
 
     class Link {
 
@@ -40,18 +43,18 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
     public Elasticity() {
 
         Shape shape;
-       
-        shape = MovingParticles.Drawing.addShape();
-        MovingParticles.Drawing.addPointToShape(shape, 1, 4);
-        shape.lastPoint().fixed=true;
-        MovingParticles.Drawing.addPointToShape(shape, 1, 3);
-        MovingParticles.Drawing.addPointToShape(shape, 1, 2);
-//        MovingParticles.Drawing.addPointToShape(shape, 1, 1);
+        /*       
+         shape = MovingParticles.Drawing.addShape();
+         MovingParticles.Drawing.addPointToShape(shape, 1, 4);
+         shape.lastPoint().fixed=true;
+         MovingParticles.Drawing.addPointToShape(shape, 1, 3);
+         MovingParticles.Drawing.addPointToShape(shape, 1, 2);
+         MovingParticles.Drawing.addPointToShape(shape, 1, 1);
+         */
 
-        
         // create a new shape with only particles that are sufficiently apart 
         ArrayList<Point> newPoints = new ArrayList<>();
-        Point newPoint=null;
+        Point newPoint;
         for (Shape s : MovingParticles.Drawing.getShapes()) {
             boolean first = true;
             double xprev = 0;
@@ -60,7 +63,7 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
                 if (first || (((p.x - xprev) * (p.x - xprev) + (p.y - yprev) * (p.y - yprev)) > 10e-6)) {
                     newPoint = new Point(p.x, p.y);
                     newPoints.add(newPoint);
-                    newPoint.fixed=p.fixed;
+                    newPoint.fixed = p.fixed;
                     xprev = p.x;
                     yprev = p.y;
                     first = false;
@@ -77,7 +80,7 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
             shape = MovingParticles.Drawing.addShape();
             for (Point p : newPoints) {
                 MovingParticles.Drawing.addPointToShape(shape, p.x, p.y);
-                shape.lastPoint().fixed=p.fixed;
+                shape.lastPoint().fixed = p.fixed;
             }
             System.out.printf("\nShape %s with %d points\n\n", shape.label, shape.points.size());
         }
@@ -123,13 +126,19 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
         pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
 
-        kInfo = new JLabel("elasticity constant", JLabel.CENTER);
-        sliderK = new JSlider(-2000, 10000, 0);
-        sliderK.addChangeListener(this);
+        k1Info = new JLabel("elasticity constant (stretch)", JLabel.CENTER);
+        sliderK1 = new JSlider(-5000, 5000, 0);
+        sliderK1.addChangeListener(this);
+        k2Info = new JLabel("elasticity constant (compress)", JLabel.CENTER);
+        sliderK2 = new JSlider(-5000, 5000, 0);
+        sliderK2.addChangeListener(this);
 
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
-        pane.add(kInfo);
-        pane.add(sliderK);
+        pane.add(k1Info);
+        pane.add(sliderK1);
+        pane.add(Box.createRigidArea(new Dimension(500, 20)));
+        pane.add(k2Info);
+        pane.add(sliderK2);
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
 
         for (int i = 0; i < extremities.size(); i++) {
@@ -149,10 +158,15 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
     }
 
     public void stateChanged(ChangeEvent e) {
-        if (e.getSource().equals(sliderK)) {
-            k = Math.pow(10.0, (double) sliderK.getValue() / 1000);
-            String kString = String.format("%f", k);
-            kInfo.setText("elasticity constant = " + kString);
+        if (e.getSource().equals(sliderK1)) {
+            k1 = Math.pow(10.0, (double) sliderK1.getValue() / 1000);
+            String kString = String.format("%f", k1);
+            k1Info.setText("elasticity constant (stretch) = " + kString);
+        }
+        if (e.getSource().equals(sliderK2)) {
+            k2 = Math.pow(10.0, (double) sliderK2.getValue() / 1000);
+            String kString = String.format("%f", k2);
+            k2Info.setText("elasticity constant (compress) = " + kString);
         }
     }
 
@@ -271,6 +285,13 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
                     + (p1.y_init - p2.y_init) * (p1.y_init - p2.y_init);
             double r0 = Math.sqrt(r0square);
 
+            double k;
+            if (r > r0) {
+                k = k1;
+            } else {
+                k = k2;
+            }
+
             Double force = k * (r - r0);
 
             potentialEnergy = potentialEnergy + 0.5 * k * (r - r0) * (r - r0);
@@ -286,10 +307,10 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
 
         // extra gravity
         for (Point p : particles) {
-           p.vynew = p.vynew - 10 * dt;
-           potentialEnergy=potentialEnergy+p.mass*p.y*10;
-       } 
-        
+            p.vynew = p.vynew - 10 * dt;
+            potentialEnergy = potentialEnergy + p.mass * p.y * 10;
+        }
+
         // new position and speed of all particles
         for (Point p : particles) {
             if (!p.fixed) {
