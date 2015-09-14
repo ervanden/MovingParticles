@@ -3,18 +3,22 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
+import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-class Elasticity implements Animation, ActionListener, ChangeListener {
+class Elasticity implements Animation, ActionListener, ChangeListener, ItemListener {
 
     JPanel pointPane;
     JPanel pane;
@@ -25,10 +29,13 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
 
     double k1 = 1;  // elasticity constant  F = k * delta(x)
     double k2 = 1;
+    boolean gravity = false;
+
     JSlider sliderK1;
     JSlider sliderK2;
     JLabel k1Info;
     JLabel k2Info;
+    JCheckBox gBox;
 
     class Link {
 
@@ -123,14 +130,22 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
         }
 
         pane = new JPanel();
-        pane.add(Box.createRigidArea(new Dimension(500, 20)));
         pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
+        Border blackline = BorderFactory.createLineBorder(Color.black);
+        pane.setBorder(blackline);
+
+        gBox = new JCheckBox("gravity");
+        gBox.addItemListener(this);
+        gBox.setEnabled(true);
+
+        pane.add(Box.createRigidArea(new Dimension(500, 20)));
+        pane.add(gBox);
 
         k1Info = new JLabel("elasticity constant (stretch)", JLabel.CENTER);
-        sliderK1 = new JSlider(-5000, 5000, 0);
+        sliderK1 = new JSlider(-5000, 3000, 0);
         sliderK1.addChangeListener(this);
         k2Info = new JLabel("elasticity constant (compress)", JLabel.CENTER);
-        sliderK2 = new JSlider(-5000, 5000, 0);
+        sliderK2 = new JSlider(-5000, 3000, 0);
         sliderK2.addChangeListener(this);
 
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
@@ -170,6 +185,20 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
         }
     }
 
+    public void itemStateChanged(ItemEvent e) {
+
+        Object source = e.getItemSelectable();
+
+        if (source == gBox) {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                gravity = true;
+            }
+            if (e.getStateChange() == ItemEvent.DESELECTED) {
+                gravity = false;
+            }
+        }
+    }
+
     private void addTextField(int i, String label, double value) {
         pointPane.add(Box.createRigidArea(new Dimension(20, 0)));
         pointPane.add(new JLabel(label));
@@ -182,42 +211,49 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
 
     public void actionPerformed(ActionEvent e) {
         {
-            JTextField field = (JTextField) e.getSource();
             String action = e.getActionCommand();
-            int particleNr = Integer.parseInt(action.split("[|]")[0]);
-            String attribute = action.split("[|]")[1];
-            boolean validValue = true;
-            double value = 0d;
-            try {
-                value = Double.valueOf(field.getText());
-            } catch (Exception ex) {
-                field.setBackground(Color.yellow);
-                validValue = false;
-            }
-            if (validValue) {
-                String pName = extremities.get(particleNr).particleName;
-                field.setBackground(Color.white);
 
-                if (attribute.equals("Mass")) {
-                    extremities.get(particleNr).mass = value;
-                    System.out.println(pName + "." + attribute + "=" + value);
+            if (action.equals("gravity on/off")) {
+                gravity = !gravity;
+                System.out.println("gravity" + gravity);
+            } else {
 
-                    field.setBackground(Color.green);
+                JTextField field = (JTextField) e.getSource();
+                int particleNr = Integer.parseInt(action.split("[|]")[0]);
+                String attribute = action.split("[|]")[1];
+                boolean validValue = true;
+                double value = 0d;
+                try {
+                    value = Double.valueOf(field.getText());
+                } catch (Exception ex) {
+                    field.setBackground(Color.yellow);
+                    validValue = false;
                 }
-                if (attribute.equals("Velocity")) {
-                    extremities.get(particleNr).velocity = value;
-                    System.out.println(pName + "." + attribute + "=" + value);
-                    field.setBackground(Color.green);
-                }
-                if (attribute.equals("Angle")) {
-                    extremities.get(particleNr).angle = value;
-                    System.out.println(pName + "." + attribute + "=" + value);
-                    field.setBackground(Color.green);
-                }
-                if (attribute.equals("Velocity") || attribute.equals("Angle")) {
-                    for (Point p : particles) {
-                        p.vx = p.velocity * Math.cos((p.angle / 180) * Math.PI);
-                        p.vy = p.velocity * Math.sin((p.angle / 180) * Math.PI);
+                if (validValue) {
+                    String pName = extremities.get(particleNr).particleName;
+                    field.setBackground(Color.white);
+
+                    if (attribute.equals("Mass")) {
+                        extremities.get(particleNr).mass = value;
+                        System.out.println(pName + "." + attribute + "=" + value);
+
+                        field.setBackground(Color.green);
+                    }
+                    if (attribute.equals("Velocity")) {
+                        extremities.get(particleNr).velocity = value;
+                        System.out.println(pName + "." + attribute + "=" + value);
+                        field.setBackground(Color.green);
+                    }
+                    if (attribute.equals("Angle")) {
+                        extremities.get(particleNr).angle = value;
+                        System.out.println(pName + "." + attribute + "=" + value);
+                        field.setBackground(Color.green);
+                    }
+                    if (attribute.equals("Velocity") || attribute.equals("Angle")) {
+                        for (Point p : particles) {
+                            p.vx = p.velocity * Math.cos((p.angle / 180) * Math.PI);
+                            p.vy = p.velocity * Math.sin((p.angle / 180) * Math.PI);
+                        }
                     }
                 }
             }
@@ -305,10 +341,11 @@ class Elasticity implements Animation, ActionListener, ChangeListener {
             p2.vynew = p2.vynew - (uy * force / mass2) * dt;
         }
 
-        // extra gravity
-        for (Point p : particles) {
-            p.vynew = p.vynew - 10 * dt;
-            potentialEnergy = potentialEnergy + p.mass * p.y * 10;
+        if (gravity) {
+            for (Point p : particles) {
+                p.vynew = p.vynew - 9.8 * dt;
+                potentialEnergy = potentialEnergy + p.mass * p.y * 9.8;
+            }
         }
 
         // new position and speed of all particles

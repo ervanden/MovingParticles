@@ -7,6 +7,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -16,6 +17,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
+import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -59,6 +61,12 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
         sFrame = new JFrame("animaton settings");
         Container pane = sFrame.getContentPane();
         pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
+         Border       blackline = BorderFactory.createLineBorder(Color.black);
+
+         JPanel topPane=new JPanel();
+         topPane.setLayout(new BoxLayout(topPane, BoxLayout.PAGE_AXIS));
+         topPane.setBorder(blackline);
+         pane.add(topPane);
 
         String[] animationTypes = {"rotation", "gravity", "elastic"};
 
@@ -86,18 +94,18 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
         cogBox.setEnabled(false);
         trajectoryBox.setEnabled(false);
 
-        pane.add(Box.createRigidArea(new Dimension(500, 20)));
-        pane.add(animationBox);
-        pane.add(Box.createRigidArea(new Dimension(500, 20)));
-        pane.add(frameDelayInfo);
-        pane.add(sliderFrameDelay);
-        pane.add(Box.createRigidArea(new Dimension(500, 20)));
-        pane.add(timeStepInfo);
-        pane.add(sliderTimeStep);
-        pane.add(Box.createRigidArea(new Dimension(500, 20)));
-        pane.add(resolutionInfo);
-        pane.add(sliderResolution);
-        pane.add(Box.createRigidArea(new Dimension(500, 20)));
+        topPane.add(Box.createRigidArea(new Dimension(500, 20)));
+        topPane.add(animationBox);
+        topPane.add(Box.createRigidArea(new Dimension(500, 20)));
+        topPane.add(frameDelayInfo);
+        topPane.add(sliderFrameDelay);
+        topPane.add(Box.createRigidArea(new Dimension(500, 20)));
+        topPane.add(timeStepInfo);
+        topPane.add(sliderTimeStep);
+        topPane.add(Box.createRigidArea(new Dimension(500, 20)));
+        topPane.add(resolutionInfo);
+        topPane.add(sliderResolution);
+        topPane.add(Box.createRigidArea(new Dimension(500, 20)));
 
         JPanel showPanel = new JPanel();
         showPanel.add(trajectoryBox);
@@ -121,10 +129,10 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
         followCogButton.setEnabled(false);
         goSuspendButton.setEnabled(false);
 
-        pane.add(Box.createRigidArea(new Dimension(500, 20)));
-        pane.add(showPanel);
-        pane.add(Box.createRigidArea(new Dimension(500, 20)));
-        pane.add(goPanel);
+        topPane.add(Box.createRigidArea(new Dimension(500, 20)));
+        topPane.add(showPanel);
+        topPane.add(Box.createRigidArea(new Dimension(500, 20)));
+        topPane.add(goPanel);
 
         sFrame.pack();
         sFrame.setVisible(true);

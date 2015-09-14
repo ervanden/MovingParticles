@@ -95,11 +95,8 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         x = e.getX();
         y = e.getY();
 
-        if (plane.zPlane) {
-            zFrame.setTitle(String.format("x=%.2f y=%.2f", transform.xScreenToUser(x),
-                    transform.yScreenToUser(y)));
-        };
-
+        zFrame.setTitle(String.format("x=%.2f y=%.2f", transform.xScreenToUser(x),
+                transform.yScreenToUser(y)));
     }
 
     public void mouseDragged(MouseEvent e) {
@@ -254,43 +251,31 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         if (actionMoveView) {
 
             double userDeltaX, userDeltaY;
-            Transform planeTransform = null;
-
-            if (plane.zPlane) {
-                planeTransform = transform;
-            } else {  // impossible?
-                actionMoveView = false;
-                firstPoint = false;
-            }
 
             if (firstPoint) {
                 xprev = x;
                 yprev = y;
                 firstPoint = false;
-                System.out.println("move view first point");
             }
 
             if (!firstPoint) {
-                                System.out.println("move view second point");
-                userDeltaX = planeTransform.xScreenToUser(x) - planeTransform.xScreenToUser(xprev);
-                userDeltaY = planeTransform.yScreenToUser(y) - planeTransform.yScreenToUser(yprev);
+                userDeltaX = transform.xScreenToUser(x) - transform.xScreenToUser(xprev);
+                userDeltaY = transform.yScreenToUser(y) - transform.yScreenToUser(yprev);
                 xprev = x;
                 yprev = y;
 
-                double xmin = planeTransform.uxmin;
-                double xmax = planeTransform.uxmax;
-                double ymin = planeTransform.uymin;
-                double ymax = planeTransform.uymax;
+                double xmin = transform.uxmin;
+                double xmax = transform.uxmax;
+                double ymin = transform.uymin;
+                double ymax = transform.uymax;
 
-                planeTransform.setUserSpace(xmin - userDeltaX, xmax - userDeltaX, ymin - userDeltaY, ymax - userDeltaY);
+                transform.setUserSpace(xmin - userDeltaX, xmax - userDeltaX, ymin - userDeltaY, ymax - userDeltaY);
 
-                if (plane.zPlane) {
-                    repaintZplane();
-                }
+                repaintZplane();
 
             }
 
-        } 
+        }
 
         if ((actionSelectArea || actionUnselectArea)) {
 
@@ -439,21 +424,19 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
             int zoomFactor = 2;
             double userx, usery;
 
-            if (plane.zPlane) {
-                double xmin = transform.uxmin;
-                double xmax = transform.uxmax;
-                double ymin = transform.uymin;
-                double ymax = transform.uymax;
-                userx = transform.xScreenToUser(x);
-                usery = transform.yScreenToUser(y);
+            double xmin = transform.uxmin;
+            double xmax = transform.uxmax;
+            double ymin = transform.uymin;
+            double ymax = transform.uymax;
+            userx = transform.xScreenToUser(x);
+            usery = transform.yScreenToUser(y);
 
-                transform.setUserSpace(userx - (xmax - xmin) / (2 * zoomFactor),
-                        userx + (xmax - xmin) / (2 * zoomFactor),
-                        usery - (ymax - ymin) / (2 * zoomFactor),
-                        usery + (ymax - ymin) / (2 * zoomFactor));
+            transform.setUserSpace(userx - (xmax - xmin) / (2 * zoomFactor),
+                    userx + (xmax - xmin) / (2 * zoomFactor),
+                    usery - (ymax - ymin) / (2 * zoomFactor),
+                    usery + (ymax - ymin) / (2 * zoomFactor));
 
-                repaintZplane();
-            };
+            repaintZplane();
 
             firstPoint = false;  // from now on, exiting the window = terminate zoomIn
 
@@ -854,12 +837,10 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
     private void create() {   // Create and set up the windows.
 
         zPlane.t = transform;
-        zPlane.zPlane = true;
 
         transform.setUserSpace(-10, 10, -10, 10);
 
-//create zPlane and wPlane frames
-//get device screen coordinates to position both frames
+        //get device screen coordinates to position the frame
         Rectangle bounds = gc.getBounds(); // device coordinates of the screen (0,0) = upper left (w,h) = lo right
 
         zFrame.setLocation(bounds.width / 2, 0);  //bounds.height / 3);
@@ -875,7 +856,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         zPlane.addKeyListener(this);
 
         zFrame.add(zPlane);
-        zFrame.setTitle("z plane");
+        zFrame.setTitle("space");
         zFrame.setVisible(true);
         zFrame.add(zPlane);
 
@@ -956,8 +937,8 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         AddMenuItem(menuDelete, "Shape", "Delete Shape");
         AddMenuItem(menuDelete, "Selection", "Delete Selection");
         AddMenuItem(menuDelete, "All", "Delete All");
-        
-                JMenu menuFix = new JMenu("Fix");
+
+        JMenu menuFix = new JMenu("Fix");
         zMenuBar.add(menuFix);
         AddMenuItem(menuFix, "Point", "Fix Point");
 

@@ -10,6 +10,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.border.Border;
 
 class Gravity implements Animation, ActionListener {
 
@@ -42,6 +43,9 @@ class Gravity implements Animation, ActionListener {
         pane = new JPanel();
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
         pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
+        Border blackline = BorderFactory.createLineBorder(Color.black);
+        pane.setBorder(blackline);
+
         for (int i = 0; i < particles.size(); i++) {
             Point p = particles.get(i);
             pointPane = new JPanel();
@@ -127,8 +131,8 @@ class Gravity implements Animation, ActionListener {
 
         for (Point p : particles) {
             kineticEnergy = kineticEnergy + 0.5 * p.mass * (p.vx * p.vx + p.vy * p.vy);
-            p.vxnew=p.vx;
-            p.vynew=p.vy;
+            p.vxnew = p.vx;
+            p.vynew = p.vy;
         }
 
         // new speed of all particles
@@ -155,15 +159,15 @@ class Gravity implements Animation, ActionListener {
                 p2.vynew = p2.vynew - (uy * force / mass2) * dt;
             }
         }
-        
+
         // new position and speed of all particles
         for (Point p : particles) {
-           p.x = p.x + ((p.vx+p.vxnew)/2) * dt;
-           p.y = p.y + ((p.vy+p.vynew)/2) * dt;
+            p.x = p.x + ((p.vx + p.vxnew) / 2) * dt;
+            p.y = p.y + ((p.vy + p.vynew) / 2) * dt;
  //          p.x = p.x + p.vx * dt;
- //          p.y = p.y + p.vy * dt;
-            p.vx=p.vxnew;
-            p.vy=p.vynew;
+            //          p.y = p.y + p.vy * dt;
+            p.vx = p.vxnew;
+            p.vy = p.vynew;
         }
 
         for (Point p : particles) {
@@ -174,7 +178,7 @@ class Gravity implements Animation, ActionListener {
             x2 = MovingParticles.transform.xUserToScreen(p.xLastDrawn);
             y2 = MovingParticles.transform.yUserToScreen(p.yLastDrawn);
             double sqScreenDistance = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
-            if (sqScreenDistance > resolution*resolution) {
+            if (sqScreenDistance > resolution * resolution) {
                 if (p.trajectory != null) {
                     p.trajectory.addPoint(p.x, p.y);
                 }
