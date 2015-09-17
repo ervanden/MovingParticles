@@ -78,12 +78,15 @@ class Elasticity implements Animation, ActionListener, ChangeListener, ItemListe
             }
         }
         MovingParticles.Drawing.clear();
-
-        if (newPoints.size() <= 1) {
-            System.out.println("All points too close. Shape is removed");
-            shape = null;
-            return;
-        } else {
+        /*
+         if (newPoints.size() <= 1) {
+         System.out.println("All points too close. Shape reduced to single point");
+         shape = null;
+         return;
+         } else
+         */
+        {
+            System.out.println("Shapes reduced to " + newPoints.size() + " points");
             shape = MovingParticles.Drawing.addShape();
             for (Point p : newPoints) {
                 MovingParticles.Drawing.addPointToShape(shape, p.x, p.y);
@@ -349,12 +352,39 @@ class Elasticity implements Animation, ActionListener, ChangeListener, ItemListe
         }
 
         // new position and speed of all particles
+        Transform t = MovingParticles.transform;
+
         for (Point p : particles) {
             if (!p.fixed) {
                 p.x = p.x + ((p.vx + p.vxnew) / 2) * dt;
                 p.y = p.y + ((p.vy + p.vynew) / 2) * dt;
                 p.vx = p.vxnew;
                 p.vy = p.vynew;
+            }
+        }
+
+        // bounce 
+        for (Point p : particles) {
+            double uxmax = t.xScreenToUser((int) t.sxmax_real);
+            double uxmin = t.xScreenToUser((int) t.sxmin_real);
+            double uymax = t.yScreenToUser((int) t.symax_real);
+            double uymin = t.yScreenToUser((int) t.symin_real);
+
+            if (p.x > uxmax) {
+                p.x = uxmax - (p.x - uxmax);
+                p.vx = -p.vx;
+            }
+            if (p.x < uxmin) {
+                p.x = uxmin + (uxmin - p.x);
+                p.vx = -p.vx;
+            }
+            if (p.y > uymax) {
+                p.y = uymax - (p.y - uymax);
+                p.vy = -p.vy;
+            }
+            if (p.y < uymin) {
+                p.y = uymin + (uymin - p.y);
+                p.vy = -p.vy;
             }
         }
 

@@ -15,10 +15,10 @@ class Transform {
     public double uymax;
 
 // real screen coordinates (from setUserSpace)
-    double sxmin_real = 0;
-    double sxmax_real = 0;
-    double symin_real = 0;
-    double symax_real = 0;
+    public double sxmin_real = 0;
+    public double sxmax_real = 0;
+    public double symin_real = 0;
+    public double symax_real = 0;
 
 // recalculated screen boundaries to preserve user space aspect ratio
     double sxmin = 0;
