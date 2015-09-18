@@ -71,7 +71,17 @@ class Drawing {
     }
 
     public synchronized void addPointToShape(Shape s, double x, double y) {
-        s.addPoint(x, y);
+        if (s.points.size() == 0) {
+            s.addPoint(x, y);
+        } else {
+            double xprev = s.lastPoint().x;
+            double yprev = s.lastPoint().y;
+            if (((x - xprev) * (x - xprev) + (y - yprev) * (y - yprev)) > 10e-6) {
+                s.addPoint(x, y);
+            } else {
+                System.out.println("Point too close to previous in shape " + s.label + " : not added");
+            }
+        }
     }
 
     public synchronized void clearShape(Shape s) {

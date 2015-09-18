@@ -30,6 +30,7 @@ class Elasticity implements Animation, ActionListener, ChangeListener, ItemListe
     double k1 = 1;  // elasticity constant  F = k * delta(x)
     double k2 = 1;
     boolean gravity = false;
+    boolean viscosity = true;
 
     JSlider sliderK1;
     JSlider sliderK2;
@@ -49,89 +50,87 @@ class Elasticity implements Animation, ActionListener, ChangeListener, ItemListe
 
     public Elasticity() {
 
-        Shape shape;
-        /*       
+        /* no longer needed : too close a point intercepted in addPointToShape()
+        
+         // replace each shape by  a new shape with only particles that are sufficiently apart 
+        
+         ArrayList<Point> newPoints = new ArrayList<>();
+         Point newPoint;
+         for (Shape s : MovingParticles.Drawing.getShapes()) {
+         boolean first = true;
+         double xprev = 0;
+         double yprev = 0;
+         for (Point p : s.points) {
+         if (first || (((p.x - xprev) * (p.x - xprev) + (p.y - yprev) * (p.y - yprev)) > 10e-6)) {
+         newPoint = new Point(p.x, p.y);
+         newPoints.add(newPoint);
+         newPoint.fixed = p.fixed;
+         xprev = p.x;
+         yprev = p.y;
+         first = false;
+         }
+         }
+         }
+         MovingParticles.Drawing.clear();
+
+         {
+         System.out.println("Shapes reduced to " + newPoints.size() + " points");
          shape = MovingParticles.Drawing.addShape();
-         MovingParticles.Drawing.addPointToShape(shape, 1, 4);
-         shape.lastPoint().fixed=true;
-         MovingParticles.Drawing.addPointToShape(shape, 1, 3);
-         MovingParticles.Drawing.addPointToShape(shape, 1, 2);
-         MovingParticles.Drawing.addPointToShape(shape, 1, 1);
+         for (Point p : newPoints) {
+         MovingParticles.Drawing.addPointToShape(shape, p.x, p.y);
+         shape.lastPoint().fixed = p.fixed;
+         }
+         System.out.printf("\nShape %s with %d points\n\n", shape.label, shape.points.size());
+         }
          */
-
-        // create a new shape with only particles that are sufficiently apart 
-        ArrayList<Point> newPoints = new ArrayList<>();
-        Point newPoint;
-        for (Shape s : MovingParticles.Drawing.getShapes()) {
-            boolean first = true;
-            double xprev = 0;
-            double yprev = 0;
-            for (Point p : s.points) {
-                if (first || (((p.x - xprev) * (p.x - xprev) + (p.y - yprev) * (p.y - yprev)) > 10e-6)) {
-                    newPoint = new Point(p.x, p.y);
-                    newPoints.add(newPoint);
-                    newPoint.fixed = p.fixed;
-                    xprev = p.x;
-                    yprev = p.y;
-                    first = false;
-                }
-            }
-        }
-        MovingParticles.Drawing.clear();
-        /*
-         if (newPoints.size() <= 1) {
-         System.out.println("All points too close. Shape reduced to single point");
-         shape = null;
-         return;
-         } else
-         */
-        {
-            System.out.println("Shapes reduced to " + newPoints.size() + " points");
-            shape = MovingParticles.Drawing.addShape();
-            for (Point p : newPoints) {
-                MovingParticles.Drawing.addPointToShape(shape, p.x, p.y);
-                shape.lastPoint().fixed = p.fixed;
-            }
-            System.out.printf("\nShape %s with %d points\n\n", shape.label, shape.points.size());
-        }
-
-        shape.isSelected = true;
-
         // populate 'particles'
         int c = 1;
-        for (Point p : shape.points) {
-            particles.add(p);
-            p.velocity = 0;
-            p.angle = 0;
-            p.particleName = shape.label + "-" + c;
-            c++;
-            p.x_init = p.x;
-            p.y_init = p.y;
-            p.xLastDrawn = p.x;
-            p.yLastDrawn = p.y;
-            p.trajectory = null;
-        }
+        for (Shape shape : MovingParticles.Drawing.getShapes()) {
+            Point pprev = null;
+            for (Point p : shape.points) {
+                particles.add(p);
+                p.velocity = 0;
+                p.angle = 0;
+                p.particleName = shape.label + "-" + c;
+                c++;
+                p.x_init = p.x;
+                p.y_init = p.y;
+                p.xLastDrawn = p.x;
+                p.yLastDrawn = p.y;
+                p.trajectory = null;
 
-        // populate extremities
-        Point pe;
-        pe = shape.points.get(0);
-        extremities.add(pe);
-        pe.particleName = shape.label + "-begin";
-        pe = shape.points.get(shape.points.size() - 1);
-        extremities.add(pe);
-        pe.particleName = shape.label + "-end";
+                // add link to previous point in this shape
+                if (pprev != null) {
+                    links.add(new Link(p, pprev));
+                    System.out.printf("added link %s - %s\n", p.particleName, pprev.particleName);
+                }
 
-        // populate 'neighbours' of all particles
-        // assuming there is only 1 shape, all the particles belong to this shape
-        for (int i = 0; i < particles.size(); i++) {
-            Point p = particles.get(i);
-            if (i < particles.size() - 1) {
-                Point pn = particles.get(i + 1);
-                links.add(new Link(p, pn));
-//                System.out.printf("added link %s - %s\n",p.particleName ,pn.particleName);
+                pprev = p;
+            }
+
+            // add extremities of this shape
+            Point pe;
+            pe = shape.points.get(0);
+            extremities.add(pe);
+            pe.particleName = shape.label + "-begin";
+            if (shape.points.size() > 1) {
+                pe = shape.points.get(shape.points.size() - 1);
+                extremities.add(pe);
+                pe.particleName = shape.label + "-end";
             }
         }
-
+        /*       
+         // populate 'neighbours' of all particles
+         // assuming there is only 1 shape, all the particles belong to this shape
+         for (int i = 0; i < particles.size(); i++) {
+         Point p = particles.get(i);
+         if (i < particles.size() - 1) {
+         Point pn = particles.get(i + 1);
+         links.add(new Link(p, pn));
+         //                System.out.printf("added link %s - %s\n",p.particleName ,pn.particleName);
+         }
+         }
+         */
         pane = new JPanel();
         pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
         Border blackline = BorderFactory.createLineBorder(Color.black);
@@ -348,6 +347,13 @@ class Elasticity implements Animation, ActionListener, ChangeListener, ItemListe
             for (Point p : particles) {
                 p.vynew = p.vynew - 9.8 * dt;
                 potentialEnergy = potentialEnergy + p.mass * p.y * 9.8;
+            }
+        }
+
+        if (viscosity) {
+            for (Point p : particles) {
+                p.vynew = p.vynew - 0.2 * p.vynew * dt;
+                p.vxnew = p.vxnew - 0.2 * p.vxnew * dt;
             }
         }
 
