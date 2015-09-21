@@ -2,11 +2,18 @@
 
 public class Point {
 
+    static int count=0;
+
+        public boolean isSelected = false;
+    public boolean isPreSelected = false;
+    public boolean isPreUnselected = false;
+    
 public double x;
 public double y;
 public double vx;
 public double vy;
 public boolean fixed;
+public double radius;
 
 String particleName;
 Shape trajectory;
@@ -29,6 +36,8 @@ vx=0;
 vy=0;
 fixed=false;
 mass=1;
+radius=1;
+particleName="P"+count++;
 }
 
 double getZX(){

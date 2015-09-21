@@ -3,6 +3,8 @@ import java.util.*;
 
 class Shape {
 
+    
+    
     public String label = "";
     java.util.List<Point> points;
     Color color;

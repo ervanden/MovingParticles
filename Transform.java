@@ -137,6 +137,13 @@ class Transform {
         );
     }
 
+    public void circle(double x, double y, double r) {
+        int xcenter = xUserToScreen(x);
+        int ycenter = yUserToScreen(y);
+        int radius = xUserToScreen(r)-xUserToScreen(0);
+        graphics.drawOval(xcenter - radius, ycenter - radius, 2 * radius, 2 * radius);
+    }
+
     public void dot(double x, double y) {
         int xcenter, ycenter;
         xcenter = xUserToScreen(x);
@@ -144,6 +151,13 @@ class Transform {
         graphics.drawOval(xcenter - 3, ycenter - 3, 6, 6);
     }
 
+    public void label(String s, double x, double y){
+                int xcenter, ycenter;
+        xcenter = xUserToScreen(x);
+        ycenter = yUserToScreen(y);
+        graphics.drawString(s, xcenter + 4, ycenter - 4);  
+    }
+    
     public void complexPoint(String s, double x, double y) {
         int xcenter, ycenter;
         xcenter = xUserToScreen(x);
@@ -157,13 +171,12 @@ class Transform {
         int xcenter, ycenter;
         xcenter = xUserToScreen(x);
         ycenter = yUserToScreen(y);
-        int w=4;
+        int w = 4;
         graphics.drawLine(xcenter - w, ycenter - w, xcenter - w, ycenter + w);
         graphics.drawLine(xcenter - w, ycenter + w, xcenter + w, ycenter + w);
         graphics.drawLine(xcenter + w, ycenter + w, xcenter + w, ycenter - w);
         graphics.drawLine(xcenter + w, ycenter - w, xcenter - w, ycenter - w);
     }
-    
 
     public void strings(ArrayList<String> l) {
         int xo, yo;

@@ -1,6 +1,7 @@
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
 import javax.swing.*;
 
 public class MovingParticles implements ActionListener, MouseListener, MouseMotionListener, KeyListener, ItemListener {
@@ -14,8 +15,9 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
     static JFrame zFrame = new JFrame();
     static JFrame dFrame = new JFrame("Settings");
+    PropertyFrame propertyFrame;
 
-    JCheckBox dotButton = new JCheckBox("dots");
+    JCheckBox labelButton = new JCheckBox("labels");
     JCheckBox lineButton = new JCheckBox("lines");
     JCheckBox scaleButton = new JCheckBox("scale");
     JCheckBox gridButton = new JCheckBox("snap to grid ");
@@ -41,13 +43,14 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
     boolean actionAddPoint = false;
 
     boolean actionMovePoint = false;
-    boolean actionMoveShape = false;
     boolean actionMoveSelection = false;
     boolean actionMoveAll = false;
 
     boolean actionDeletePoint = false;
+    boolean actionPropertiesPoint = false;
     boolean actionFixPoint = false;
-    boolean actionDeleteShape = false;
+    boolean actionUnfixPoint = false;
+    boolean actionDeleteLink = false;
     boolean actionUnselect = false;
     boolean actionSelect = false;
     boolean actionSelectArea = false;
@@ -62,14 +65,10 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
     double xCircle = 0, yCircle = 0; // center of circle
     double xRadius = 0, yRadius = 0; // clicked point to mark radius
 
-    PointShape cps;
+    Shape cps;
     Point cp;
 
-    public static void repaintZplane() {
-        zPlane.blitPaint();
-    }
-
-    public static void repaintBothWindows() {
+    public static void repaint() {
         zPlane.blitPaint();
     }
 
@@ -142,7 +141,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
                 Drawing.addPointToShape(currentShape, xCircle, yCircle + radius);
 
-                repaintBothWindows();
+                repaint();
 
             };
 
@@ -155,7 +154,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                 double yUser = transform.yScreenToUser(y);
                 Drawing.addPointToShape(currentShape, xUser, yUser);
 
-                repaintBothWindows();
+                repaint();
                 xprev = x;
                 yprev = y;
                 firstPoint = false;
@@ -180,7 +179,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                 Drawing.moveShapesRelative(whatToMove,
                         transform.xScreenToUser(x) - transform.xScreenToUser(xprev),
                         transform.yScreenToUser(y) - transform.yScreenToUser(yprev));
-                repaintBothWindows();
+                repaint();
                 xprev = x;
                 yprev = y;
             };
@@ -218,7 +217,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
                     Drawing.movePointRelative(cp, xusernew - xuserprev, yusernew - yuserprev);
 
-                    repaintBothWindows();
+                    repaint();
                 }
 
                 xuserprev = xusernew;
@@ -226,27 +225,6 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
             };
         }; // action move point
-
-        if (actionMoveShape) {
-
-            if (firstPoint) {
-                xprev = x;
-                yprev = y;
-                double xuser = transform.xScreenToUser(x);
-                double yuser = transform.yScreenToUser(y);
-                currentShape = Drawing.closestShape(xuser, yuser);
-                firstPoint = false;
-            };
-
-            if (!firstPoint && (currentShape != null)) {
-                Drawing.moveShapeRelative(currentShape,
-                        transform.xScreenToUser(x) - transform.xScreenToUser(xprev),
-                        transform.yScreenToUser(y) - transform.yScreenToUser(yprev));
-                xprev = x;
-                yprev = y;
-                repaintBothWindows();
-            };
-        }; // action move shape
 
         if (actionMoveView) {
 
@@ -271,7 +249,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
                 transform.setUserSpace(xmin - userDeltaX, xmax - userDeltaX, ymin - userDeltaY, ymax - userDeltaY);
 
-                repaintZplane();
+                repaint();
 
             }
 
@@ -302,7 +280,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                     Drawing.unselectArea();
                 }
 
-                repaintBothWindows();
+                repaint();
 
             };
 
@@ -326,10 +304,10 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
             // add terminal point
             Drawing.addPointToShape(currentShape, transform.xScreenToUser(x),
                     transform.yScreenToUser(y));
-            repaintBothWindows();
+            repaint();
         }
 
-        if (actionMoveAll || actionMoveSelection || actionMovePoint || actionMoveShape || actionMoveView) {
+        if (actionMoveAll || actionMoveSelection || actionMovePoint || actionMoveView) {
             firstPoint = true;  // ready to move next shape
         }
 
@@ -342,14 +320,14 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
             actionSelectArea = false;
             Drawing.commitSelectedArea();
             Drawing.areaCursor(false, 0, 0, 0, 0);
-            repaintZplane();
+            repaint();
         }
 
         if (actionUnselectArea) {
             actionUnselectArea = false;
             Drawing.commitUnselectedArea();
             Drawing.areaCursor(false, 0, 0, 0, 0);
-            repaintZplane();
+            repaint();
         }
 
     }
@@ -373,12 +351,13 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         actionAddShape = false;
         actionAddLine = false;
         actionMovePoint = false;
-        actionMoveShape = false;
         actionMoveSelection = false;
         actionMoveAll = false;
         actionDeletePoint = false;
+        actionPropertiesPoint = false;
         actionFixPoint = false;
-        actionDeleteShape = false;
+        actionUnfixPoint = false;
+        actionDeleteLink = false;
         actionSelect = false;
         actionUnselect = false;
 
@@ -398,25 +377,45 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
             if (cp != null) {
                 cp.fixed = true;
             }
-            repaintBothWindows();
+            repaint();
+        }
+        if (actionUnfixPoint) {
+
+            double xuser = transform.xScreenToUser(x);
+            double yuser = transform.yScreenToUser(y);
+            cp = Drawing.closestPoint(xuser, yuser);
+            if (cp != null) {
+                cp.fixed = false;
+            }
+            repaint();
         }
 
         if (actionDeletePoint) {
 
             double xuser = transform.xScreenToUser(x);
             double yuser = transform.yScreenToUser(y);
-            cps = Drawing.closestPointShape(xuser, yuser);
-            Drawing.deleteShape(cps);
-            repaintBothWindows();
+            Drawing.deletePoint(Drawing.closestPoint(xuser, yuser));
+            repaint();
         }
 
-        if (actionDeleteShape) {
+        if (actionPropertiesPoint) {
 
             double xuser = transform.xScreenToUser(x);
             double yuser = transform.yScreenToUser(y);
-            currentShape = Drawing.closestShape(xuser, yuser);
-            Drawing.deleteShape(currentShape);
-            repaintBothWindows();
+            Point p = Drawing.closestPoint(xuser, yuser);
+            if (p != null) {
+                ArrayList<Point> pl = new ArrayList<>();
+                pl.add(p);
+                propertyFrame.display(pl);
+            }
+        }
+
+        if (actionDeleteLink) {
+
+            double xuser = transform.xScreenToUser(x);
+            double yuser = transform.yScreenToUser(y);
+            Drawing.deleteLink(Drawing.closestLink(xuser, yuser));
+            repaint();
         }
 
         if (actionZoomIn) {
@@ -436,7 +435,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                     usery - (ymax - ymin) / (2 * zoomFactor),
                     usery + (ymax - ymin) / (2 * zoomFactor));
 
-            repaintZplane();
+            repaint();
 
             firstPoint = false;  // from now on, exiting the window = terminate zoomIn
 
@@ -444,38 +443,41 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
         if (actionSelect) {
 
-            // actionSelect stays active until the cursor leaves the z plane
-            int nrs;
+            // actionSelect stays active until the cursor leaves the plane
             double userx, usery;
+            Point p;
+            Link l;
             userx = transform.xScreenToUser(e.getX());
             usery = transform.yScreenToUser(e.getY());
-            nrs = Drawing.selectShapes(userx, usery, transform.xScreenToUser(2) - transform.xScreenToUser(0));
+            p = Drawing.locatePoint(userx, usery);
+            if (p != null) {
+                p.isSelected = true;
+            } else {
+                l = Drawing.closestLink(userx, usery);
+                if (l != null) {
+                    l.isSelected = true;
+                }
+            }
 
-            repaintBothWindows();
+            repaint();
 
         }
-        ; // Select
 
         if (actionUnselect) {
 
             // actionUnselect stays active until the cursor leaves the z plane
-            int nrs;
             double userx, usery;
             userx = transform.xScreenToUser(e.getX());
             usery = transform.yScreenToUser(e.getY());
-            nrs = Drawing.unselectShapes(userx, usery, transform.xScreenToUser(2) - transform.xScreenToUser(0));
-
-            repaintBothWindows();
+            if (Drawing.unSelectPoint(userx, usery)) {
+                repaint();
+            }
 
         }
-        ; // Unselect        
 
         if (actionAddLine) {
             if (firstPoint) {
-                //              currentShapeDrawing.addPointToShape(zPlaneTransform.xScreenToUser(x),
-                //                      zPlaneTransform.yScreenToUser(y));
-                System.out.println(" add line first point " + transform.xScreenToUser(x) + " "
-                        + transform.yScreenToUser(y));
+                Drawing.addPointToShape(currentShape, transform.xScreenToUser(x), transform.yScreenToUser(y));
                 xprev = x;
                 yprev = y;
                 firstPoint = false;
@@ -495,23 +497,20 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
                 nsegments = 1;
                 // create nsegments intermediate points
-                for (int i = 0; i <= nsegments; i++) {
-                    System.out.println(" segment point x= " + (xbegin + ((double) i / (double) nsegments) * (xend - xbegin))
-                            + " y= " + (ybegin + ((double) i / (double) nsegments) * (yend - ybegin)));
+                for (int i = 1; i <= nsegments; i++) {
                     Drawing.addPointToShape(currentShape, xbegin + ((double) i / (double) nsegments) * (xend - xbegin),
                             ybegin + ((double) i / (double) nsegments) * (yend - ybegin));
                 };
 
                 xprev = x;
                 yprev = y;
-                repaintBothWindows();
-            };
+            }
+            repaint();
 
             if (e.getClickCount() > 1) {
                 actionAddLine = false;
-            };
+            }
         }
-        ;
 
         if (actionAddPoint) {
 
@@ -519,19 +518,20 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
             yprev = y;
             double xuser = transform.xScreenToUser(x);
             double yuser = transform.yScreenToUser(y);
-            cps = Drawing.addPointShape();
+            cps = Drawing.addShape();
             if (Drawing.snapToGrid) {
                 xuser = Math.round(xuser);
                 yuser = Math.round(yuser);
             };
             Drawing.addPointToShape(cps, xuser, yuser);
+            cps.isPoint = true;
 
-            repaintBothWindows();
+            repaint();
             firstPoint = true;
             actionMovePoint = true;
 
         }
-        ;  // Add Point
+        ;
 
     }
 
@@ -543,14 +543,14 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
         Object source = e.getItemSelectable();
 
-        if (source == dotButton) {
+        if (source == labelButton) {
             if (e.getStateChange() == ItemEvent.SELECTED) {
-                Drawing.dotsVisible = true;
+                Drawing.labelsVisible = true;
             };
             if (e.getStateChange() == ItemEvent.DESELECTED) {
-                Drawing.dotsVisible = false;
+                Drawing.labelsVisible = false;
             };
-            repaintBothWindows();
+            repaint();
         };
 
         if (source == lineButton) {
@@ -560,7 +560,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
             if (e.getStateChange() == ItemEvent.DESELECTED) {
                 Drawing.linesVisible = false;
             };
-            repaintBothWindows();
+            repaint();
         };
 
         if (source == scaleButton) {
@@ -570,7 +570,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
             if (e.getStateChange() == ItemEvent.DESELECTED) {
                 Drawing.scaleVisible = false;
             };
-            repaintBothWindows();
+            repaint();
         };
 
         if (source == gridButton) {
@@ -580,7 +580,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
             if (e.getStateChange() == ItemEvent.DESELECTED) {
                 Drawing.snapToGrid = false;
             };
-            repaintBothWindows();
+            repaint();
         };
 
         if (source == animateButton) {
@@ -641,11 +641,6 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
             firstPoint = true;
         };
 
-        if (buttonClicked == "Move Shape") {
-            actionMoveShape = true;
-            firstPoint = true;
-        };
-
         if (buttonClicked == "Move Selection") {
             actionMoveSelection = true;
             firstPoint = true;
@@ -661,24 +656,51 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
             firstPoint = true;
         };
 
+        if (buttonClicked == "Unfix Point") {
+            actionUnfixPoint = true;
+            firstPoint = true;
+        };
+
         if (buttonClicked == "Delete Point") {
             actionDeletePoint = true;
             firstPoint = true;
         };
 
-        if (buttonClicked == "Delete Shape") {
-            actionDeleteShape = true;
+        if (buttonClicked == "Delete Link") {
+            actionDeleteLink = true;
             firstPoint = true;
         };
 
-        if (buttonClicked == "Delete Selection") {
-            Drawing.clearSelection();
-            repaintBothWindows();
+        if (buttonClicked == "Delete Selected Points") {
+            Drawing.deleteSelectedPoints();
+            repaint();
+        };
+
+        if (buttonClicked == "Delete Selected Links") {
+            Drawing.deleteSelectedLinks();
+            repaint();
         };
 
         if (buttonClicked == "Delete All") {
-            Drawing.clear();
-            repaintBothWindows();
+            Drawing.deleteDrawing();
+            repaint();
+        };
+
+        if (buttonClicked == "Properties Point") {
+            actionPropertiesPoint=true;
+            firstPoint=true;
+        };
+
+        if (buttonClicked == "Properties Link") {
+ //           actionPropertiesLink=true;
+        };
+
+        if (buttonClicked == "Properties Selected Points") {
+            propertyFrame.display(Drawing.getSelectedPoints());
+        };
+
+        if (buttonClicked == "Properties Selected Links") {
+ //           propertyFrame.display(Drawing.selectedLinks();
         };
 
         if (buttonClicked == "Move View") {
@@ -706,12 +728,12 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
         if (buttonClicked == "Select All") {
             Drawing.selectAll();
-            repaintBothWindows();
+            repaint();
         };
 
         if (buttonClicked == "Unselect All") {
             Drawing.unselectAll();
-            repaintBothWindows();
+            repaint();
         };
 
         if (buttonClicked == "Zoom In") {
@@ -734,7 +756,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                     userx + ((xmax - xmin) / 2) * zoomOutFactor,
                     usery - ((ymax - ymin) / 2) * zoomOutFactor,
                     usery + ((ymax - ymin) / 2) * zoomOutFactor);
-            repaintZplane();
+            repaint();
 
         };
 
@@ -754,7 +776,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                     xcenter + w / 2,
                     ycenter - w / 2,
                     ycenter + w / 2);
-            repaintZplane();
+            repaint();
 
         };
 
@@ -790,7 +812,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                     };
                 };
 
-                repaintBothWindows();
+                repaint();
             }
 
         }; // Add Grid
@@ -821,7 +843,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                 };
             };
 
-            repaintBothWindows();
+            repaint();
         }; // Add Polar Grid
 
     }
@@ -869,8 +891,8 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         Container pane = dFrame.getContentPane();
         pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
 
-        dotButton.setSelected(false);
-        dotButton.addItemListener(this);
+        labelButton.setSelected(false);
+        labelButton.addItemListener(this);
 
         lineButton.setSelected(true);
         lineButton.addItemListener(this);
@@ -888,7 +910,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         editorPane.setLayout(new BoxLayout(editorPane, BoxLayout.LINE_AXIS));
         editorPane.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
         editorPane.add(Box.createRigidArea(new Dimension(40, 0)));
-        editorPane.add(dotButton);
+        editorPane.add(labelButton);
         editorPane.add(Box.createRigidArea(new Dimension(20, 0)));
         editorPane.add(lineButton);
         editorPane.add(Box.createRigidArea(new Dimension(20, 0)));
@@ -927,20 +949,28 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         JMenu menuMove = new JMenu("Move");
         zMenuBar.add(menuMove);
         AddMenuItem(menuMove, "Point", "Move Point");
-        AddMenuItem(menuMove, "Shape", "Move Shape");
         AddMenuItem(menuMove, "Selection", "Move Selection");
         AddMenuItem(menuMove, "All", "Move All");
 
         JMenu menuDelete = new JMenu("Delete");
         zMenuBar.add(menuDelete);
         AddMenuItem(menuDelete, "Point", "Delete Point");
-        AddMenuItem(menuDelete, "Shape", "Delete Shape");
-        AddMenuItem(menuDelete, "Selection", "Delete Selection");
+        AddMenuItem(menuDelete, "Link", "Delete Link");
+        AddMenuItem(menuDelete, "Selected Points", "Delete Selected Points");
+        AddMenuItem(menuDelete, "Selected Links", "Delete Selected Links");
         AddMenuItem(menuDelete, "All", "Delete All");
 
-        JMenu menuFix = new JMenu("Fix");
+        JMenu menuFix = new JMenu("Particles");
         zMenuBar.add(menuFix);
-        AddMenuItem(menuFix, "Point", "Fix Point");
+        AddMenuItem(menuFix, "Fix Point", "Fix Point");
+        AddMenuItem(menuFix, "Unfix Point", "Unfix Point");
+
+        JMenu menuProperties = new JMenu("Properties");
+        zMenuBar.add(menuProperties);
+        AddMenuItem(menuProperties, "Point", "Properties Point");
+        AddMenuItem(menuProperties, "Link", "Properties Link");
+        AddMenuItem(menuProperties, "Selected Points", "Properties Selected Points");
+        AddMenuItem(menuProperties, "Selected Links", "Properties Selected Links");
 
         JMenu menuZplane = new JMenu("View");
         zMenuBar.add(menuZplane);
@@ -950,6 +980,8 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         AddMenuItem(menuZplane, "Fit", "Zplane Fit");
 
         zFrame.setJMenuBar(zMenuBar);
+
+        propertyFrame = new PropertyFrame();
 
     }  // create
 

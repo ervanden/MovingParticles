@@ -28,14 +28,14 @@ class Rotation implements Animation {
         double cos = Math.cos(alfa);
         double sin = Math.sin(alfa);
 
-        for (Shape s : MovingParticles.Drawing.getShapes()) {
-            for (Point p : s.points) {
+
+            for (Point p : MovingParticles.Drawing.getPoints()){
                 double xnew = p.x * cos - p.y * sin;
                 double ynew = p.y * cos + p.x * sin;
                 p.x = xnew;
                 p.y = ynew;
             }
-        }
+
         return true; // redraw
     }
 }

@@ -9,6 +9,8 @@ import java.util.List;
 class Drawing {
 
     private List<Shape> shapes;
+    private List<Link> links;
+    private List<Point> points;
     private ArrayList<String> strings;
 
     int stringsMaxLength = 0;
@@ -16,7 +18,7 @@ class Drawing {
     double areaCursorX1, areaCursorY1, areaCursorX2, areaCursorY2;
     boolean areaCursorOn = false;
 
-    public boolean dotsVisible = false;
+    public boolean labelsVisible = false;
     public boolean linesVisible = true;
     public boolean scaleVisible = true;
     public boolean snapToGrid = false;
@@ -28,6 +30,8 @@ class Drawing {
 
     public Drawing() {
         shapes = new ArrayList<>();
+        links = new ArrayList<>();
+        points = new ArrayList<>();
         strings = new ArrayList<>();
         shapes.clear();
         strings.clear();
@@ -35,24 +39,48 @@ class Drawing {
         shapeCounter = 1;
     }
 
-    public synchronized void clear() {
+    public synchronized void deleteDrawing() {
         shapes.clear();
+        links.clear();
+        points.clear();
         strings.clear();
         pointCounter = 1;
         shapeCounter = 1;
     }
 
-    public synchronized void clearSelection() {
+    public synchronized void deleteSelectedPoints() {
+        Iterator<Link> itr = links.iterator();
 
-        Iterator<Shape> itr = shapes.iterator();
-
-        itr = shapes.iterator();
+        itr = links.iterator();
         while (itr.hasNext()) {
-            Shape s = itr.next();
-            if (s.isSelected) {
+            Link l = itr.next();
+            if (l.p1.isSelected || l.p2.isSelected) {
                 itr.remove();
             }
+        }
 
+        Iterator<Point> pitr = points.iterator();
+        pitr = points.iterator();
+        while (pitr.hasNext()) {
+            Point p = pitr.next();
+            System.out.println("iterating  " + p.particleName);
+            if (p.isSelected) {
+                System.out.println("deleting " + p.particleName);
+                pitr.remove();
+            }
+        }
+
+    }
+
+    public synchronized void deleteSelectedLinks() {
+        Iterator<Link> itr = links.iterator();
+
+        itr = links.iterator();
+        while (itr.hasNext()) {
+            Link l = itr.next();
+            if (l.isSelected) {
+                itr.remove();
+            }
         }
     }
 
@@ -70,14 +98,36 @@ class Drawing {
         shapes.remove(s);
     }
 
+    public synchronized void deleteLink(Link l) {
+        links.remove(l);
+    }
+
+    public synchronized void deletePoint(Point p) {
+        Iterator<Link> itr = links.iterator();
+
+        itr = links.iterator();
+        while (itr.hasNext()) {
+            Link l = itr.next();
+            if ((l.p1 == p) || (l.p2 == p)) {
+                itr.remove();
+            }
+
+        }
+        points.remove(p);
+    }
+
     public synchronized void addPointToShape(Shape s, double x, double y) {
         if (s.points.size() == 0) {
             s.addPoint(x, y);
+            points.add(s.lastPoint());
         } else {
-            double xprev = s.lastPoint().x;
-            double yprev = s.lastPoint().y;
+            Point pprev = s.lastPoint();
+            double xprev = pprev.x;
+            double yprev = pprev.y;
             if (((x - xprev) * (x - xprev) + (y - yprev) * (y - yprev)) > 10e-6) {
                 s.addPoint(x, y);
+                points.add(s.lastPoint());
+                links.add(new Link(s.lastPoint(), pprev));
             } else {
                 System.out.println("Point too close to previous in shape " + s.label + " : not added");
             }
@@ -85,16 +135,37 @@ class Drawing {
     }
 
     public synchronized void clearShape(Shape s) {
+        for (Point p : s.points) {
+            deletePoint(p);
+        }
         s.clear();
     }
 
-    public synchronized ArrayList<Shape> getShapes() {
+    public synchronized ArrayList<Point> getPoints() {
         // makes a copy of 'shapes' to be used when risk of concurrent modification
-        ArrayList<Shape> l = new ArrayList<>();
-        for (Shape s : shapes) {
-            l.add(s);
+        ArrayList<Point> list = new ArrayList<>();
+        for (Point p : points) {
+            list.add(p);
         }
-        return l;
+        return list;
+    }
+    
+        public synchronized ArrayList<Point> getSelectedPoints() {
+        // makes a copy of 'shapes' to be used when risk of concurrent modification
+        ArrayList<Point> list = new ArrayList<>();
+        for (Point p : points) {
+            if (p.isSelected) list.add(p);
+        }
+        return list;
+    }
+    
+        public synchronized ArrayList<Link> getLinks() {
+        // makes a copy of 'shapes' to be used when risk of concurrent modification
+        ArrayList<Link> list = new ArrayList<>();
+        for (Link l : links) {
+            list.add(l);
+        }
+        return list;
     }
 
     public synchronized void areaCursor(boolean cursorOn, double ax1, double ay1, double ax2, double ay2) {
@@ -127,46 +198,36 @@ class Drawing {
 
         t.strings(strings);
 
-        Point xyprev;
-        for (Shape s : shapes) {
-            if ((s.isSelected || s.isPreSelected) && !s.isPreUnselected) {
+        for (Point p : points) {
+            if ((p.isSelected || p.isPreSelected) && !p.isPreUnselected) {
                 t.graphics.setColor(Color.RED);
-                g2.setStroke(stroke2);
+                //                   g2.setStroke(stroke2);
             } else {
-                t.graphics.setColor(s.color);
-                g2.setStroke(stroke0);
+                t.graphics.setColor(Color.BLACK);
+                //                   g2.setStroke(stroke0);
             };
-
-            if (s.getClass().getName().equals("PointShape")) {
-
-                PointShape ps = (PointShape) s;
-                t.complexPoint(ps.getName(), ps.getX(), ps.getY());
-                if (ps.getPoint().fixed) {
-                    t.fix(ps.getPoint().x, ps.getPoint().y);
-                }
-
-            } else {   // not a point shape
-
-                if (linesVisible) {
-                    xyprev = null;
-                    for (Point xy : s.points) {
-                        if (xyprev != null) {
-                            t.line(xyprev.getZX(), xyprev.getZY(), xy.getZX(), xy.getZY());
-                        }
-                        if (xy.fixed) {
-                            t.fix(xy.x, xy.y);
-                        }
-                        xyprev = xy;
-                    }
-                }
-
-                if (dotsVisible) {
-                    for (Point xy : s.points) {
-                        t.dot(xy.x, xy.y);
-                    }
-                }
+            t.circle(p.x, p.y, p.radius);
+            if (labelsVisible) {
+                t.label(p.particleName, p.x, p.y);
+            }
+            if (p.fixed) {
+                t.fix(p.x, p.y);
             }
         }
+
+        if (linesVisible) {
+            for (Link l : links) {
+                if ((l.isSelected || l.isPreSelected) && !l.isPreUnselected) {
+                    t.graphics.setColor(Color.RED);
+                    //                   g2.setStroke(stroke2);
+                } else {
+                    t.graphics.setColor(Color.BLACK);
+                    //                   g2.setStroke(stroke0);
+                };
+                t.line(l.p1.x, l.p1.y, l.p2.x, l.p2.y);
+            }
+        }
+
     }
 
     public synchronized void setMinMax() {
@@ -197,74 +258,52 @@ class Drawing {
         }
     }
 
-    public synchronized PointShape closestPointShape(double x, double y) {
-        PointShape psmin = null;
-        double dmin = Double.POSITIVE_INFINITY;
-        for (Shape s : shapes) {
-
-            if (s.getClass().getName().equals("PointShape")) {
-                PointShape ps = (PointShape) s;
-                double x1 = ps.getX();
-                double y1 = ps.getY();
-                if ((x - x1) * (x - x1) + (y - y1) * (y - y1) < dmin) {
-                    dmin = (x - x1) * (x - x1) + (y - y1) * (y - y1);
-                    psmin = ps;
-                };
-            }
-
-        }; // for
-        return psmin;
-    }
-
-    public synchronized Point closestPoint(double x, double y) {
+    public synchronized Point locatePoint(double x, double y) {
         Point psmin = null;
-        double dmin = Double.POSITIVE_INFINITY;
-        for (Shape s : shapes) {
-            for (Point ps : s.points) {
-                double x1 = ps.x;
-                double y1 = ps.y;
-                if ((x - x1) * (x - x1) + (y - y1) * (y - y1) < dmin) {
-                    dmin = (x - x1) * (x - x1) + (y - y1) * (y - y1);
-                    psmin = ps;
-                }
+        for (Point p : points) {
+            double x1 = p.x;
+            double y1 = p.y;
+            if ((x - x1) * (x - x1) + (y - y1) * (y - y1) < p.radius * p.radius) {
+                psmin = p;
             }
         }
         return psmin;
     }
 
-    public synchronized Shape closestShape(double x, double y) {
-        Shape smin = null;
+    public synchronized Point closestPoint(double x, double y) {
+        Point pmin = null;
         double dmin = Double.POSITIVE_INFINITY;
-        for (Shape s : shapes) {
-
-            if (s.getClass().getName().equals("Shape")) {
-
-                for (Point xy : s.points) {
-                    double x1 = xy.getZX();
-                    double y1 = xy.getZY();
-                    if ((x - x1) * (x - x1) + (y - y1) * (y - y1) < dmin) {
-                        dmin = (x - x1) * (x - x1) + (y - y1) * (y - y1);
-                        smin = s;
-                    };
-                };
-
+        for (Point p : points) {
+            //           System.out.println("link from "+l.p1.particleName+" - "+l.p2.particleName);
+            double x1 = p.x;
+            double y1 = p.y;
+            if ((x - x1) * (x - x1) + (y - y1) * (y - y1) < dmin) {
+                dmin = (x - x1) * (x - x1) + (y - y1) * (y - y1);
+                pmin = p;
             }
+        }
+        return pmin;
+    }
 
-        }; // for
-        return smin;
+    public synchronized Link closestLink(double x, double y) {
+        Link lmin = null;
+        double dmin = Double.POSITIVE_INFINITY;
+        for (Link l : links) {
+            //           System.out.println("link from "+l.p1.particleName+" - "+l.p2.particleName);
+            double x1 = (l.p1.x + l.p2.x) / 2;
+            double y1 = (l.p1.y + l.p2.y) / 2;
+            if ((x - x1) * (x - x1) + (y - y1) * (y - y1) < dmin) {
+                dmin = (x - x1) * (x - x1) + (y - y1) * (y - y1);
+                lmin = l;
+            }
+        }
+        return lmin;
     }
 
     public synchronized Shape addShape() {
         Shape s = new Shape();
         s.label = "shape" + shapeCounter;
         shapeCounter++;
-        shapes.add(s);
-        return s;
-    }
-
-    public synchronized PointShape addPointShape() {
-        PointShape s = new PointShape("p" + pointCounter);
-        pointCounter++;
         shapes.add(s);
         return s;
     }
@@ -296,71 +335,51 @@ class Drawing {
         }
     }  // moveShapesRelative
 
-    public synchronized int selectShapes(double x, double y, double minPixelDist) {
-// find points close to x,y and return their number 
-// It is also the number of shapes since very point belongs to exactly one shape
-// Select the shapes
+    public synchronized boolean selectPoint(double x, double y) {
 
-        int nrs;
-        double minPixelDistSquare = minPixelDist * minPixelDist;
-
-        nrs = 0;
+        boolean selected = false;
         for (Shape s : shapes) {
-            for (Point xy : s.points) {
-                if (((xy.x - x) * (xy.x - x) + (xy.y - y) * (xy.y - y)) < minPixelDistSquare) {
-                    nrs = nrs + 1;
-                    s.isSelected = true;
-                };
-            };
-        };
-
-        if (nrs == 0) {
-            System.out.println("No shapes selected");
-            return 0;
-        } else {
-            System.out.println(nrs + " shapes selected ");
-            return nrs;
-        }
-
-    }
-
-    public synchronized int unselectShapes(double x, double y, double minPixelDist) {
-// find points close to x,y and return their number 
-// It is also the number of shapes since very point belongs to exactly one shape
-// Unselect the shapes
-
-        int nrs;
-        double minPixelDistSquare = minPixelDist * minPixelDist;
-
-        nrs = 0;
-        for (Shape s : shapes) {
-            for (Point xy : s.points) {
-                if (((xy.x - x) * (xy.x - x) + (xy.y - y) * (xy.y - y)) < minPixelDistSquare) {
-                    nrs = nrs + 1;
-                    s.isSelected = false;
+            for (Point p : s.points) {
+                if (((p.x - x) * (p.x - x) + (p.y - y) * (p.y - y)) < p.radius * p.radius) {
+                    p.isSelected = true;
+                    selected = true;
                 }
             }
         }
+        return selected;
+    }
 
-        if (nrs == 0) {
-            System.out.println("No shapes unselected");
-            return 0;
-        } else {
-            System.out.println(nrs + " shapes unselected ");
-            return nrs;
+    public synchronized boolean unSelectPoint(double x, double y) {
+
+        boolean unselected = false;
+        for (Shape s : shapes) {
+            for (Point p : s.points) {
+                if (((p.x - x) * (p.x - x) + (p.y - y) * (p.y - y)) < p.radius * p.radius) {
+                    p.isSelected = false;
+                    unselected = true;
+                }
+            }
         }
-
+        return unselected;
     }
 
     public synchronized void selectAll() {
-        for (Shape s : shapes) {
-            s.isSelected = true;
+
+        for (Point p : points) {
+            p.isSelected = true;
+        }
+        for (Link l : links) {
+            l.isSelected = true;
         }
     }
 
     public synchronized void unselectAll() {
-        for (Shape s : shapes) {
-            s.isSelected = false;
+
+        for (Point p : points) {
+            p.isSelected = false;
+        }
+        for (Link l : links) {
+            l.isSelected = false;
         }
     }
 
@@ -368,28 +387,43 @@ class Drawing {
 // preSelect all shapes that have a point in the cursor area
 // preSelection is reset each time this method is called due to cursor movement
 
-        for (Shape s : shapes) {
-            s.isPreSelected = false;
-            for (Point xy : s.points) {
-                if ((xy.x >= areaCursorX1) && (xy.x <= areaCursorX2)
-                        && (xy.y >= areaCursorY1) && (xy.y <= areaCursorY2)) {
-                    s.isPreSelected = true;
-                }
+        for (Point p : points) {
+            p.isPreSelected = false;
+            if ((p.x >= areaCursorX1) && (p.x <= areaCursorX2)
+                    && (p.y >= areaCursorY1) && (p.y <= areaCursorY2)) {
+                p.isPreSelected = true;
             }
         }
+
+        for (Link l : links) {
+            if (l.p1.isPreSelected) {
+                l.isPreSelected = true;
+            }
+            if (l.p2.isPreSelected) {
+                l.isPreSelected = true;
+            }
+        }
+
     }
 
     public synchronized void unselectArea() {
 // preUnselect all shapes that have a point in the cursor area
 // preUnselection is reset each time this method is called due to cursor movement
 
-        for (Shape s : shapes) {
-            s.isPreUnselected = false;
-            for (Point xy : s.points) {
-                if ((xy.x >= areaCursorX1) && (xy.x <= areaCursorX2)
-                        && (xy.y >= areaCursorY1) && (xy.y <= areaCursorY2)) {
-                    s.isPreUnselected = true;
-                }
+        for (Point p : points) {
+            p.isPreUnselected = false;
+            if ((p.x >= areaCursorX1) && (p.x <= areaCursorX2)
+                    && (p.y >= areaCursorY1) && (p.y <= areaCursorY2)) {
+                p.isPreUnselected = true;
+            }
+        }
+
+        for (Link l : links) {
+            if (l.p1.isPreUnselected) {
+                l.isPreSelected = true;
+            }
+            if (l.p2.isPreUnselected) {
+                l.isPreSelected = true;
             }
         }
     }
@@ -397,23 +431,33 @@ class Drawing {
     public synchronized void commitSelectedArea() {
 // Select all shapes that were preselected. Called when area selection is final
 
-        for (Shape s : shapes) {
-            if (s.isPreSelected) {
-                s.isPreSelected = false;
-                s.isSelected = true;
+        for (Point p : points) {
+            if (p.isPreSelected) {
+                p.isPreSelected = false;
+                p.isSelected = true;
+                System.out.println("commit select " + p.particleName);
+            }
+        }
+        for (Link l : links) {
+            if (l.isPreSelected) {
+                l.isPreSelected = false;
+                l.isSelected = true;
             }
         }
     }
 
     public synchronized void commitUnselectedArea() {
-// Select all shapes that were preselected. Called when area selection is final
-
-        for (Shape s : shapes) {
-            if (s.isPreUnselected) {
-                s.isPreUnselected = false;
-                s.isSelected = false;
+        for (Point p : points) {
+            if (p.isPreUnselected) {
+                p.isPreUnselected = false;
+                p.isSelected = false;
+            }
+        }
+        for (Link l : links) {
+            if (l.isPreUnselected) {
+                l.isPreUnselected = false;
+                l.isSelected = false;
             }
         }
     }
-
 }

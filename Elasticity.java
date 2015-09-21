@@ -38,127 +38,71 @@ class Elasticity implements Animation, ActionListener, ChangeListener, ItemListe
     JLabel k2Info;
     JCheckBox gBox;
 
-    class Link {
-
-        public Point p1, p2;
-
-        public Link(Point p_1, Point p_2) {
-            p1 = p_1;
-            p2 = p_2;
-        }
-    }
-
     public Elasticity() {
 
-        /* no longer needed : too close a point intercepted in addPointToShape()
-        
-         // replace each shape by  a new shape with only particles that are sufficiently apart 
-        
-         ArrayList<Point> newPoints = new ArrayList<>();
-         Point newPoint;
-         for (Shape s : MovingParticles.Drawing.getShapes()) {
-         boolean first = true;
-         double xprev = 0;
-         double yprev = 0;
-         for (Point p : s.points) {
-         if (first || (((p.x - xprev) * (p.x - xprev) + (p.y - yprev) * (p.y - yprev)) > 10e-6)) {
-         newPoint = new Point(p.x, p.y);
-         newPoints.add(newPoint);
-         newPoint.fixed = p.fixed;
-         xprev = p.x;
-         yprev = p.y;
-         first = false;
-         }
-         }
-         }
-         MovingParticles.Drawing.clear();
+        particles = MovingParticles.Drawing.getPoints();
 
-         {
-         System.out.println("Shapes reduced to " + newPoints.size() + " points");
-         shape = MovingParticles.Drawing.addShape();
-         for (Point p : newPoints) {
-         MovingParticles.Drawing.addPointToShape(shape, p.x, p.y);
-         shape.lastPoint().fixed = p.fixed;
-         }
-         System.out.printf("\nShape %s with %d points\n\n", shape.label, shape.points.size());
-         }
-         */
-        // populate 'particles'
-        int c = 1;
-        for (Shape shape : MovingParticles.Drawing.getShapes()) {
-            Point pprev = null;
-            for (Point p : shape.points) {
-                particles.add(p);
-                p.velocity = 0;
-                p.angle = 0;
-                p.particleName = shape.label + "-" + c;
-                c++;
-                p.x_init = p.x;
-                p.y_init = p.y;
-                p.xLastDrawn = p.x;
-                p.yLastDrawn = p.y;
-                p.trajectory = null;
-
-                // add link to previous point in this shape
-                if (pprev != null) {
-                    links.add(new Link(p, pprev));
-                    System.out.printf("added link %s - %s\n", p.particleName, pprev.particleName);
-                }
-
-                pprev = p;
-            }
-
-            // add extremities of this shape
-            Point pe;
-            pe = shape.points.get(0);
-            extremities.add(pe);
-            pe.particleName = shape.label + "-begin";
-            if (shape.points.size() > 1) {
-                pe = shape.points.get(shape.points.size() - 1);
-                extremities.add(pe);
-                pe.particleName = shape.label + "-end";
-            }
+        for (Point p : particles) {
+            p.x_init = p.x;
+            p.y_init = p.y;
+            p.xLastDrawn = p.x;
+            p.yLastDrawn = p.y;
+            p.trajectory = null;
         }
-        /*       
-         // populate 'neighbours' of all particles
-         // assuming there is only 1 shape, all the particles belong to this shape
-         for (int i = 0; i < particles.size(); i++) {
-         Point p = particles.get(i);
-         if (i < particles.size() - 1) {
-         Point pn = particles.get(i + 1);
-         links.add(new Link(p, pn));
-         //                System.out.printf("added link %s - %s\n",p.particleName ,pn.particleName);
-         }
-         }
-         */
+
+        // add extremities of this shape
+        Point pe;
+        pe = particles.get(0);
+        extremities.add(pe);
+        pe = particles.get(particles.size() - 1);
+        extremities.add(pe);
+
+        links = MovingParticles.Drawing.getLinks();
+
         pane = new JPanel();
-        pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
+
+        pane.setLayout(
+                new BoxLayout(pane, BoxLayout.PAGE_AXIS));
         Border blackline = BorderFactory.createLineBorder(Color.black);
+
         pane.setBorder(blackline);
 
         gBox = new JCheckBox("gravity");
-        gBox.addItemListener(this);
-        gBox.setEnabled(true);
+
+        gBox.addItemListener(
+                this);
+        gBox.setEnabled(
+                true);
 
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
         pane.add(gBox);
 
         k1Info = new JLabel("elasticity constant (stretch)", JLabel.CENTER);
         sliderK1 = new JSlider(-5000, 3000, 0);
-        sliderK1.addChangeListener(this);
+
+        sliderK1.addChangeListener(
+                this);
         k2Info = new JLabel("elasticity constant (compress)", JLabel.CENTER);
         sliderK2 = new JSlider(-5000, 3000, 0);
-        sliderK2.addChangeListener(this);
+
+        sliderK2.addChangeListener(
+                this);
 
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
         pane.add(k1Info);
+
         pane.add(sliderK1);
+
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
         pane.add(k2Info);
+
         pane.add(sliderK2);
+
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
 
-        for (int i = 0; i < extremities.size(); i++) {
+        for (int i = 0;
+                i < extremities.size();
+                i++) {
             Point p = extremities.get(i);
             pointPane = new JPanel();
             pointPane.setLayout(new BoxLayout(pointPane, BoxLayout.LINE_AXIS));
@@ -371,10 +315,10 @@ class Elasticity implements Animation, ActionListener, ChangeListener, ItemListe
 
         // bounce 
         for (Point p : particles) {
-            double uxmax = t.xScreenToUser((int) t.sxmax_real);
-            double uxmin = t.xScreenToUser((int) t.sxmin_real);
-            double uymax = t.yScreenToUser((int) t.symax_real);
-            double uymin = t.yScreenToUser((int) t.symin_real);
+            double uxmax = t.xScreenToUser((int) t.sxmax_real) - p.radius;
+            double uxmin = t.xScreenToUser((int) t.sxmin_real) + p.radius;
+            double uymax = t.yScreenToUser((int) t.symax_real) - p.radius;
+            double uymin = t.yScreenToUser((int) t.symin_real) + p.radius;
 
             if (p.x > uxmax) {
                 p.x = uxmax - (p.x - uxmax);
@@ -404,7 +348,7 @@ class Elasticity implements Animation, ActionListener, ChangeListener, ItemListe
                 double sqScreenDistance = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
                 if (sqScreenDistance > resolution * resolution) {
                     if (p.trajectory != null) {
-                        p.trajectory.addPoint(p.x, p.y);
+                        MovingParticles.Drawing.addPointToShape(p.trajectory, p.x, p.y);
                     }
                     redraw = true;
                     p.xLastDrawn = p.x;

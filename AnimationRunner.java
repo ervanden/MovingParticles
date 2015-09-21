@@ -176,7 +176,7 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
         if (source == cogBox) {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 if (centerOfGravity == null) {
-                    centerOfGravity = MovingParticles.Drawing.addPointShape();
+                    centerOfGravity = MovingParticles.Drawing.addShape();
                     MovingParticles.Drawing.addPointToShape(centerOfGravity, 0, 0);
                     centerOfGravity.color = Color.BLUE;
                     centerOfGravity.label = "CoG";
@@ -201,7 +201,7 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
 
     private void wipeTrajectory(Point p) {                 // trajectory is set to null 
         if (p.trajectory != null) {
-            p.trajectory.clear();
+            MovingParticles.Drawing.clearShape(p.trajectory);
             p.trajectory = null;
         }
     }

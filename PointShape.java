@@ -1,7 +1,6 @@
 import java.util.*;
 
-
-
+/*
 class PointShape extends Shape {  // shape that represents a complex point
 
 public PointShape(String itsname){
@@ -17,3 +16,4 @@ public Point getPoint() { return this.points.get(0); }
 public String getName() { return label; }
 
 }
+*/

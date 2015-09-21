@@ -21,23 +21,18 @@ class Gravity implements Animation, ActionListener {
 
     public Gravity() {
 
-        MovingParticles.Drawing.setString(0, "string2");
-        MovingParticles.Drawing.setString(1, "string3xyz");
+ //       MovingParticles.Drawing.setString(0, "string2");
+        //     MovingParticles.Drawing.setString(1, "string3xyz");
+        particles = MovingParticles.Drawing.getPoints();
 
-        for (Shape s : MovingParticles.Drawing.getShapes()) {
-            if (s.isPoint) {
-                System.out.println("Shape " + s.label);
-                for (Point p : s.points) {
-                    System.out.println("  point " + s.label);
-                    particles.add(p);
-                    p.particleName = s.label;
-                    p.x_init = p.x;
-                    p.y_init = p.y;
-                    p.xLastDrawn = p.x;
-                    p.yLastDrawn = p.y;
-                    p.trajectory = null;
-                }
-            }
+        for (Point p : particles) {
+            p.velocity = 0;
+            p.angle = 0;
+            p.x_init = p.x;
+            p.y_init = p.y;
+            p.xLastDrawn = p.x;
+            p.yLastDrawn = p.y;
+            p.trajectory = null;
         }
 
         pane = new JPanel();
@@ -164,7 +159,7 @@ class Gravity implements Animation, ActionListener {
         for (Point p : particles) {
             p.x = p.x + ((p.vx + p.vxnew) / 2) * dt;
             p.y = p.y + ((p.vy + p.vynew) / 2) * dt;
- //          p.x = p.x + p.vx * dt;
+            //          p.x = p.x + p.vx * dt;
             //          p.y = p.y + p.vy * dt;
             p.vx = p.vxnew;
             p.vy = p.vynew;
@@ -180,7 +175,7 @@ class Gravity implements Animation, ActionListener {
             double sqScreenDistance = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
             if (sqScreenDistance > resolution * resolution) {
                 if (p.trajectory != null) {
-                    p.trajectory.addPoint(p.x, p.y);
+                    MovingParticles.Drawing.addPointToShape(p.trajectory, p.x, p.y);
                 }
                 redraw = true;
                 p.xLastDrawn = p.x;
