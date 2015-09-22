@@ -18,7 +18,7 @@ import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-class Elasticity implements Animation, ActionListener, ChangeListener, ItemListener {
+class Elasticity implements Animation,ChangeListener, ItemListener {
 
     JPanel pointPane;
     JPanel pane;
@@ -60,62 +60,29 @@ class Elasticity implements Animation, ActionListener, ChangeListener, ItemListe
         links = MovingParticles.Drawing.getLinks();
 
         pane = new JPanel();
-
-        pane.setLayout(
-                new BoxLayout(pane, BoxLayout.PAGE_AXIS));
+        pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
         Border blackline = BorderFactory.createLineBorder(Color.black);
-
         pane.setBorder(blackline);
-
         gBox = new JCheckBox("gravity");
-
-        gBox.addItemListener(
-                this);
-        gBox.setEnabled(
-                true);
-
-        pane.add(Box.createRigidArea(new Dimension(500, 20)));
-        pane.add(gBox);
+        gBox.addItemListener(this);
+        gBox.setEnabled(true);
 
         k1Info = new JLabel("elasticity constant (stretch)", JLabel.CENTER);
         sliderK1 = new JSlider(-5000, 3000, 0);
-
-        sliderK1.addChangeListener(
-                this);
         k2Info = new JLabel("elasticity constant (compress)", JLabel.CENTER);
         sliderK2 = new JSlider(-5000, 3000, 0);
-
-        sliderK2.addChangeListener(
-                this);
-
+        sliderK1.addChangeListener(this);
+        sliderK2.addChangeListener(this);
+       
+        pane.add(Box.createRigidArea(new Dimension(500, 20)));
+        pane.add(gBox);
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
         pane.add(k1Info);
-
         pane.add(sliderK1);
-
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
         pane.add(k2Info);
-
         pane.add(sliderK2);
-
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
-
-        for (int i = 0;
-                i < extremities.size();
-                i++) {
-            Point p = extremities.get(i);
-            pointPane = new JPanel();
-            pointPane.setLayout(new BoxLayout(pointPane, BoxLayout.LINE_AXIS));
-            pointPane.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
-            pointPane.add(Box.createRigidArea(new Dimension(40, 0)));
-            pointPane.add(new JLabel(p.particleName));
-            addTextField(i, "Mass", p.mass);
-            addTextField(i, "Velocity", p.velocity);
-            addTextField(i, "Angle", p.angle);
-            pane.add(pointPane);
-
-        }
-
     }
 
     public void stateChanged(ChangeEvent e) {
@@ -144,17 +111,7 @@ class Elasticity implements Animation, ActionListener, ChangeListener, ItemListe
             }
         }
     }
-
-    private void addTextField(int i, String label, double value) {
-        pointPane.add(Box.createRigidArea(new Dimension(20, 0)));
-        pointPane.add(new JLabel(label));
-        pointPane.add(Box.createRigidArea(new Dimension(20, 0)));
-        JTextField field = new JTextField(String.format("%.2f", value));
-        field.addActionListener(this);
-        field.setActionCommand(i + "|" + label);
-        pointPane.add(field);
-    }
-
+/*
     public void actionPerformed(ActionEvent e) {
         {
             String action = e.getActionCommand();
@@ -206,7 +163,8 @@ class Elasticity implements Animation, ActionListener, ChangeListener, ItemListe
         }
 
     }
-
+*/
+    
     public JPanel getPane() {
         return pane;
     }
@@ -348,7 +306,7 @@ class Elasticity implements Animation, ActionListener, ChangeListener, ItemListe
                 double sqScreenDistance = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
                 if (sqScreenDistance > resolution * resolution) {
                     if (p.trajectory != null) {
-                        MovingParticles.Drawing.addPointToShape(p.trajectory, p.x, p.y);
+                        MovingParticles.Drawing.addPointToCurve(p.trajectory, p.x, p.y);
                     }
                     redraw = true;
                     p.xLastDrawn = p.x;

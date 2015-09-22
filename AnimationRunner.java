@@ -176,10 +176,10 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
         if (source == cogBox) {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 if (centerOfGravity == null) {
-                    centerOfGravity = MovingParticles.Drawing.addShape();
-                    MovingParticles.Drawing.addPointToShape(centerOfGravity, 0, 0);
-                    centerOfGravity.color = Color.BLUE;
-                    centerOfGravity.label = "CoG";
+                    centerOfGravity = MovingParticles.Drawing.addCurve();
+                    MovingParticles.Drawing.addPointToCurve(centerOfGravity, 0, 0);
+                    centerOfGravity.lastPoint().color = Color.BLUE;
+                    centerOfGravity.lastPoint().particleName = "CoG";
                 }
             };
             if (e.getStateChange() == ItemEvent.DESELECTED) {
@@ -208,11 +208,11 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
 
     private void createTrajectory(Point p) {
         if (p.trajectory == null) {
-            p.trajectory = MovingParticles.Drawing.addShape();
+            p.trajectory = MovingParticles.Drawing.addCurve();
         } else {
             System.out.println("createTrajectory() : trajectory already exists");
         }
-        MovingParticles.Drawing.addPointToShape(p.trajectory, p.x, p.y);
+        MovingParticles.Drawing.addPointToCurve(p.trajectory, p.x, p.y);
     }
 
     public Point updateCenterOfGravity() {

@@ -12,7 +12,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.border.Border;
 
-class Gravity implements Animation, ActionListener {
+class Gravity implements Animation {
 
     JPanel pointPane;
     JPanel pane;
@@ -21,8 +21,6 @@ class Gravity implements Animation, ActionListener {
 
     public Gravity() {
 
- //       MovingParticles.Drawing.setString(0, "string2");
-        //     MovingParticles.Drawing.setString(1, "string3xyz");
         particles = MovingParticles.Drawing.getPoints();
 
         for (Point p : particles) {
@@ -40,31 +38,6 @@ class Gravity implements Animation, ActionListener {
         pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
         Border blackline = BorderFactory.createLineBorder(Color.black);
         pane.setBorder(blackline);
-
-        for (int i = 0; i < particles.size(); i++) {
-            Point p = particles.get(i);
-            pointPane = new JPanel();
-            pointPane.setLayout(new BoxLayout(pointPane, BoxLayout.LINE_AXIS));
-            pointPane.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
-            pointPane.add(Box.createRigidArea(new Dimension(40, 0)));
-            pointPane.add(new JLabel(p.particleName));
-            addTextField(i, "Mass", p.mass);
-            addTextField(i, "Velocity", p.velocity);
-            addTextField(i, "Angle", p.angle);
-            pane.add(pointPane);
-
-        }
-
-    }
-
-    private void addTextField(int i, String label, double value) {
-        pointPane.add(Box.createRigidArea(new Dimension(20, 0)));
-        pointPane.add(new JLabel(label));
-        pointPane.add(Box.createRigidArea(new Dimension(20, 0)));
-        JTextField field = new JTextField(String.format("%.2f", value));
-        field.addActionListener(this);
-        field.setActionCommand(i + "|" + label);
-        pointPane.add(field);
     }
 
     public JPanel getPane() {
@@ -73,46 +46,6 @@ class Gravity implements Animation, ActionListener {
 
     public ArrayList<Point> getParticles() {
         return new ArrayList<Point>(particles);
-    }
-
-    public void actionPerformed(ActionEvent e) {
-        {
-            JTextField field = (JTextField) e.getSource();
-            String action = e.getActionCommand();
-            int particleNr = Integer.parseInt(action.split("[|]")[0]);
-            String attribute = action.split("[|]")[1];
-            boolean validValue = true;
-            double value = 0d;
-            try {
-                value = Double.valueOf(field.getText());
-            } catch (Exception ex) {
-                field.setBackground(Color.yellow);
-                validValue = false;
-            }
-            if (validValue) {
-                field.setBackground(Color.white);
-                System.out.println(particleNr + "." + attribute + "=" + value);
-                if (attribute.equals("Mass")) {
-                    particles.get(particleNr).mass = value;
-                    field.setBackground(Color.green);
-                }
-                if (attribute.equals("Velocity")) {
-                    particles.get(particleNr).velocity = value;
-                    field.setBackground(Color.green);
-                }
-                if (attribute.equals("Angle")) {
-                    particles.get(particleNr).angle = value;
-                    field.setBackground(Color.green);
-                }
-                if (attribute.equals("Velocity") || attribute.equals("Angle")) {
-                    for (Point p : particles) {
-                        p.vx = p.velocity * Math.cos((p.angle / 180) * Math.PI);
-                        p.vy = p.velocity * Math.sin((p.angle / 180) * Math.PI);
-                    }
-                }
-            }
-        }
-
     }
 
     public boolean step(double dt, int resolution) {
@@ -175,7 +108,7 @@ class Gravity implements Animation, ActionListener {
             double sqScreenDistance = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
             if (sqScreenDistance > resolution * resolution) {
                 if (p.trajectory != null) {
-                    MovingParticles.Drawing.addPointToShape(p.trajectory, p.x, p.y);
+                    MovingParticles.Drawing.addPointToCurve(p.trajectory, p.x, p.y);
                 }
                 redraw = true;
                 p.xLastDrawn = p.x;

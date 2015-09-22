@@ -3,11 +3,9 @@ import java.util.*;
 
 class Shape {
 
+    Point pEnd=null;
     
-    
-    public String label = "";
     java.util.List<Point> points;
-    Color color;
 
     public boolean isPoint = false;
     public boolean isSelected = false;
@@ -16,8 +14,6 @@ class Shape {
 
     public Shape() {
         points = new ArrayList<>();
-        points.clear();
-        color=Color.BLACK;
     }
 
     // clear() should only be called from Drawing.clearShape,for synchronization

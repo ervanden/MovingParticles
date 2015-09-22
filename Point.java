@@ -1,4 +1,7 @@
 
+import java.awt.Color;
+
+
 
 public class Point {
 
@@ -16,6 +19,8 @@ public boolean fixed;
 public double radius;
 
 String particleName;
+Color color = Color.BLACK;
+
 Shape trajectory;
 public double mass;
 public double velocity;

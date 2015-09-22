@@ -116,20 +116,50 @@ class Drawing {
         points.remove(p);
     }
 
+    public synchronized Shape addShape() { // empty shape
+        Shape s = new Shape();
+        return s;
+    }
+
     public synchronized void addPointToShape(Shape s, double x, double y) {
+        Point p = new Point(x, y);
+        if (s.pEnd == null) {
+            s.pEnd = p;
+            points.add(p);
+            System.out.println("Added point " + p.particleName);
+        } else {
+            double xprev = s.pEnd.x;
+            double yprev = s.pEnd.y;
+            if (((x - xprev) * (x - xprev) + (y - yprev) * (y - yprev)) > 10e-6) {
+                points.add(p);
+                System.out.println("Added point " + p.particleName);
+                links.add(new Link(p, s.pEnd));
+                System.out.println("Added link " + p.particleName + " - " + s.pEnd.particleName);
+                s.pEnd = p;
+            } else {
+                System.out.println("Point too close to previous  : not added to shape");
+            }
+        }
+    }
+
+    public synchronized Shape addCurve() {
+        Shape s = new Shape();
+        shapeCounter++;
+        shapes.add(s);
+        return s;
+    }
+
+    public synchronized void addPointToCurve(Shape s, double x, double y) {
         if (s.points.size() == 0) {
             s.addPoint(x, y);
-            points.add(s.lastPoint());
         } else {
             Point pprev = s.lastPoint();
             double xprev = pprev.x;
             double yprev = pprev.y;
             if (((x - xprev) * (x - xprev) + (y - yprev) * (y - yprev)) > 10e-6) {
                 s.addPoint(x, y);
-                points.add(s.lastPoint());
-                links.add(new Link(s.lastPoint(), pprev));
             } else {
-                System.out.println("Point too close to previous in shape " + s.label + " : not added");
+                System.out.println("Point too close to previous in shape  : not added");
             }
         }
     }
@@ -149,17 +179,19 @@ class Drawing {
         }
         return list;
     }
-    
-        public synchronized ArrayList<Point> getSelectedPoints() {
+
+    public synchronized ArrayList<Point> getSelectedPoints() {
         // makes a copy of 'shapes' to be used when risk of concurrent modification
         ArrayList<Point> list = new ArrayList<>();
         for (Point p : points) {
-            if (p.isSelected) list.add(p);
+            if (p.isSelected) {
+                list.add(p);
+            }
         }
         return list;
     }
-    
-        public synchronized ArrayList<Link> getLinks() {
+
+    public synchronized ArrayList<Link> getLinks() {
         // makes a copy of 'shapes' to be used when risk of concurrent modification
         ArrayList<Link> list = new ArrayList<>();
         for (Link l : links) {
@@ -185,7 +217,18 @@ class Drawing {
         if (snapToGrid) {
             t.gridLines();
         }
-
+        
+        t.graphics.setColor(Color.GREEN);
+        for (Shape s : shapes) {
+            Point pprev = null;
+            for (Point p : s.points) {
+                if (pprev != null) {
+                    t.line(pprev.x, pprev.y, p.x, p.y);
+                }
+                pprev = p;
+            }
+        }
+        
         t.axes();
 
         if (areaCursorOn) {
@@ -227,6 +270,7 @@ class Drawing {
                 t.line(l.p1.x, l.p1.y, l.p2.x, l.p2.y);
             }
         }
+
 
     }
 
@@ -300,14 +344,6 @@ class Drawing {
         return lmin;
     }
 
-    public synchronized Shape addShape() {
-        Shape s = new Shape();
-        s.label = "shape" + shapeCounter;
-        shapeCounter++;
-        shapes.add(s);
-        return s;
-    }
-
     public synchronized void moveShapeRelative(Shape s, double dx, double dy) {
         for (Point xy : s.points) {
             xy.replaceXY(xy.getZX() + dx, xy.getZY() + dy);
@@ -326,8 +362,7 @@ class Drawing {
 // if l == "selection" then move only selected shapes
         for (Shape s : shapes) {
             if ((l.equals("all"))
-                    || (l.equals("selection") && s.isSelected)
-                    || (s.label == l)) {
+                    || (l.equals("selection") && s.isSelected)) {
                 for (Point xy : s.points) {
                     xy.replaceXY(xy.getZX() + dx, xy.getZY() + dy);
                 };
