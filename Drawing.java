@@ -8,7 +8,7 @@ import java.util.List;
 
 class Drawing {
 
-    private List<Shape> shapes;
+    private List<Curve> curves;
     private List<Link> links;
     private List<Point> points;
     private ArrayList<String> strings;
@@ -29,18 +29,16 @@ class Drawing {
     int shapeCounter;  // used to construct names shape1, shape2,...
 
     public Drawing() {
-        shapes = new ArrayList<>();
+        curves = new ArrayList<>();
         links = new ArrayList<>();
         points = new ArrayList<>();
         strings = new ArrayList<>();
-        shapes.clear();
-        strings.clear();
         pointCounter = 1;
         shapeCounter = 1;
     }
 
     public synchronized void deleteDrawing() {
-        shapes.clear();
+        curves.clear();
         links.clear();
         points.clear();
         strings.clear();
@@ -94,8 +92,12 @@ class Drawing {
         }
     }
 
-    public synchronized void deleteShape(Shape s) {
-        shapes.remove(s);
+    public synchronized void deleteCurve(Curve s) {
+        for (Point p : s.points) {
+            deletePoint(p);
+        }
+        s.points.clear();
+        curves.remove(s);
     }
 
     public synchronized void deleteLink(Link l) {
@@ -114,6 +116,18 @@ class Drawing {
 
         }
         points.remove(p);
+    }
+
+    public synchronized Point addPoint(double x, double y) {
+        Point p = new Point(x, y);
+        points.add(p);
+        return p;
+    }
+
+    public synchronized Link addLink(Point p1, Point p2) {
+        Link l = new Link(p1, p2);
+        links.add(l);
+        return l;
     }
 
     public synchronized Shape addShape() { // empty shape
@@ -142,33 +156,25 @@ class Drawing {
         }
     }
 
-    public synchronized Shape addCurve() {
-        Shape s = new Shape();
-        shapeCounter++;
-        shapes.add(s);
+    public synchronized Curve addCurve() {
+        Curve s = new Curve();
+        curves.add(s);
         return s;
     }
 
-    public synchronized void addPointToCurve(Shape s, double x, double y) {
-        if (s.points.size() == 0) {
-            s.addPoint(x, y);
+    public synchronized void addPointToCurve(Curve s, double x, double y) {
+        if (s.points.isEmpty()) {
+            s.points.add(new Point(x, y));
         } else {
             Point pprev = s.lastPoint();
             double xprev = pprev.x;
             double yprev = pprev.y;
             if (((x - xprev) * (x - xprev) + (y - yprev) * (y - yprev)) > 10e-6) {
-                s.addPoint(x, y);
+                s.points.add(new Point(x, y));
             } else {
-                System.out.println("Point too close to previous in shape  : not added");
+//                System.out.println("Point too close to previous in shape  : not added");
             }
         }
-    }
-
-    public synchronized void clearShape(Shape s) {
-        for (Point p : s.points) {
-            deletePoint(p);
-        }
-        s.clear();
     }
 
     public synchronized ArrayList<Point> getPoints() {
@@ -217,9 +223,9 @@ class Drawing {
         if (snapToGrid) {
             t.gridLines();
         }
-        
-        t.graphics.setColor(Color.GREEN);
-        for (Shape s : shapes) {
+
+        t.graphics.setColor(Color.BLACK);
+        for (Curve s : curves) {
             Point pprev = null;
             for (Point p : s.points) {
                 if (pprev != null) {
@@ -228,7 +234,7 @@ class Drawing {
                 pprev = p;
             }
         }
-        
+
         t.axes();
 
         if (areaCursorOn) {
@@ -249,9 +255,9 @@ class Drawing {
                 t.graphics.setColor(Color.BLACK);
                 //                   g2.setStroke(stroke0);
             };
-            t.circle(p.x, p.y, p.radius);
+            t.circle(p.x, p.y, p.radius,p.filled);
             if (labelsVisible) {
-                t.label(p.particleName, p.x, p.y);
+                t.label(p.particleName, p.x+p.radius*0.72, p.y+p.radius*0.72);
             }
             if (p.fixed) {
                 t.fix(p.x, p.y);
@@ -271,7 +277,6 @@ class Drawing {
             }
         }
 
-
     }
 
     public synchronized void setMinMax() {
@@ -281,24 +286,40 @@ class Drawing {
         ymax = Double.NEGATIVE_INFINITY;
         ymin = Double.POSITIVE_INFINITY;
 
-        for (Shape s : shapes) {
+        for (Point p : points) {
+            double xright = p.x + p.radius;
+            double ytop = p.y + p.radius;
+            double xleft = p.x - p.radius;
+            double ybottom = p.y - p.radius;
+            if (xleft < xmin) {
+                xmin = xleft;
+            }
+            if (xright > xmax) {
+                xmax = xright;
+            }
+            if (ybottom < ymin) {
+                ymin = ybottom;
+            }
+            if (ytop > ymax) {
+                ymax = ytop;
+            }
+        }
 
-            for (Point xy : s.points) {
-                if (xy.getZX() < xmin) {
-                    xmin = xy.getZX();
+        for (Curve s : curves) {
+            for (Point p : s.points) {
+                if (p.x < xmin) {
+                    xmin = p.x;
                 }
-                if (xy.getZX() > xmax) {
-                    xmax = xy.getZX();
+                if (p.x > xmax) {
+                    xmax = p.x;
                 }
-                if (xy.getZY() < ymin) {
-                    ymin = xy.getZY();
+                if (p.y < ymin) {
+                    ymin = p.y;
                 }
-                if (xy.getZY() > ymax) {
-                    ymax = xy.getZY();
+                if (p.y > ymax) {
+                    ymax = p.y;
                 }
-
-            };
-
+            }
         }
     }
 
@@ -344,41 +365,37 @@ class Drawing {
         return lmin;
     }
 
-    public synchronized void moveShapeRelative(Shape s, double dx, double dy) {
-        for (Point xy : s.points) {
-            xy.replaceXY(xy.getZX() + dx, xy.getZY() + dy);
-        };
-    }
-
     public synchronized void movePointRelative(Point p, double dx, double dy) {
         p.x = p.x + dx;
         p.y = p.y + dy;
     }
 
-    public synchronized void moveShapesRelative(String l, double dx, double dy) {
+    public synchronized void moveDrawingRelative(String l, double dx, double dy) {
 
-// move the shape or shapes with label l 
-// if l == "all" then move everything except parameter points
-// if l == "selection" then move only selected shapes
-        for (Shape s : shapes) {
-            if ((l.equals("all"))
-                    || (l.equals("selection") && s.isSelected)) {
-                for (Point xy : s.points) {
-                    xy.replaceXY(xy.getZX() + dx, xy.getZY() + dy);
+        for (Curve s : curves) {
+            if ((l.equals("all")) || (l.equals("selection") && s.isSelected)) {
+                for (Point p : s.points) {
+                    p.x = p.x + dx;
+                    p.y = p.y + dy;
                 };
             };
         }
-    }  // moveShapesRelative
+
+        for (Point p : points) {
+            if ((l.equals("all")) || (l.equals("selection") && p.isSelected)) {
+                p.x = p.x + dx;
+                p.y = p.y + dy;
+            };
+        }
+    }
 
     public synchronized boolean selectPoint(double x, double y) {
 
         boolean selected = false;
-        for (Shape s : shapes) {
-            for (Point p : s.points) {
-                if (((p.x - x) * (p.x - x) + (p.y - y) * (p.y - y)) < p.radius * p.radius) {
-                    p.isSelected = true;
-                    selected = true;
-                }
+        for (Point p : points) {
+            if (((p.x - x) * (p.x - x) + (p.y - y) * (p.y - y)) < p.radius * p.radius) {
+                p.isSelected = true;
+                selected = true;
             }
         }
         return selected;
@@ -387,12 +404,10 @@ class Drawing {
     public synchronized boolean unSelectPoint(double x, double y) {
 
         boolean unselected = false;
-        for (Shape s : shapes) {
-            for (Point p : s.points) {
-                if (((p.x - x) * (p.x - x) + (p.y - y) * (p.y - y)) < p.radius * p.radius) {
-                    p.isSelected = false;
-                    unselected = true;
-                }
+        for (Point p : points) {
+            if (((p.x - x) * (p.x - x) + (p.y - y) * (p.y - y)) < p.radius * p.radius) {
+                p.isSelected = false;
+                unselected = true;
             }
         }
         return unselected;

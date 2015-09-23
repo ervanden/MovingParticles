@@ -137,11 +137,15 @@ class Transform {
         );
     }
 
-    public void circle(double x, double y, double r) {
+    public void circle(double x, double y, double r, boolean filled) {
         int xcenter = xUserToScreen(x);
         int ycenter = yUserToScreen(y);
-        int radius = xUserToScreen(r)-xUserToScreen(0);
-        graphics.drawOval(xcenter - radius, ycenter - radius, 2 * radius, 2 * radius);
+        int radius = xUserToScreen(r) - xUserToScreen(0);
+        if (filled) {
+            graphics.fillOval(xcenter - radius, ycenter - radius, 2 * radius, 2 * radius);
+        } else {
+            graphics.drawOval(xcenter - radius, ycenter - radius, 2 * radius, 2 * radius);
+        }
     }
 
     public void dot(double x, double y) {
@@ -151,13 +155,13 @@ class Transform {
         graphics.drawOval(xcenter - 3, ycenter - 3, 6, 6);
     }
 
-    public void label(String s, double x, double y){
-                int xcenter, ycenter;
+    public void label(String s, double x, double y) {
+        int xcenter, ycenter;
         xcenter = xUserToScreen(x);
         ycenter = yUserToScreen(y);
-        graphics.drawString(s, xcenter + 4, ycenter - 4);  
+        graphics.drawString(s, xcenter , ycenter );
     }
-    
+
     public void complexPoint(String s, double x, double y) {
         int xcenter, ycenter;
         xcenter = xUserToScreen(x);

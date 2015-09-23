@@ -104,48 +104,48 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         y = e.getY();
 
         zFrame.setTitle(String.format("x=%.2f y=%.2f", transform.xScreenToUser(x), transform.yScreenToUser(y)));
+        /*
+         if (actionAddCircle) {
 
-        if (actionAddCircle) {
+         double radius, gridAngle;
 
-            double radius, gridAngle;
+         if (firstPoint) {
+         xCircle = transform.xScreenToUser(x);
+         yCircle = transform.yScreenToUser(y);
+         if (Drawing.snapToGrid) {
+         xCircle = Math.round(xCircle);
+         yCircle = Math.round(yCircle);
+         }
+         firstPoint = false;
 
-            if (firstPoint) {
-                xCircle = transform.xScreenToUser(x);
-                yCircle = transform.yScreenToUser(y);
-                if (Drawing.snapToGrid) {
-                    xCircle = Math.round(xCircle);
-                    yCircle = Math.round(yCircle);
-                }
-                firstPoint = false;
+         } else {
+         xRadius = transform.xScreenToUser(x);
+         yRadius = transform.yScreenToUser(y);
+         if (Drawing.snapToGrid) {
+         xRadius = Math.round(xRadius);
+         yRadius = Math.round(yRadius);
+         }
 
-            } else {
+         Drawing.clearShape(currentShape);
 
-                xRadius = transform.xScreenToUser(x);
-                yRadius = transform.yScreenToUser(y);
-                if (Drawing.snapToGrid) {
-                    xRadius = Math.round(xRadius);
-                    yRadius = Math.round(yRadius);
-                }
+         radius = Math.sqrt((xRadius - xCircle) * (xRadius - xCircle) + (yRadius - yCircle) * (yRadius - yCircle));
+         gridAngle = Math.sqrt(transform.xScreenToUser(minPixelDist) - transform.xScreenToUser(0)) / radius;
+         if (gridAngle > (Math.PI / 10)) {
+         gridAngle = Math.PI / 10;
+         }
 
-                Drawing.clearShape(currentShape);
+         for (double angle = 0; angle < 2 * Math.PI; angle = angle + gridAngle) {
+         Drawing.addPointToShape(currentShape, xCircle + radius * Math.sin(angle), yCircle + radius * Math.cos(angle));
+         };
 
-                radius = Math.sqrt((xRadius - xCircle) * (xRadius - xCircle) + (yRadius - yCircle) * (yRadius - yCircle));
-                gridAngle = Math.sqrt(transform.xScreenToUser(minPixelDist) - transform.xScreenToUser(0)) / radius;
-                if (gridAngle > (Math.PI / 10)) {
-                    gridAngle = Math.PI / 10;
-                }
+         Drawing.addPointToShape(currentShape, xCircle, yCircle + radius);
 
-                for (double angle = 0; angle < 2 * Math.PI; angle = angle + gridAngle) {
-                    Drawing.addPointToShape(currentShape, xCircle + radius * Math.sin(angle), yCircle + radius * Math.cos(angle));
-                };
+         repaint();
 
-                Drawing.addPointToShape(currentShape, xCircle, yCircle + radius);
+         };
 
-                repaint();
-
-            };
-
-        };
+         };
+         */
 
         if (actionAddShape) {
             // add point only if sufficiently far from previous OR if it is the first point 
@@ -176,7 +176,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                 if (actionMoveSelection) {
                     whatToMove = "selection";
                 }
-                Drawing.moveShapesRelative(whatToMove,
+                Drawing.moveDrawingRelative(whatToMove,
                         transform.xScreenToUser(x) - transform.xScreenToUser(xprev),
                         transform.yScreenToUser(y) - transform.yScreenToUser(yprev));
                 repaint();
@@ -524,14 +524,12 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                 yuser = Math.round(yuser);
             };
             Drawing.addPointToShape(cps, xuser, yuser);
-            cps.isPoint = true;
 
             repaint();
             firstPoint = true;
             actionMovePoint = true;
 
         }
-        ;
 
     }
 
@@ -546,22 +544,22 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         if (source == labelButton) {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 Drawing.labelsVisible = true;
-            };
+            }
             if (e.getStateChange() == ItemEvent.DESELECTED) {
                 Drawing.labelsVisible = false;
-            };
+            }
             repaint();
-        };
+        }
 
         if (source == lineButton) {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 Drawing.linesVisible = true;
-            };
+            }
             if (e.getStateChange() == ItemEvent.DESELECTED) {
                 Drawing.linesVisible = false;
-            };
+            }
             repaint();
-        };
+        }
 
         if (source == scaleButton) {
             if (e.getStateChange() == ItemEvent.SELECTED) {
@@ -569,19 +567,19 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
             };
             if (e.getStateChange() == ItemEvent.DESELECTED) {
                 Drawing.scaleVisible = false;
-            };
+            }
             repaint();
-        };
+        }
 
         if (source == gridButton) {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 Drawing.snapToGrid = true;
-            };
+            }
             if (e.getStateChange() == ItemEvent.DESELECTED) {
                 Drawing.snapToGrid = false;
-            };
+            }
             repaint();
-        };
+        }
 
         if (source == animateButton) {
             if (e.getStateChange() == ItemEvent.SELECTED) {
@@ -598,8 +596,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                     animateThread = null;
                 }
             }
-        };
-
+        }
     }
 
     public void actionPerformed(ActionEvent ae) {
@@ -618,7 +615,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
             actionAddShape = true;
             firstPoint = true;
             currentShape = Drawing.addShape();
-        };
+        }
 
         if (buttonClicked == "Add Line") {
             actionAddLine = true;
@@ -687,12 +684,12 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         };
 
         if (buttonClicked == "Properties Point") {
-            actionPropertiesPoint=true;
-            firstPoint=true;
+            actionPropertiesPoint = true;
+            firstPoint = true;
         };
 
         if (buttonClicked == "Properties Link") {
- //           actionPropertiesLink=true;
+            //           actionPropertiesLink=true;
         };
 
         if (buttonClicked == "Properties Selected Points") {
@@ -700,7 +697,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         };
 
         if (buttonClicked == "Properties Selected Links") {
- //           propertyFrame.display(Drawing.selectedLinks();
+            //           propertyFrame.display(Drawing.selectedLinks();
         };
 
         if (buttonClicked == "Move View") {
@@ -783,34 +780,40 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         if (buttonClicked == "Add Grid") {
 
             double xmin = transform.uxmin;
-            double xmax = transform.uxmax;
             double ymin = transform.uymin;
-            double ymax = transform.uymax;
 
             GridDialog gd = new GridDialog();
-            gd.popUp(zFrame, xmin, xmax, ymin, ymax, (xmax - xmin) / 20);
+            gd.popUp(zFrame, xmin, ymin, 1, 1, 10, 10);
 
             if (gd.validValues) {
                 xmin = gd.xmin;
-                xmax = gd.xmax;
+                double xgrid = gd.xdelta;
                 ymin = gd.ymin;
-                ymax = gd.ymax;
-                double xgrid = gd.delta;
-                double ygrid = gd.delta;
+                double ygrid = gd.ydelta;
+                int nx = gd.xn;
+                int ny = gd.yn;
+                
 
-                for (double x = xmin; x <= xmax; x = x + xgrid) {
-                    Shape s = Drawing.addShape();
-                    for (double y = ymin; y <= ymax; y = y + ygrid) {
-                        Drawing.addPointToShape(s, x, y);
-                    };
-                };
+            Point[][] mpoints = new Point[nx][ny];
 
-                for (double y = ymin; y <= ymax; y = y + ygrid) {
-                    Shape s = Drawing.addShape();
-                    for (double x = xmin; x <= xmax; x = x + xgrid) {
-                        Drawing.addPointToShape(s, x, y);
-                    };
-                };
+                for (int ix = 0; ix < nx; ix++) {
+                    for (int iy = 0; iy < ny; iy++) {
+                        Point p = MovingParticles.Drawing.addPoint(xmin + ix * xgrid, ymin + iy * ygrid);
+                        mpoints[ix][iy] = p;
+                    }
+                }
+                // horizontal links
+                for (int ix = 0; ix < nx-1; ix++) {
+                    for (int iy = 0; iy < ny; iy++) {
+                        MovingParticles.Drawing.addLink(mpoints[ix][iy],mpoints[ix+1][iy]);
+                    }
+                }
+                //vertical links
+                for (int ix = 0; ix < nx; ix++) {
+                    for (int iy = 0; iy < ny-1; iy++) {
+                        MovingParticles.Drawing.addLink(mpoints[ix][iy],mpoints[ix][iy+1]);
+                    }
+                }
 
                 repaint();
             }

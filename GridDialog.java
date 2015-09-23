@@ -21,24 +21,44 @@ class ParseDoubleField {
     }
 }
 
+class ParseIntField {
+
+    static int value;
+
+    static int parse(JTextField field) {
+        try {
+            value = Integer.parseInt(field.getText());
+            System.out.println("parsed value=" + value);
+            return value;
+        } catch (java.lang.NumberFormatException nfe) {
+            field.setText(field.getText() + " ?");
+            field.setForeground(Color.red);
+            return Integer.MAX_VALUE;
+        }
+    }
+}
+
 class GridDialog implements ActionListener, PropertyChangeListener {
 
     JFrame owningFrame;
     public double xmin;
-    public double xmax;
+    public double xdelta;
     public double ymin;
-    public double ymax;
-    public double delta;
+    public double ydelta;
+    public int xn;
+    public int yn;
     public boolean validValues=false; // false after "Cancel" or Window Close
     
-    double initxmin, initxmax, initymin, initymax, initdelta; // value to reset to
+    double initxmin, initxdelta, initymin, initydelta; // value to reset to
+    int initxn, inityn;
 
     JDialog dialog;
     JTextField xminGridField = new JTextField(10);
-    JTextField xmaxGridField = new JTextField(10);
+    JTextField xdeltaGridField = new JTextField(10);
     JTextField yminGridField = new JTextField(10);
-    JTextField ymaxGridField = new JTextField(10);
-    JTextField deltaField = new JTextField(10);
+    JTextField ydeltaGridField = new JTextField(10);
+    JTextField xnField = new JTextField(10);
+        JTextField ynField = new JTextField(10);
 
     ArrayList<JTextField> textFields = new ArrayList<JTextField>();
 
@@ -52,35 +72,37 @@ class GridDialog implements ActionListener, PropertyChangeListener {
         System.out.println(lastButtonClicked + " pressed!");
         if (ae.getActionCommand().equals("Enter")) {
 
-            int nrErrors = 0;
-            JTextField field;
-
             xmin = ParseDoubleField.parse(xminGridField);
-            xmax = ParseDoubleField.parse(xmaxGridField);
+            xdelta = ParseDoubleField.parse(xdeltaGridField);
             ymin = ParseDoubleField.parse(yminGridField);
-            ymax = ParseDoubleField.parse(ymaxGridField);
-            delta = ParseDoubleField.parse(deltaField);
+            ydelta = ParseDoubleField.parse(ydeltaGridField);
+            xn = ParseIntField.parse(xnField);
+                        yn = ParseIntField.parse(ynField);
 
             if ((!Double.isNaN(xmin))
-                    && (!Double.isNaN(xmax))
+                    && (!Double.isNaN(xdelta))
                     && (!Double.isNaN(ymin))
-                    && (!Double.isNaN(ymax))
-                    && (!Double.isNaN(delta))) {
+                    && (!Double.isNaN(ydelta))
+                    && (xdelta != Integer.MAX_VALUE)
+                      && (ydelta != Integer.MAX_VALUE)                  
+                    ) {
                 System.out.println("xmin=" + xmin);
-                System.out.println("xmax=" + xmax);
+                System.out.println("xdelta=" + xdelta);
                 System.out.println("ymin=" + ymin);
-                System.out.println("ymax=" + ymax);
-                System.out.println("delta= " + delta);
+                System.out.println("ydelta=" + ydelta);
+                System.out.println("xdelta= " + xdelta);
+                 System.out.println("ydelta= " + ydelta);
                 validValues=true;
                 dialog.dispose();
             };
 
         } else if (ae.getActionCommand().equals("Reset")) {
             xminGridField.setText(("" + initxmin));
-            xmaxGridField.setText(("" + initxmax));
+            xdeltaGridField.setText(("" + initxdelta));
             yminGridField.setText(("" + initymin));
-            ymaxGridField.setText(("" + initymax));
-            deltaField.setText(("" + initdelta));
+            ydeltaGridField.setText(("" + initydelta));
+            xnField.setText(("" + initxn));
+                        ynField.setText(("" + inityn));
             for (JTextField field : textFields) {
                 field.setForeground(Color.black);
             };
@@ -92,32 +114,36 @@ class GridDialog implements ActionListener, PropertyChangeListener {
         ;
     }
 
-    public void popUp(JFrame f, double xmin, double xmax, double ymin, double ymax, double delta) {
+    public void popUp(JFrame f, double xmin, double ymin, double xdelta, double ydelta, int xn, int yn) {
         owningFrame = f;
         initxmin = xmin;
-        initxmax = xmax;
+        initxdelta = xdelta;
         initymin = ymin;
-        initymax = ymax;
-        initdelta= delta;
+        initydelta = ydelta;
+        initxn= xn;
+        inityn=yn;
 
         textFields.clear();
         textFields.add(xminGridField);
-        textFields.add(xmaxGridField);
+        textFields.add(xdeltaGridField);
         textFields.add(yminGridField);
-        textFields.add(ymaxGridField);
-        textFields.add(deltaField);
+        textFields.add(ydeltaGridField);
+        textFields.add(xnField);
+        textFields.add(ynField);
 
         xminGridField.setText(("" + initxmin));
-        xmaxGridField.setText(("" + initxmax));
+        xdeltaGridField.setText(("" + initxdelta));
         yminGridField.setText(("" + initymin));
-        ymaxGridField.setText(("" + initymax));
-        deltaField.setText((""+initdelta));
+        ydeltaGridField.setText(("" + initydelta));
+        xnField.setText((""+initxn));
+          ynField.setText((""+inityn));
 
         Object[] array = {"xmin", xminGridField,
-            "xmax", xmaxGridField,
+            "xdelta", xdeltaGridField,
             "ymin", yminGridField,
-            "ymax", ymaxGridField,
-        "delta",deltaField};
+            "ydelta", ydeltaGridField,
+        "xn",xnField,
+        "yn",ynField};
 
         JButton btnEnter = new JButton("Enter");
         JButton btnReset = new JButton("Reset");

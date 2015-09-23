@@ -31,7 +31,7 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
     int steps = 0;
 
     ArrayList<Point> particles = null;
-    Shape centerOfGravity = null;
+   Curve centerOfGravity = null;
 
     public boolean suspended = true;
     public boolean exitRequested = false;
@@ -184,7 +184,7 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
             };
             if (e.getStateChange() == ItemEvent.DESELECTED) {
                 if (centerOfGravity != null) {
-                    MovingParticles.Drawing.deleteShape(centerOfGravity);
+                    MovingParticles.Drawing.deleteCurve(centerOfGravity);
                     centerOfGravity = null;
                 }
             };
@@ -201,7 +201,7 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
 
     private void wipeTrajectory(Point p) {                 // trajectory is set to null 
         if (p.trajectory != null) {
-            MovingParticles.Drawing.clearShape(p.trajectory);
+            MovingParticles.Drawing.deleteCurve(p.trajectory);
             p.trajectory = null;
         }
     }
@@ -360,7 +360,7 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
             wipeTrajectory(p);
         }
         if (centerOfGravity != null) {
-            MovingParticles.Drawing.deleteShape(centerOfGravity);
+            MovingParticles.Drawing.deleteCurve(centerOfGravity);
         }
         sFrame.dispose();
         System.out.println("exited.");

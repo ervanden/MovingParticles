@@ -22,8 +22,8 @@ public class PropertyFrame implements ActionListener {
     JPanel pointPanel;
     JButton goButton;
     ArrayList<Point> pointList;
-            ArrayList<Point> displayList;
-            
+    ArrayList<Point> displayList;
+
     public PropertyFrame() {
         pFrame = new JFrame("properties");
         pane = pFrame.getContentPane();
@@ -32,8 +32,8 @@ public class PropertyFrame implements ActionListener {
     }
 
     public void display(ArrayList<Point> plist) {
-        
-        pointList=plist;
+
+        pointList = plist;
         if (plist.size() > 1) {
             Point p_all = new Point(0, 0);
             p_all.particleName = "all";
@@ -66,6 +66,11 @@ public class PropertyFrame implements ActionListener {
             pointPanel.add(Box.createRigidArea(new Dimension(40, 0)));
             pointPanel.add(new JLabel(p.particleName));
             addTextField(i, "Radius", p.radius);
+            if (p.filled) {
+                addTextField(i, "filled", 1);
+            } else {
+                addTextField(i, "filled", 0);
+            }
             addTextField(i, "Mass", p.mass);
             addTextField(i, "Velocity", p.velocity);
             addTextField(i, "Angle", p.angle);
@@ -116,6 +121,16 @@ public class PropertyFrame implements ActionListener {
                     }
                 }
                 displayList.get(particleNr).radius = value;
+                System.out.println(pName + "." + attribute + "=" + value);
+                field.setBackground(Color.green);
+            }
+            if (attribute.equals("filled")) {
+                if (particleNr == 0) {
+                    for (Point p : pointList) {
+                        p.filled = (value > 0);
+                    }
+                }
+                displayList.get(particleNr).filled = (value > 0);
                 System.out.println(pName + "." + attribute + "=" + value);
                 field.setBackground(Color.green);
             }

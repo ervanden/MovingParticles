@@ -17,11 +17,12 @@ public double vx;
 public double vy;
 public boolean fixed;
 public double radius;
+public boolean filled;
 
 String particleName;
 Color color = Color.BLACK;
 
-Shape trajectory;
+Curve trajectory;
 public double mass;
 public double velocity;
 public double angle;
@@ -41,7 +42,8 @@ vx=0;
 vy=0;
 fixed=false;
 mass=1;
-radius=1;
+radius=0.1;
+filled=true;
 particleName="P"+count++;
 }
 
