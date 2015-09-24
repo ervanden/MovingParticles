@@ -6,12 +6,12 @@ class Curve {
     Color color;
     
     java.util.List<Point> points;
-
+/*
     public boolean isPoint = false;
     public boolean isSelected = false;
     public boolean isPreSelected = false;
     public boolean isPreUnselected = false;
-
+*/
     public Curve() {
         points = new ArrayList<>();
     }

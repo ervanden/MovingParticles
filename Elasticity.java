@@ -15,24 +15,27 @@ import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-class Elasticity implements Animation,ChangeListener, ItemListener {
+class Elasticity implements Animation, ChangeListener, ItemListener {
 
     JPanel pointPane;
     JPanel pane;
 
     ArrayList<Point> particles = new ArrayList<>();
-    ArrayList<Point> extremities = new ArrayList<>();
     ArrayList<Link> links = new ArrayList<>();
 
     double k1 = 1;  // elasticity constant  F = k * delta(x)
     double k2 = 1;
+    double v = 0;  // viscosity
     boolean gravity = false;
     boolean viscosity = true;
 
     JSlider sliderK1;
     JSlider sliderK2;
+    JSlider sliderViscosity;
     JLabel k1Info;
     JLabel k2Info;
+    JLabel viscosityInfo;
+
     JCheckBox gBox;
 
     public Elasticity() {
@@ -46,13 +49,6 @@ class Elasticity implements Animation,ChangeListener, ItemListener {
             p.yLastDrawn = p.y;
             p.trajectory = null;
         }
-
-        // add extremities of this shape
-        Point pe;
-        pe = particles.get(0);
-        extremities.add(pe);
-        pe = particles.get(particles.size() - 1);
-        extremities.add(pe);
 
         links = MovingParticles.Drawing.getLinks();
 
@@ -68,9 +64,12 @@ class Elasticity implements Animation,ChangeListener, ItemListener {
         sliderK1 = new JSlider(-5000, 3000, 0);
         k2Info = new JLabel("elasticity constant (compress)", JLabel.CENTER);
         sliderK2 = new JSlider(-5000, 3000, 0);
+        viscosityInfo = new JLabel("viscosity", JLabel.CENTER);
+        sliderViscosity = new JSlider(-3000, 3000, 0);
         sliderK1.addChangeListener(this);
         sliderK2.addChangeListener(this);
-       
+        sliderViscosity.addChangeListener(this);
+
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
         pane.add(gBox);
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
@@ -79,6 +78,9 @@ class Elasticity implements Animation,ChangeListener, ItemListener {
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
         pane.add(k2Info);
         pane.add(sliderK2);
+        pane.add(Box.createRigidArea(new Dimension(500, 20)));
+        pane.add(viscosityInfo);
+        pane.add(sliderViscosity);
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
     }
 
@@ -92,6 +94,11 @@ class Elasticity implements Animation,ChangeListener, ItemListener {
             k2 = Math.pow(10.0, (double) sliderK2.getValue() / 1000);
             String kString = String.format("%f", k2);
             k2Info.setText("elasticity constant (compress) = " + kString);
+        }
+        if (e.getSource().equals(sliderViscosity)) {
+            v = Math.pow(10.0, (double) sliderViscosity.getValue() / 1000);
+            String kString = String.format("%f", v);
+            viscosityInfo.setText("viscosity = " + kString);
         }
     }
 
@@ -108,60 +115,7 @@ class Elasticity implements Animation,ChangeListener, ItemListener {
             }
         }
     }
-/*
-    public void actionPerformed(ActionEvent e) {
-        {
-            String action = e.getActionCommand();
 
-            if (action.equals("gravity on/off")) {
-                gravity = !gravity;
-                System.out.println("gravity" + gravity);
-            } else {
-
-                JTextField field = (JTextField) e.getSource();
-                int particleNr = Integer.parseInt(action.split("[|]")[0]);
-                String attribute = action.split("[|]")[1];
-                boolean validValue = true;
-                double value = 0d;
-                try {
-                    value = Double.valueOf(field.getText());
-                } catch (Exception ex) {
-                    field.setBackground(Color.yellow);
-                    validValue = false;
-                }
-                if (validValue) {
-                    String pName = extremities.get(particleNr).particleName;
-                    field.setBackground(Color.white);
-
-                    if (attribute.equals("Mass")) {
-                        extremities.get(particleNr).mass = value;
-                        System.out.println(pName + "." + attribute + "=" + value);
-
-                        field.setBackground(Color.green);
-                    }
-                    if (attribute.equals("Velocity")) {
-                        extremities.get(particleNr).velocity = value;
-                        System.out.println(pName + "." + attribute + "=" + value);
-                        field.setBackground(Color.green);
-                    }
-                    if (attribute.equals("Angle")) {
-                        extremities.get(particleNr).angle = value;
-                        System.out.println(pName + "." + attribute + "=" + value);
-                        field.setBackground(Color.green);
-                    }
-                    if (attribute.equals("Velocity") || attribute.equals("Angle")) {
-                        for (Point p : particles) {
-                            p.vx = p.velocity * Math.cos((p.angle / 180) * Math.PI);
-                            p.vy = p.velocity * Math.sin((p.angle / 180) * Math.PI);
-                        }
-                    }
-                }
-            }
-        }
-
-    }
-*/
-    
     public JPanel getPane() {
         return pane;
     }
@@ -251,8 +205,8 @@ class Elasticity implements Animation,ChangeListener, ItemListener {
 
         if (viscosity) {
             for (Point p : particles) {
-                p.vynew = p.vynew - 0.2 * p.vynew * dt;
-                p.vxnew = p.vxnew - 0.2 * p.vxnew * dt;
+                p.vynew = p.vynew - v * p.vynew * dt;
+                p.vxnew = p.vxnew - v * p.vxnew * dt;
             }
         }
 
@@ -268,57 +222,112 @@ class Elasticity implements Animation,ChangeListener, ItemListener {
             }
         }
 
-        // bounce 
-        for (Point p : particles) {
-            double uxmax = t.xScreenToUser((int) t.sxmax_real) - p.radius;
-            double uxmin = t.xScreenToUser((int) t.sxmin_real) + p.radius;
-            double uymax = t.yScreenToUser((int) t.symax_real) - p.radius;
-            double uymin = t.yScreenToUser((int) t.symin_real) + p.radius;
-
-            if (p.x > uxmax) {
-                p.x = uxmax - (p.x - uxmax);
-                p.vx = -p.vx;
-            }
-            if (p.x < uxmin) {
-                p.x = uxmin + (uxmin - p.x);
-                p.vx = -p.vx;
-            }
-            if (p.y > uymax) {
-                p.y = uymax - (p.y - uymax);
-                p.vy = -p.vy;
-            }
-            if (p.y < uymin) {
-                p.y = uymin + (uymin - p.y);
-                p.vy = -p.vy;
-            }
+        for (Point p1 : particles) {
+            p1.color = Color.BLACK;
         }
+        for (Point p1 : particles) {
+            for (Point p2 : particles) {
+                if (p1 != p2) {
+                    if (((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y)) < (p1.radius + p2.radius) * (p1.radius + p2.radius)) {
+                        p1.color = Color.ORANGE;
+                        p2.color = Color.ORANGE;
 
-        for (Point p : particles) {
-            if (!p.fixed) {
-                double x1, x2, y1, y2;
-                x1 = MovingParticles.transform.xUserToScreen(p.x);
-                y1 = MovingParticles.transform.yUserToScreen(p.y);
-                x2 = MovingParticles.transform.xUserToScreen(p.xLastDrawn);
-                y2 = MovingParticles.transform.yUserToScreen(p.yLastDrawn);
-                double sqScreenDistance = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
-                if (sqScreenDistance > resolution * resolution) {
-                    if (p.trajectory != null) {
-                        MovingParticles.Drawing.addPointToCurve(p.trajectory, p.x, p.y);
+                    double xm = p2.x - p1.x;
+                    double ym = p2.y - p1.y;
+                    double xt = ym;
+                    double yt = -xm;
+                    double rt = Math.sqrt(xt * xt + yt * yt);
+                    double xt1 = xt / rt;
+                    double yt1 = yt / rt;
+                    if (p1.tangent == null) {
+                        p1.tangent = MovingParticles.Drawing.addCurve();
+                        MovingParticles.Drawing.addPointToCurve(p1.tangent, 0, 0);
+                        MovingParticles.Drawing.addPointToCurve(p1.tangent, 1,1);
                     }
-                    redraw = true;
-                    p.xLastDrawn = p.x;
-                    p.yLastDrawn = p.y;
+                    p1.tangent.points.get(0).x = p1.x;
+                    p1.tangent.points.get(0).y = p1.y;
+                    p1.tangent.points.get(1).x = p1.x + xt1;
+                    p1.tangent.points.get(1).y = p1.y + yt1;
+                    
+                    //  xt1 + i yt1   = tangent
+                    //  (vrx +i vry) = (vx + i vy)*(xt1 - i yt1) = speed relative to tangent
+                    //               = (vx*xt1+vy*yt1)  + i (vy*xt1-vx*yt1)
+                    //  (vrx - i vry) = bounced
+                    //  (vrx - i vry)*(xt1 + i yt1) = absolute speed after bounce
+                    //         = (vrx*xt1+vry*yt1) +i(vrx*yt1-vry*xt1)
+                    
+                    double vrx=p1.vx*xt1+p1.vy*yt1;
+                    double vry=p1.vy*xt1-p1.vx*yt1;
+                    p1.vx=vrx*xt1+vry*yt1;
+                    p1.vy=vrx*yt1-vry*xt1;
+                    
+                    } 
+                    
                 }
             }
         }
-        MovingParticles.Drawing.setString(0, String.format("K=%f", kineticEnergy));
-        MovingParticles.Drawing.setString(1, String.format("P=%f", potentialEnergy));
-        MovingParticles.Drawing.setString(2, String.format("T=%f", kineticEnergy + potentialEnergy));
-        //        return redraw;
-        return redraw;
+
+
+    // bounce 
+    for (Point p : particles) {
+        double uxmax = t.xScreenToUser((int) t.sxmax_real) - p.radius;
+        double uxmin = t.xScreenToUser((int) t.sxmin_real) + p.radius;
+        double uymax = t.yScreenToUser((int) t.symax_real) - p.radius;
+        double uymin = t.yScreenToUser((int) t.symin_real) + p.radius;
+
+        if (p.x > uxmax) {
+            p.x = uxmax - (p.x - uxmax);
+            p.vx = -p.vx;
+        }
+        if (p.x < uxmin) {
+            p.x = uxmin + (uxmin - p.x);
+            p.vx = -p.vx;
+        }
+        if (p.y > uymax) {
+            p.y = uymax - (p.y - uymax);
+            p.vy = -p.vy;
+        }
+        if (p.y < uymin) {
+            p.y = uymin + (uymin - p.y);
+            p.vy = -p.vy;
+        }
     }
 
-    public void cleanup() {
+    for (Point p : particles
+
+    
+        ) {
+            if (!p.fixed) {
+            double x1, x2, y1, y2;
+            x1 = MovingParticles.transform.xUserToScreen(p.x);
+            y1 = MovingParticles.transform.yUserToScreen(p.y);
+            x2 = MovingParticles.transform.xUserToScreen(p.xLastDrawn);
+            y2 = MovingParticles.transform.yUserToScreen(p.yLastDrawn);
+            double sqScreenDistance = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
+            if (sqScreenDistance > resolution * resolution) {
+                if (p.trajectory != null) {
+                    MovingParticles.Drawing.addPointToCurve(p.trajectory, p.x, p.y);
+                }
+                redraw = true;
+                p.xLastDrawn = p.x;
+                p.yLastDrawn = p.y;
+            }
+        }
+    }
+
+    MovingParticles.Drawing.setString (
+
+    0, String.format("K=%f", kineticEnergy));
+    MovingParticles.Drawing.setString (
+
+    1, String.format("P=%f", potentialEnergy));
+    MovingParticles.Drawing.setString (
+    2, String.format("T=%f", kineticEnergy + potentialEnergy));
+        //        return redraw;
+    return redraw ;
+}
+
+public void cleanup() {
     }
 
 }

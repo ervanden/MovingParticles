@@ -17,6 +17,9 @@ class Drawing {
 
     double areaCursorX1, areaCursorY1, areaCursorX2, areaCursorY2;
     boolean areaCursorOn = false;
+    
+    double circleCursorX,circleCursorY,circleCursorR;
+    boolean circleCursorOn=false;
 
     public boolean labelsVisible = false;
     public boolean linesVisible = true;
@@ -213,6 +216,13 @@ class Drawing {
         areaCursorX2 = ax2;
         areaCursorY2 = ay2;
     }
+    
+        public synchronized void circleCursor(boolean cursorOn, double x, double y, double r) {
+        circleCursorOn = cursorOn;
+        circleCursorX = x;
+        circleCursorY = y;
+        circleCursorR = r;
+    }
 
     public synchronized void draw(Transform t) {
 
@@ -244,7 +254,12 @@ class Drawing {
             t.line(areaCursorX2, areaCursorY2, areaCursorX1, areaCursorY2);
             t.line(areaCursorX1, areaCursorY2, areaCursorX1, areaCursorY1);
         }
-
+        
+        if (circleCursorOn) {
+            g2.setColor(Color.gray);
+            t.circle(circleCursorX, circleCursorY, circleCursorR,false);
+        }
+        
         t.strings(strings);
 
         for (Point p : points) {
@@ -252,7 +267,7 @@ class Drawing {
                 t.graphics.setColor(Color.RED);
                 //                   g2.setStroke(stroke2);
             } else {
-                t.graphics.setColor(Color.BLACK);
+                t.graphics.setColor(p.color);
                 //                   g2.setStroke(stroke0);
             };
             t.circle(p.x, p.y, p.radius,p.filled);
@@ -372,20 +387,20 @@ class Drawing {
 
     public synchronized void moveDrawingRelative(String l, double dx, double dy) {
 
-        for (Curve s : curves) {
-            if ((l.equals("all")) || (l.equals("selection") && s.isSelected)) {
+        for (Curve s : curves) {  // trajectories can not be selected
+            if (l.equals("all")) {
                 for (Point p : s.points) {
                     p.x = p.x + dx;
                     p.y = p.y + dy;
-                };
-            };
+                }
+            }
         }
 
         for (Point p : points) {
             if ((l.equals("all")) || (l.equals("selection") && p.isSelected)) {
                 p.x = p.x + dx;
                 p.y = p.y + dy;
-            };
+            }
         }
     }
 
