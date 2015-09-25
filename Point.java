@@ -20,6 +20,8 @@ public class Point {
     String particleName;
     Color color = Color.BLACK;
 Curve tangent=null;
+Curve normal= null;
+Curve w = null;
     Curve trajectory;
     public double mass;
     public double velocity;
@@ -41,7 +43,7 @@ Curve tangent=null;
         fixed = false;
         mass = 1;
         radius = 0.1;
-        filled = true;
+        filled = false;
         particleName = "P" + count++;
     }
 

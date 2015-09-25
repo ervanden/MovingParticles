@@ -349,6 +349,16 @@ class Drawing {
         }
         return psmin;
     }
+    
+        public synchronized Point locatePointByName(String name) {
+        Point psmin = null;
+        for (Point p : points) {
+            if (p.particleName.equals(name)) {
+                psmin = p;
+            }
+        }
+        return psmin;
+    }
 
     public synchronized Point closestPoint(double x, double y) {
         Point pmin = null;
