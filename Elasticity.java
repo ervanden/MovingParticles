@@ -264,16 +264,11 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
             }
         }
 
-        for (Point p1 : particles) {
-            p1.color = Color.BLACK;
-        }
-
         for (Link l : collidingParticles()) {
 
             Point p1 = l.p1;
             Point p2 = l.p2;
-//            p1.color = Color.ORANGE;
-//            p2.color = Color.ORANGE;
+
 // M = unit vector from P1 to P2
 // T = unit tangential vector = M*i
             double xm = p2.x - p1.x;
@@ -283,12 +278,13 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
             double ym1 = ym / rm;
             double xt1 = -ym1;
             double yt1 = xm1;
-
+            
+// look at the collision as an observer moving with speed v2. Now P1 collides with P2 which is at rest
             double wx = p1.vx - p2.vx;
             double wy = p1.vy - p2.vy;
 
-            double wt = wx * xt1 + wy * yt1; // after collision speed of P1 in direction of T
-            double wm = wx * xm1 + wy * ym1; // after collision speed of P2 in direction of M
+            double wt = wx * xt1 + wy * yt1; //  speed of P1 in direction of T
+            double wm = wx * xm1 + wy * ym1; //  speed of P1 in direction of M
 //            System.out.printf("vx1=%f xy1=%f vx2=%f vy2=%f\n", p1.vx, p1.vy, p2.vx, p2.vy);
 //            System.out.printf("wx=%f wy=%f w=%f wt=%f wm=%f\n", wx, wy, w, wt, wm);
 /*
@@ -320,8 +316,10 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
             p1.normal.points.get(1).x = p1.x + wm * xm1;
             p1.normal.points.get(1).y = p1.y + wm * ym1;
 */
-            double a1 = (p1.mass - p2.mass) / (p1.mass + p2.mass);
-            double a2 = 2 * p1.mass / (p1.mass + p2.mass);
+            // Perpendicular speeds are calculated independent from tangential speed
+            // a1 and a2 = how much of the perpendicular speed of P1 is  kept / transferred to P2 
+            double a1 = (p1.mass - p2.mass) / (p1.mass + p2.mass); // ratio speed of P1 after/before collision
+            double a2 = 2 * p1.mass / (p1.mass + p2.mass);   //ratio of speed of P2 after collision / P1 before collision
 
             p1.vx = wt * xt1 + a1 * wm * xm1 + p2.vx;
             p1.vy = wt * yt1 + a1 * wm * ym1 + p2.vy;
