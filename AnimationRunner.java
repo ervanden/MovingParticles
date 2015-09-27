@@ -31,7 +31,7 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
     int steps = 0;
 
     ArrayList<Point> particles = null;
-   Curve centerOfGravity = null;
+   Marker centerOfGravity = null;
 
     public boolean suspended = true;
     public boolean exitRequested = false;
@@ -176,15 +176,14 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
         if (source == cogBox) {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 if (centerOfGravity == null) {
-                    centerOfGravity = MovingParticles.Drawing.addCurve();
-                    MovingParticles.Drawing.addPointToCurve(centerOfGravity, 0, 0);
-                    centerOfGravity.lastPoint().color = Color.BLUE;
-                    centerOfGravity.lastPoint().particleName = "CoG";
+                    centerOfGravity = MovingParticles.Drawing.addMarker(0d,0d);
+                    centerOfGravity.color = Color.BLUE;
+                    centerOfGravity.name = "CoG";
                 }
             };
             if (e.getStateChange() == ItemEvent.DESELECTED) {
                 if (centerOfGravity != null) {
-                    MovingParticles.Drawing.deleteCurve(centerOfGravity);
+                    MovingParticles.Drawing.deleteMarker(centerOfGravity);
                     centerOfGravity = null;
                 }
             };
@@ -215,7 +214,7 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
         MovingParticles.Drawing.addPointToCurve(p.trajectory, p.x, p.y);
     }
 
-    public Point updateCenterOfGravity() {
+    public Marker updateCenterOfGravity() {
         double xCenterOfGravity = 0;
         double yCenterOfGravity = 0;
         double totalMass = 0;
@@ -225,9 +224,9 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
             yCenterOfGravity = yCenterOfGravity + p.mass * p.y;
             totalMass = totalMass + p.mass;
         }
-        centerOfGravity.points.get(0).x = xCenterOfGravity / totalMass;
-        centerOfGravity.points.get(0).y = yCenterOfGravity / totalMass;
-        return centerOfGravity.points.get(0);
+        centerOfGravity.x = xCenterOfGravity / totalMass;
+        centerOfGravity.y = yCenterOfGravity / totalMass;
+        return centerOfGravity;
     }
 
     public void reset() {
@@ -304,7 +303,7 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
     }
 
     void moveCenterToCog() {
-        Point cog = updateCenterOfGravity();
+        Marker cog = updateCenterOfGravity();
         double xmin = transform.uxmin;
         double xmax = transform.uxmax;
         double ymin = transform.uymin;
@@ -360,7 +359,7 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
             wipeTrajectory(p);
         }
         if (centerOfGravity != null) {
-            MovingParticles.Drawing.deleteCurve(centerOfGravity);
+            MovingParticles.Drawing.deleteMarker(centerOfGravity);
         }
         sFrame.dispose();
         System.out.println("exited.");

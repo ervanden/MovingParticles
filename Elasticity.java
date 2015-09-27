@@ -39,13 +39,24 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
     JCheckBox gBox;
 
     public Elasticity() {
-
+/*
         Point pp = MovingParticles.Drawing.addPoint(2, 5);
         pp.radius = 1;
         pp.velocity = 1;
+        pp.angle = 45;
         pp = MovingParticles.Drawing.addPoint(6, 3.5);
         pp.radius = 1;
-
+        pp.velocity = 1;
+        pp.angle = 90;
+        pp = MovingParticles.Drawing.addPoint(8, 1.5);
+        pp.radius = 1;
+        pp.velocity = 1;
+        pp.angle = 120;
+        pp = MovingParticles.Drawing.addPoint(0, 4.5);
+        pp.radius = 1;
+        pp.velocity = 1;
+        pp.angle = -66;
+*/
         particles = MovingParticles.Drawing.getPoints();
 
         for (Point p : particles) {
@@ -73,7 +84,7 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
         k2Info = new JLabel("elasticity constant (compress)", JLabel.CENTER);
         sliderK2 = new JSlider(-5000, 3000, 0);
         viscosityInfo = new JLabel("viscosity", JLabel.CENTER);
-        sliderViscosity = new JSlider(-3000, 3000, 0);
+        sliderViscosity = new JSlider(-3000, 3000, -3000);
         sliderK1.addChangeListener(this);
         sliderK2.addChangeListener(this);
         sliderViscosity.addChangeListener(this);
@@ -104,7 +115,11 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
             k2Info.setText("elasticity constant (compress) = " + kString);
         }
         if (e.getSource().equals(sliderViscosity)) {
+            if (sliderViscosity.getValue()==-3000){
+                v=0;
+            } else {
             v = Math.pow(10.0, (double) sliderViscosity.getValue() / 1000);
+            }
             String kString = String.format("%f", v);
             viscosityInfo.setText("viscosity = " + kString);
         }
@@ -152,6 +167,25 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
         if (p2 != null) {
             System.out.println("== p2 " + p2.particleName);
         }
+    }
+
+    public ArrayList<Link> collidingParticles() {
+ //       System.out.println("==== colliding particles");
+        ArrayList<Link> l = new ArrayList<>();
+        for (int i = 0; i < particles.size(); i++) {
+            for (int j = i + 1; j < particles.size(); j++) {
+                Point p1 = particles.get(i);
+                Point p2 = particles.get(j);
+ //               System.out.println("check collision p1=" + p1.particleName + " p2=" + p2.particleName);
+                if (((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y)) < (p1.radius + p2.radius) * (p1.radius + p2.radius)) {
+                    Link link = new Link(p1, p2);
+                    l.add(link);
+ //                   System.out.println("* collision p1=" + p1.particleName + " p2=" + p2.particleName);
+                }
+            }
+        }
+//        System.out.println("=======================");
+        return l;
     }
 
     int steps = 0;
@@ -234,15 +268,12 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
             p1.color = Color.BLACK;
         }
 
-//        for (Point p1 : particles) {
-//            for (Point p2 : particles) {
-//                if (p1 != p2) {
-        Point p1 = MovingParticles.Drawing.locatePointByName("P0");
-        Point p2 = MovingParticles.Drawing.locatePointByName("P1");
-        if (((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y)) < (p1.radius + p2.radius) * (p1.radius + p2.radius)) {
-            System.out.println("collision p1=" + p1.particleName + " p2=" + p2.particleName);
-            p1.color = Color.ORANGE;
-            p2.color = Color.ORANGE;
+        for (Link l : collidingParticles()) {
+
+            Point p1 = l.p1;
+            Point p2 = l.p2;
+//            p1.color = Color.ORANGE;
+//            p2.color = Color.ORANGE;
 // M = unit vector from P1 to P2
 // T = unit tangential vector = M*i
             double xm = p2.x - p1.x;
@@ -255,13 +286,12 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
 
             double wx = p1.vx - p2.vx;
             double wy = p1.vy - p2.vy;
-            double w = Math.sqrt(wx * wx + wy * wy);
 
             double wt = wx * xt1 + wy * yt1; // after collision speed of P1 in direction of T
             double wm = wx * xm1 + wy * ym1; // after collision speed of P2 in direction of M
-            System.out.printf("vx1=%f xy1=%f vx2=%f vy2=%f\n", p1.vx, p1.vy, p2.vx, p2.vy);
-            System.out.printf("wx=%f wy=%f w=%f wt=%f wm=%f\n", wx, wy, w, wt, wm);
-
+//            System.out.printf("vx1=%f xy1=%f vx2=%f vy2=%f\n", p1.vx, p1.vy, p2.vx, p2.vy);
+//            System.out.printf("wx=%f wy=%f w=%f wt=%f wm=%f\n", wx, wy, w, wt, wm);
+/*
             if (p1.w == null) {
                 p1.w = MovingParticles.Drawing.addCurve();
                 MovingParticles.Drawing.addPointToCurve(p1.w, 0, 0);
@@ -278,8 +308,8 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
             }
             p1.tangent.points.get(0).x = p1.x;
             p1.tangent.points.get(0).y = p1.y;
-            p1.tangent.points.get(1).x = p1.x + wt*xt1;
-            p1.tangent.points.get(1).y = p1.y + wt*yt1;
+            p1.tangent.points.get(1).x = p1.x + wt * xt1;
+            p1.tangent.points.get(1).y = p1.y + wt * yt1;
             if (p1.normal == null) {
                 p1.normal = MovingParticles.Drawing.addCurve();
                 MovingParticles.Drawing.addPointToCurve(p1.normal, 0, 0);
@@ -287,22 +317,19 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
             }
             p1.normal.points.get(0).x = p1.x;
             p1.normal.points.get(0).y = p1.y;
-            p1.normal.points.get(1).x = p1.x + wm*xm1;
-            p1.normal.points.get(1).y = p1.y + wm*ym1;
+            p1.normal.points.get(1).x = p1.x + wm * xm1;
+            p1.normal.points.get(1).y = p1.y + wm * ym1;
+*/
+            double a1 = (p1.mass - p2.mass) / (p1.mass + p2.mass);
+            double a2 = 2 * p1.mass / (p1.mass + p2.mass);
 
-                        p1.vx = wt * xt1 + p2.vx;
-            p1.vy = wt * yt1 + p2.vy;
-            p2.vx = wm * xm1 + p2.vx;
-            p2.vy = wm * ym1 + p2.vy;
+            p1.vx = wt * xt1 + a1 * wm * xm1 + p2.vx;
+            p1.vy = wt * yt1 + a1 * wm * ym1 + p2.vy;
+            p2.vx = a2 * wm * xm1 + p2.vx;
+            p2.vy = a2 * wm * ym1 + p2.vy;
 
-            
-            
- //           try {Thread.sleep(2000);} catch(Exception e){};
         }
 
-        //               }
-        //           }
-        //       }
         // bounce 
         for (Point p : particles) {
             double uxmax = t.xScreenToUser((int) t.sxmax_real) - p.radius;
@@ -352,7 +379,7 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
         MovingParticles.Drawing.setString(
                 1, String.format("P=%f", potentialEnergy));
         MovingParticles.Drawing.setString(
-                2, String.format("T=%f", kineticEnergy + potentialEnergy));
+                2, String.format("E=%f", kineticEnergy + potentialEnergy));
         //        return redraw;
         return redraw;
     }

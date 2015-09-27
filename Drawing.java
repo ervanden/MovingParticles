@@ -9,6 +9,7 @@ import java.util.List;
 class Drawing {
 
     private List<Curve> curves;
+    private List<Marker> markers;
     private List<Link> links;
     private List<Point> points;
     private ArrayList<String> strings;
@@ -17,9 +18,9 @@ class Drawing {
 
     double areaCursorX1, areaCursorY1, areaCursorX2, areaCursorY2;
     boolean areaCursorOn = false;
-    
-    double circleCursorX,circleCursorY,circleCursorR;
-    boolean circleCursorOn=false;
+
+    double circleCursorX, circleCursorY, circleCursorR;
+    boolean circleCursorOn = false;
 
     public boolean labelsVisible = false;
     public boolean linesVisible = true;
@@ -33,6 +34,7 @@ class Drawing {
 
     public Drawing() {
         curves = new ArrayList<>();
+        markers = new ArrayList<>();
         links = new ArrayList<>();
         points = new ArrayList<>();
         strings = new ArrayList<>();
@@ -42,6 +44,7 @@ class Drawing {
 
     public synchronized void deleteDrawing() {
         curves.clear();
+        markers.clear();
         links.clear();
         points.clear();
         strings.clear();
@@ -49,43 +52,8 @@ class Drawing {
         shapeCounter = 1;
     }
 
-    public synchronized void deleteSelectedPoints() {
-        Iterator<Link> itr = links.iterator();
-
-        itr = links.iterator();
-        while (itr.hasNext()) {
-            Link l = itr.next();
-            if (l.p1.isSelected || l.p2.isSelected) {
-                itr.remove();
-            }
-        }
-
-        Iterator<Point> pitr = points.iterator();
-        pitr = points.iterator();
-        while (pitr.hasNext()) {
-            Point p = pitr.next();
-            System.out.println("iterating  " + p.particleName);
-            if (p.isSelected) {
-                System.out.println("deleting " + p.particleName);
-                pitr.remove();
-            }
-        }
-
-    }
-
-    public synchronized void deleteSelectedLinks() {
-        Iterator<Link> itr = links.iterator();
-
-        itr = links.iterator();
-        while (itr.hasNext()) {
-            Link l = itr.next();
-            if (l.isSelected) {
-                itr.remove();
-            }
-        }
-    }
-
-    public void setString(int position, String s) {
+ 
+    public void setString(int position, String s) {  // strings displayed in upper left corner
         if (position > strings.size() - 1) {
             strings.add(s);
         }
@@ -95,36 +63,20 @@ class Drawing {
         }
     }
 
-    public synchronized void deleteCurve(Curve s) {
-        for (Point p : s.points) {
-            deletePoint(p);
-        }
-        s.points.clear();
-        curves.remove(s);
-    }
-
-    public synchronized void deleteLink(Link l) {
-        links.remove(l);
-    }
-
-    public synchronized void deletePoint(Point p) {
-        Iterator<Link> itr = links.iterator();
-
-        itr = links.iterator();
-        while (itr.hasNext()) {
-            Link l = itr.next();
-            if ((l.p1 == p) || (l.p2 == p)) {
-                itr.remove();
-            }
-
-        }
-        points.remove(p);
-    }
 
     public synchronized Point addPoint(double x, double y) {
         Point p = new Point(x, y);
         points.add(p);
         return p;
+    }
+
+    public synchronized Marker addMarker(double x, double y) {
+        Marker m = new Marker();
+        m.x = x;
+        m.y = y;
+        m.color = Color.BLACK;
+        markers.add(m);
+        return m;
     }
 
     public synchronized Link addLink(Point p1, Point p2) {
@@ -179,6 +131,36 @@ class Drawing {
             }
         }
     }
+    
+        public synchronized void deleteCurve(Curve s) {
+        for (Point p : s.points) {
+            deletePoint(p);
+        }
+        s.points.clear();
+        curves.remove(s);
+    }
+
+    public synchronized void deleteMarker(Marker m) {
+        markers.remove(m);
+    }
+
+    public synchronized void deleteLink(Link l) {
+        links.remove(l);
+    }
+
+    public synchronized void deletePoint(Point p) {
+        Iterator<Link> itr = links.iterator();
+
+        itr = links.iterator();
+        while (itr.hasNext()) {
+            Link l = itr.next();
+            if ((l.p1 == p) || (l.p2 == p)) {
+                itr.remove();
+            }
+        }
+        points.remove(p);
+    }
+
 
     public synchronized ArrayList<Point> getPoints() {
         // makes a copy of 'shapes' to be used when risk of concurrent modification
@@ -216,8 +198,8 @@ class Drawing {
         areaCursorX2 = ax2;
         areaCursorY2 = ay2;
     }
-    
-        public synchronized void circleCursor(boolean cursorOn, double x, double y, double r) {
+
+    public synchronized void circleCursor(boolean cursorOn, double x, double y, double r) {
         circleCursorOn = cursorOn;
         circleCursorX = x;
         circleCursorY = y;
@@ -234,7 +216,12 @@ class Drawing {
             t.gridLines();
         }
 
-        t.graphics.setColor(Color.BLACK);
+        for (Marker m : markers) {
+            t.graphics.setColor(m.color);
+            t.marker(m.name, m.x, m.y);
+        }
+
+        t.graphics.setColor(Color.BLACK);  // curves always black
         for (Curve s : curves) {
             Point pprev = null;
             for (Point p : s.points) {
@@ -254,12 +241,12 @@ class Drawing {
             t.line(areaCursorX2, areaCursorY2, areaCursorX1, areaCursorY2);
             t.line(areaCursorX1, areaCursorY2, areaCursorX1, areaCursorY1);
         }
-        
+
         if (circleCursorOn) {
             g2.setColor(Color.gray);
-            t.circle(circleCursorX, circleCursorY, circleCursorR,false);
+            t.circle(circleCursorX, circleCursorY, circleCursorR, false);
         }
-        
+
         t.strings(strings);
 
         for (Point p : points) {
@@ -270,9 +257,9 @@ class Drawing {
                 t.graphics.setColor(p.color);
                 //                   g2.setStroke(stroke0);
             };
-            t.circle(p.x, p.y, p.radius,p.filled);
+            t.circle(p.x, p.y, p.radius, p.filled);
             if (labelsVisible) {
-                t.label(p.particleName, p.x+p.radius*0.72, p.y+p.radius*0.72);
+                t.label(p.particleName, p.x + p.radius * 0.72, p.y + p.radius * 0.72);
             }
             if (p.fixed) {
                 t.fix(p.x, p.y);
@@ -349,8 +336,8 @@ class Drawing {
         }
         return psmin;
     }
-    
-        public synchronized Point locatePointByName(String name) {
+
+    public synchronized Point locatePointByName(String name) {
         Point psmin = null;
         for (Point p : points) {
             if (p.particleName.equals(name)) {
@@ -535,4 +522,41 @@ class Drawing {
             }
         }
     }
+    
+       public synchronized void deleteSelectedPoints() {
+        Iterator<Link> itr = links.iterator();
+
+        itr = links.iterator();
+        while (itr.hasNext()) {
+            Link l = itr.next();
+            if (l.p1.isSelected || l.p2.isSelected) {
+                itr.remove();
+            }
+        }
+
+        Iterator<Point> pitr = points.iterator();
+        pitr = points.iterator();
+        while (pitr.hasNext()) {
+            Point p = pitr.next();
+            System.out.println("iterating  " + p.particleName);
+            if (p.isSelected) {
+                System.out.println("deleting " + p.particleName);
+                pitr.remove();
+            }
+        }
+
+    }
+
+    public synchronized void deleteSelectedLinks() {
+        Iterator<Link> itr = links.iterator();
+
+        itr = links.iterator();
+        while (itr.hasNext()) {
+            Link l = itr.next();
+            if (l.isSelected) {
+                itr.remove();
+            }
+        }
+    }
+
 }

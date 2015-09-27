@@ -155,20 +155,21 @@ class Transform {
         graphics.drawOval(xcenter - 3, ycenter - 3, 6, 6);
     }
 
+    public void marker(String name, double x, double y) {
+        int xcenter, ycenter;
+        xcenter = xUserToScreen(x);
+        ycenter = yUserToScreen(y);
+        int w = 4;
+        graphics.drawLine(xcenter - w, ycenter - w, xcenter + w, ycenter + w);
+        graphics.drawLine(xcenter - w, ycenter + w, xcenter + w, ycenter - w);
+        graphics.drawString(name, xcenter+2*w, ycenter+2*w);
+    }
+
     public void label(String s, double x, double y) {
         int xcenter, ycenter;
         xcenter = xUserToScreen(x);
         ycenter = yUserToScreen(y);
-        graphics.drawString(s, xcenter , ycenter );
-    }
-
-    public void complexPoint(String s, double x, double y) {
-        int xcenter, ycenter;
-        xcenter = xUserToScreen(x);
-        ycenter = yUserToScreen(y);
-        graphics.fillOval(xcenter - 4, ycenter - 4, 8, 8);
-        graphics.drawString(s, xcenter + 4, ycenter - 4);
-        //                  System.out.printf("point %s at %d,%d\n",s,xcenter + 4, ycenter - 4);
+        graphics.drawString(s, xcenter, ycenter);
     }
 
     public void fix(double x, double y) {
