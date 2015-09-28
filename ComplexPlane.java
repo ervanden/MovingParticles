@@ -1,12 +1,10 @@
 
 import java.awt.*;
-
 import java.awt.image.BufferStrategy;
 
 class ComplexPlane extends Canvas {
 
     private static final long serialVersionUID = 1L;
- //   boolean zPlane = false;
 
     Transform t = MovingParticles.transform;
 

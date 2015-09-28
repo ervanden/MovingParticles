@@ -23,42 +23,26 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
     ArrayList<Point> particles = new ArrayList<>();
     ArrayList<Link> links = new ArrayList<>();
 
-    double k1 = 1;  // elasticity constant  F = k * delta(x)
-    double k2 = 1;
+    double kStretch = 1;  // elasticity constant  F = k * delta(x)
+    double kCompress = 1;
     double v = 0;  // viscosity
     boolean gravity = false;
     boolean viscosity = true;
 
-    JSlider sliderK1;
-    JSlider sliderK2;
+    JSlider sliderKStretch;
+    JSlider sliderKCompress;
     JSlider sliderViscosity;
-    JLabel k1Info;
-    JLabel k2Info;
+    JLabel kStretchInfo;
+    JLabel kCompressInfo;
     JLabel viscosityInfo;
 
     JCheckBox gBox;
 
     public Elasticity() {
-/*
-        Point pp = MovingParticles.Drawing.addPoint(2, 5);
-        pp.radius = 1;
-        pp.velocity = 1;
-        pp.angle = 45;
-        pp = MovingParticles.Drawing.addPoint(6, 3.5);
-        pp.radius = 1;
-        pp.velocity = 1;
-        pp.angle = 90;
-        pp = MovingParticles.Drawing.addPoint(8, 1.5);
-        pp.radius = 1;
-        pp.velocity = 1;
-        pp.angle = 120;
-        pp = MovingParticles.Drawing.addPoint(0, 4.5);
-        pp.radius = 1;
-        pp.velocity = 1;
-        pp.angle = -66;
-*/
-        particles = MovingParticles.Drawing.getPoints();
 
+        particles = MovingParticles.Drawing.getPoints();
+        links = MovingParticles.Drawing.getLinks();
+        
         for (Point p : particles) {
             p.x_init = p.x;
             p.y_init = p.y;
@@ -69,8 +53,6 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
             p.vy = p.velocity * Math.sin((p.angle / 180) * Math.PI);
         }
 
-        links = MovingParticles.Drawing.getLinks();
-
         pane = new JPanel();
         pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
         Border blackline = BorderFactory.createLineBorder(Color.black);
@@ -79,49 +61,65 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
         gBox.addItemListener(this);
         gBox.setEnabled(true);
 
-        k1Info = new JLabel("elasticity constant (stretch)", JLabel.CENTER);
-        sliderK1 = new JSlider(-5000, 3000, 0);
-        k2Info = new JLabel("elasticity constant (compress)", JLabel.CENTER);
-        sliderK2 = new JSlider(-5000, 3000, 0);
+        kStretchInfo = new JLabel("elasticity constant (stretch)", JLabel.CENTER);
+        sliderKStretch = new JSlider(-5000, 3000, 0);
+        readKStretch();
+        kCompressInfo = new JLabel("elasticity constant (compress)", JLabel.CENTER);
+        sliderKCompress = new JSlider(-5000, 3000, 0);
+        readKCompress();
         viscosityInfo = new JLabel("viscosity", JLabel.CENTER);
         sliderViscosity = new JSlider(-3000, 3000, -3000);
-        sliderK1.addChangeListener(this);
-        sliderK2.addChangeListener(this);
+        readViscosity();
+        
+        sliderKStretch.addChangeListener(this);
+        sliderKCompress.addChangeListener(this);
         sliderViscosity.addChangeListener(this);
 
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
         pane.add(gBox);
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
-        pane.add(k1Info);
-        pane.add(sliderK1);
+        pane.add(kStretchInfo);
+        pane.add(sliderKStretch);
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
-        pane.add(k2Info);
-        pane.add(sliderK2);
+        pane.add(kCompressInfo);
+        pane.add(sliderKCompress);
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
         pane.add(viscosityInfo);
         pane.add(sliderViscosity);
         pane.add(Box.createRigidArea(new Dimension(500, 20)));
     }
 
-    public void stateChanged(ChangeEvent e) {
-        if (e.getSource().equals(sliderK1)) {
-            k1 = Math.pow(10.0, (double) sliderK1.getValue() / 1000);
-            String kString = String.format("%f", k1);
-            k1Info.setText("elasticity constant (stretch) = " + kString);
+    private void readKStretch() {
+        kStretch = Math.pow(10.0, (double) sliderKStretch.getValue() / 1000);
+        String kString = String.format("%f", kStretch);
+        kStretchInfo.setText("elasticity constant (stretch) = " + kString);
+    }
+
+    private void readKCompress() {
+        kCompress = Math.pow(10.0, (double) sliderKCompress.getValue() / 1000);
+        String kString = String.format("%f", kCompress);
+        kCompressInfo.setText("elasticity constant (compress) = " + kString);
+    }
+
+    private void readViscosity() {
+        if (sliderViscosity.getValue() == -3000) {
+            v = 0;
+        } else {
+            v = Math.pow(10.0, (double) sliderViscosity.getValue() / 1000);
         }
-        if (e.getSource().equals(sliderK2)) {
-            k2 = Math.pow(10.0, (double) sliderK2.getValue() / 1000);
-            String kString = String.format("%f", k2);
-            k2Info.setText("elasticity constant (compress) = " + kString);
+        String kString = String.format("%f", v);
+        viscosityInfo.setText("viscosity = " + kString);
+    }
+
+    public void stateChanged(ChangeEvent e) {
+        if (e.getSource().equals(sliderKStretch)) {
+            readKStretch();
+        }
+        if (e.getSource().equals(sliderKCompress)) {
+            readKCompress();
         }
         if (e.getSource().equals(sliderViscosity)) {
-            if (sliderViscosity.getValue()==-3000){
-                v=0;
-            } else {
-            v = Math.pow(10.0, (double) sliderViscosity.getValue() / 1000);
-            }
-            String kString = String.format("%f", v);
-            viscosityInfo.setText("viscosity = " + kString);
+            readViscosity();
         }
     }
 
@@ -170,17 +168,17 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
     }
 
     public ArrayList<Link> collidingParticles() {
- //       System.out.println("==== colliding particles");
+        //       System.out.println("==== colliding particles");
         ArrayList<Link> l = new ArrayList<>();
         for (int i = 0; i < particles.size(); i++) {
             for (int j = i + 1; j < particles.size(); j++) {
                 Point p1 = particles.get(i);
                 Point p2 = particles.get(j);
- //               System.out.println("check collision p1=" + p1.particleName + " p2=" + p2.particleName);
+                //               System.out.println("check collision p1=" + p1.particleName + " p2=" + p2.particleName);
                 if (((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y)) < (p1.radius + p2.radius) * (p1.radius + p2.radius)) {
                     Link link = new Link(p1, p2);
                     l.add(link);
- //                   System.out.println("* collision p1=" + p1.particleName + " p2=" + p2.particleName);
+                    //                   System.out.println("* collision p1=" + p1.particleName + " p2=" + p2.particleName);
                 }
             }
         }
@@ -220,9 +218,9 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
 
             double k;
             if (r > r0) {
-                k = k1;
+                k = kStretch;
             } else {
-                k = k2;
+                k = kCompress;
             }
 
             Double force = k * (r - r0);
@@ -278,7 +276,7 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
             double ym1 = ym / rm;
             double xt1 = -ym1;
             double yt1 = xm1;
-            
+
 // look at the collision as an observer moving with speed v2. Now P1 collides with P2 which is at rest
             double wx = p1.vx - p2.vx;
             double wy = p1.vy - p2.vy;
@@ -288,34 +286,34 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
 //            System.out.printf("vx1=%f xy1=%f vx2=%f vy2=%f\n", p1.vx, p1.vy, p2.vx, p2.vy);
 //            System.out.printf("wx=%f wy=%f w=%f wt=%f wm=%f\n", wx, wy, w, wt, wm);
 /*
-            if (p1.w == null) {
-                p1.w = MovingParticles.Drawing.addCurve();
-                MovingParticles.Drawing.addPointToCurve(p1.w, 0, 0);
-                MovingParticles.Drawing.addPointToCurve(p1.w, 1, 1);
-            }
-            p1.w.points.get(0).x = p1.x;
-            p1.w.points.get(0).y = p1.y;
-            p1.w.points.get(1).x = p1.x + wx;
-            p1.w.points.get(1).y = p1.y + wy;
-            if (p1.tangent == null) {
-                p1.tangent = MovingParticles.Drawing.addCurve();
-                MovingParticles.Drawing.addPointToCurve(p1.tangent, 0, 0);
-                MovingParticles.Drawing.addPointToCurve(p1.tangent, 1, 1);
-            }
-            p1.tangent.points.get(0).x = p1.x;
-            p1.tangent.points.get(0).y = p1.y;
-            p1.tangent.points.get(1).x = p1.x + wt * xt1;
-            p1.tangent.points.get(1).y = p1.y + wt * yt1;
-            if (p1.normal == null) {
-                p1.normal = MovingParticles.Drawing.addCurve();
-                MovingParticles.Drawing.addPointToCurve(p1.normal, 0, 0);
-                MovingParticles.Drawing.addPointToCurve(p1.normal, 1, 1);
-            }
-            p1.normal.points.get(0).x = p1.x;
-            p1.normal.points.get(0).y = p1.y;
-            p1.normal.points.get(1).x = p1.x + wm * xm1;
-            p1.normal.points.get(1).y = p1.y + wm * ym1;
-*/
+             if (p1.w == null) {
+             p1.w = MovingParticles.Drawing.addCurve();
+             MovingParticles.Drawing.addPointToCurve(p1.w, 0, 0);
+             MovingParticles.Drawing.addPointToCurve(p1.w, 1, 1);
+             }
+             p1.w.points.get(0).x = p1.x;
+             p1.w.points.get(0).y = p1.y;
+             p1.w.points.get(1).x = p1.x + wx;
+             p1.w.points.get(1).y = p1.y + wy;
+             if (p1.tangent == null) {
+             p1.tangent = MovingParticles.Drawing.addCurve();
+             MovingParticles.Drawing.addPointToCurve(p1.tangent, 0, 0);
+             MovingParticles.Drawing.addPointToCurve(p1.tangent, 1, 1);
+             }
+             p1.tangent.points.get(0).x = p1.x;
+             p1.tangent.points.get(0).y = p1.y;
+             p1.tangent.points.get(1).x = p1.x + wt * xt1;
+             p1.tangent.points.get(1).y = p1.y + wt * yt1;
+             if (p1.normal == null) {
+             p1.normal = MovingParticles.Drawing.addCurve();
+             MovingParticles.Drawing.addPointToCurve(p1.normal, 0, 0);
+             MovingParticles.Drawing.addPointToCurve(p1.normal, 1, 1);
+             }
+             p1.normal.points.get(0).x = p1.x;
+             p1.normal.points.get(0).y = p1.y;
+             p1.normal.points.get(1).x = p1.x + wm * xm1;
+             p1.normal.points.get(1).y = p1.y + wm * ym1;
+             */
             // Perpendicular speeds are calculated independent from tangential speed
             // a1 and a2 = how much of the perpendicular speed of P1 is  kept / transferred to P2 
             double a1 = (p1.mass - p2.mass) / (p1.mass + p2.mass); // ratio speed of P1 after/before collision

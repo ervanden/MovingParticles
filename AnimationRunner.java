@@ -31,7 +31,7 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
     int steps = 0;
 
     ArrayList<Point> particles = null;
-   Marker centerOfGravity = null;
+    Marker centerOfGravity = null;
 
     public boolean suspended = true;
     public boolean exitRequested = false;
@@ -61,12 +61,12 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
         sFrame = new JFrame("animaton settings");
         Container pane = sFrame.getContentPane();
         pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
-         Border       blackline = BorderFactory.createLineBorder(Color.black);
+        Border blackline = BorderFactory.createLineBorder(Color.black);
 
-         JPanel topPane=new JPanel();
-         topPane.setLayout(new BoxLayout(topPane, BoxLayout.PAGE_AXIS));
-         topPane.setBorder(blackline);
-         pane.add(topPane);
+        JPanel topPane = new JPanel();
+        topPane.setLayout(new BoxLayout(topPane, BoxLayout.PAGE_AXIS));
+        topPane.setBorder(blackline);
+        pane.add(topPane);
 
         String[] animationTypes = {"rotation", "gravity", "elastic"};
 
@@ -75,17 +75,20 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
         animationType = (String) animationBox.getSelectedItem();
         animationBox.addActionListener(this);
 
-        frameDelayInfo = new JLabel("frame delay", JLabel.CENTER);
-        sliderFrameDelay = new JSlider(0, 1000, 1000);
+        frameDelayInfo = new JLabel("frame delay",JLabel.CENTER);
+        sliderFrameDelay = new JSlider(0, 1000, 0);
         sliderFrameDelay.addChangeListener(this);
+        readFrameDelay();
 
         timeStepInfo = new JLabel("time step", JLabel.CENTER);
         sliderTimeStep = new JSlider(-6000, -1000, -3000);
         sliderTimeStep.addChangeListener(this);
+        readTimeStep();
 
         resolutionInfo = new JLabel("drawing resolution", JLabel.CENTER);
-        sliderResolution = new JSlider(1, 15, 5);
+        sliderResolution = new JSlider(1, 15, 1);
         sliderResolution.addChangeListener(this);
+        readResolution();
 
         trajectoryBox = new JCheckBox("Show trajectories");
         cogBox = new JCheckBox("Show center of gravity");
@@ -138,18 +141,30 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
         sFrame.setVisible(true);
     }
 
+    private void readFrameDelay() {
+        sleepMilliseconds = sliderFrameDelay.getValue();
+        frameDelayInfo.setText("frame delay " + sleepMilliseconds + " msec");
+    }
+
+    private void readTimeStep() {
+        timeStep = Math.pow(10.0, (double) sliderTimeStep.getValue() / 1000);
+        String timeStepString = String.format("%f", timeStep);
+        timeStepInfo.setText("time step " + timeStepString + " sec");
+    }
+
+    private void readResolution() {
+        resolution = sliderResolution.getValue();
+        String resolutionString = String.format("%d", resolution);
+        resolutionInfo.setText("resolution " + resolutionString + " pixels");
+    }
+
     public void stateChanged(ChangeEvent e) {
         if (e.getSource().equals(sliderFrameDelay)) {
-            sleepMilliseconds = sliderFrameDelay.getValue();
-            frameDelayInfo.setText("frame delay " + sleepMilliseconds + " msec");
+            readFrameDelay();
         } else if (e.getSource().equals(sliderTimeStep)) {
-            timeStep = Math.pow(10.0, (double) sliderTimeStep.getValue() / 1000);
-            String timeStepString = String.format("%f", timeStep);
-            timeStepInfo.setText("time step " + timeStepString + " sec");
+            readTimeStep();
         } else if (e.getSource().equals(sliderResolution)) {
-            resolution = sliderResolution.getValue();
-            String resolutionString = String.format("%d", resolution);
-            resolutionInfo.setText("resolution " + resolutionString + " pixels");
+            readResolution();
         }
     }
 
@@ -176,7 +191,7 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
         if (source == cogBox) {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 if (centerOfGravity == null) {
-                    centerOfGravity = MovingParticles.Drawing.addMarker(0d,0d);
+                    centerOfGravity = MovingParticles.Drawing.addMarker(0d, 0d);
                     centerOfGravity.color = Color.BLUE;
                     centerOfGravity.name = "CoG";
                 }
