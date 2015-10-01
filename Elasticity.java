@@ -314,6 +314,8 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
              p1.normal.points.get(1).x = p1.x + wm * xm1;
              p1.normal.points.get(1).y = p1.y + wm * ym1;
              */
+            
+            if (wm>0){
             // Perpendicular speeds are calculated independent from tangential speed
             // a1 and a2 = how much of the perpendicular speed of P1 is  kept / transferred to P2 
             double a1 = (p1.mass - p2.mass) / (p1.mass + p2.mass); // ratio speed of P1 after/before collision
@@ -323,6 +325,7 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
             p1.vy = wt * yt1 + a1 * wm * ym1 + p2.vy;
             p2.vx = a2 * wm * xm1 + p2.vx;
             p2.vy = a2 * wm * ym1 + p2.vy;
+            }
 
         }
 
