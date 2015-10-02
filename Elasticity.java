@@ -37,7 +37,7 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
     JLabel viscosityInfo;
 
     JCheckBox gBox;
-
+   
     public Elasticity() {
 
         particles = MovingParticles.Drawing.getPoints();
@@ -192,14 +192,13 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
         return l;
     }
 
-    int steps = 0;
+ //   int steps = 0;
 
     public boolean step(double dt, int resolution) {
         // This method calculates the new position of all particles after time step dt.
         // If no points are added to any trajectory, return false, true otherwise.
         // This to avoid redrawing the screen when nothing changed
         boolean redraw = false;
-
         double potentialEnergy = 0;
         double kineticEnergy = 0;
 
@@ -263,6 +262,9 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
                 p.y = p.y + ((p.vy + p.vynew) / 2) * dt;
                 p.vx = p.vxnew;
                 p.vy = p.vynew;
+            } else {
+                p.vx=0;
+                p.vy=0;
             }
         }
 
@@ -270,6 +272,8 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
 
             Point p1 = l.p1;
             Point p2 = l.p2;
+
+            if (l.p1.fixed){p1=l.p2; p2=l.p1;}  // if a particle is stationary, make it P2
 
 // M = unit vector from P1 to P2
 // T = unit tangential vector = M*i
@@ -325,6 +329,8 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
             double a1 = (p1.mass - p2.mass) / (p1.mass + p2.mass); // ratio speed of P1 after/before collision
             double a2 = 2 * p1.mass / (p1.mass + p2.mass);   //ratio of speed of P2 after collision / P1 before collision
 
+            if (p2.fixed){ a1=-1; a2=0;}
+            
             p1.vx = wt * xt1 + a1 * wm * xm1 + p2.vx;
             p1.vy = wt * yt1 + a1 * wm * ym1 + p2.vy;
             p2.vx = a2 * wm * xm1 + p2.vx;
