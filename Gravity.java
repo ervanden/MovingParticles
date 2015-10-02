@@ -22,8 +22,8 @@ class Gravity implements Animation {
         for (Point p : particles) {
             p.velocity = 0;
             p.angle = 0;
-            p.x_init = p.x;
-            p.y_init = p.y;
+            p.x0 = p.x;
+            p.y0 = p.y;
             p.xLastDrawn = p.x;
             p.yLastDrawn = p.y;
             p.trajectory = null;

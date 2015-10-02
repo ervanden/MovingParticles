@@ -36,7 +36,7 @@ public class PropertyFrame implements ActionListener {
         pointList = plist;
         if (plist.size() > 1) {
             Point p_all = new Point(0, 0);
-            p_all.particleName = "all";
+            p_all.name = "all";
             displayList = new ArrayList<>();
             displayList.add(p_all);
             if (plist.size() <= 10) {
@@ -59,12 +59,12 @@ public class PropertyFrame implements ActionListener {
 
         for (Point p : displayList) {
 
-            System.out.println("add to panel : " + p.particleName);
+            System.out.println("add to panel : " + p.name);
             pointPanel = new JPanel();
             pointPanel.setLayout(new BoxLayout(pointPanel, BoxLayout.LINE_AXIS));
             pointPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
             pointPanel.add(Box.createRigidArea(new Dimension(40, 0)));
-            pointPanel.add(new JLabel(p.particleName));
+            pointPanel.add(new JLabel(p.name));
             addTextField(i, "Radius", p.radius);
             if (p.filled) {
                 addTextField(i, "filled", 1);
@@ -111,7 +111,7 @@ public class PropertyFrame implements ActionListener {
             validValue = false;
         }
         if (validValue) {
-            String pName = displayList.get(particleNr).particleName;
+            String pName = displayList.get(particleNr).name;
             field.setBackground(Color.white);
 
             if (attribute.equals("Radius")) {

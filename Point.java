@@ -17,17 +17,17 @@ public class Point {
     public double radius;
     public boolean filled;
 
-    String particleName;
+    String name;
     Color color = Color.BLACK;
-Curve tangent=null;
-Curve normal= null;
-Curve w = null;
+    Curve tangent = null;
+    Curve normal = null;
+    Curve w = null;
     Curve trajectory;
     public double mass;
     public double velocity;
     public double angle;
-    public double x_init;
-    public double y_init;
+    public double x0;
+    public double y0;
     public double xLastDrawn;
     public double yLastDrawn;
     public double xnew;
@@ -44,7 +44,7 @@ Curve w = null;
         mass = 1;
         radius = 0.1;
         filled = false;
-        particleName = "P" + count++;
+        name = "P" + count++;
     }
 
     double getZX() {

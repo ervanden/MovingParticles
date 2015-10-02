@@ -95,15 +95,15 @@ class Drawing {
         if (s.pEnd == null) {
             s.pEnd = p;
             points.add(p);
-            System.out.println("Added point " + p.particleName);
+            System.out.println("Added point " + p.name);
         } else {
             double xprev = s.pEnd.x;
             double yprev = s.pEnd.y;
             if (((x - xprev) * (x - xprev) + (y - yprev) * (y - yprev)) > 10e-6) {
                 points.add(p);
-                System.out.println("Added point " + p.particleName);
+                System.out.println("Added point " + p.name);
                 links.add(new Link(p, s.pEnd));
-                System.out.println("Added link " + p.particleName + " - " + s.pEnd.particleName);
+                System.out.println("Added link " + p.name + " - " + s.pEnd.name);
                 s.pEnd = p;
             } else {
                 System.out.println("Point too close to previous  : not added to shape");
@@ -259,7 +259,7 @@ class Drawing {
             };
             t.circle(p.x, p.y, p.radius, p.filled);
             if (labelsVisible) {
-                t.label(p.particleName, p.x + p.radius * 0.72, p.y + p.radius * 0.72);
+                t.label(p.name, p.x + p.radius * 0.72, p.y + p.radius * 0.72);
             }
             if (p.fixed) {
                 t.fix(p.x, p.y);
@@ -340,7 +340,7 @@ class Drawing {
     public synchronized Point locatePointByName(String name) {
         Point psmin = null;
         for (Point p : points) {
-            if (p.particleName.equals(name)) {
+            if (p.name.equals(name)) {
                 psmin = p;
             }
         }
@@ -497,7 +497,7 @@ class Drawing {
             if (p.isPreSelected) {
                 p.isPreSelected = false;
                 p.isSelected = true;
-                System.out.println("commit select " + p.particleName);
+                System.out.println("commit select " + p.name);
             }
         }
         for (Link l : links) {
@@ -538,9 +538,9 @@ class Drawing {
         pitr = points.iterator();
         while (pitr.hasNext()) {
             Point p = pitr.next();
-            System.out.println("iterating  " + p.particleName);
+            System.out.println("iterating  " + p.name);
             if (p.isSelected) {
-                System.out.println("deleting " + p.particleName);
+                System.out.println("deleting " + p.name);
                 pitr.remove();
             }
         }

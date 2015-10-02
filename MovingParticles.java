@@ -1,7 +1,18 @@
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import javax.swing.*;
 
 public class MovingParticles implements ActionListener, MouseListener, MouseMotionListener, KeyListener, ItemListener {
@@ -127,7 +138,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                 }
 
                 radius = Math.sqrt((xRadius - xCircle) * (xRadius - xCircle) + (yRadius - yCircle) * (yRadius - yCircle));
-                Drawing.circleCursor(true,xCircle, yCircle, radius);
+                Drawing.circleCursor(true, xCircle, yCircle, radius);
                 repaint();
             }
         }
@@ -609,6 +620,10 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
     }
 
+    String AttributeToString(String name, Object value) {
+        return name + "=" + value;
+    }
+
     public void executeAction(String buttonClicked) {
 
         firstPoint = true;
@@ -818,6 +833,128 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                 repaint();
             }
         }
+
+        if (buttonClicked == "Read From File") {
+            JFileChooser fileChooser = new JFileChooser();
+            int retval = fileChooser.showOpenDialog(null);
+            if (retval == JFileChooser.APPROVE_OPTION) {
+                File fileIn = fileChooser.getSelectedFile();
+                try {
+                    InputStream is = new FileInputStream(fileIn);
+                    InputStreamReader isr = new InputStreamReader(is, "UTF-8");
+                    BufferedReader in = new BufferedReader(isr);
+
+                    HashMap<String, Point> nameToPoint = new HashMap<>();
+
+                    String l;
+                    String[] ls;
+                    while ((l = in.readLine()) != null) {
+                        ls = l.split("\\|");
+
+                        if (ls[0].equals("point")) {
+                            String name = "";
+                            double x = 0;
+                            double y = 0;
+                            double radius = 1;
+                            double mass = 1;
+                            double velocity = 0;
+                            double angle = 0;
+                            boolean filled = false;
+                            boolean fixed = false;
+
+                            for (int k = 1; k < ls.length; k++) {
+                                String[] als;
+                                als = ls[k].split("=");
+                                String attributeName = als[0];
+                                String attributeValue = als[1];
+                                if (attributeName.equals("name")) {
+                                    name = attributeValue;
+                                } else if (attributeName.equals("x")) {
+                                    x = Double.valueOf(attributeValue);
+                                } else if (attributeName.equals("y")) {
+                                    y = Double.valueOf(attributeValue);
+                                } else if (attributeName.equals("radius")) {
+                                    radius = Double.valueOf(attributeValue);
+                                } else if (attributeName.equals("mass")) {
+                                    mass = Double.valueOf(attributeValue);
+                                } else if (attributeName.equals("angle")) {
+                                    angle = Double.valueOf(attributeValue);
+                                } else if (attributeName.equals("velocity")) {
+                                    velocity = Double.valueOf(attributeValue);
+                                } else if (attributeName.equals("filled")) {
+                                    filled = attributeValue.equals("true");
+                                } else if (attributeName.equals("fixed")) {
+                                    fixed = attributeValue.equals("true");
+                                }
+                            }
+
+                            Point p = MovingParticles.Drawing.addPoint(x, y);
+                            p.name = name;
+                            p.x = x;
+                            p.y = y;
+                            p.velocity = velocity;
+                            p.angle = angle;
+                            p.mass = mass;
+                            p.radius = radius;
+                            p.fixed = fixed;
+                            p.filled = filled;
+
+                            nameToPoint.put(name, p);
+
+                        } else if (ls[0].equals("link")) {
+                            ls = l.split("\\|");
+                            MovingParticles.Drawing.addLink(nameToPoint.get(ls[1]), nameToPoint.get(ls[2]));
+                        }
+                    }
+                    in.close();
+                    repaint();
+                } catch (IOException i) {
+                    i.printStackTrace();
+                }
+            }
+        }
+
+        if (buttonClicked == "Save To File") {
+
+            ArrayList<Point> points = MovingParticles.Drawing.getPoints();
+            ArrayList<Link> links = MovingParticles.Drawing.getLinks();
+
+            JFileChooser fileChooser = new JFileChooser();
+            int retval = fileChooser.showOpenDialog(null);
+            if (retval == JFileChooser.APPROVE_OPTION) {
+                File fileOut = fileChooser.getSelectedFile();
+                try {
+                    OutputStream is = new FileOutputStream(fileOut);
+                    OutputStreamWriter isr = new OutputStreamWriter(is, "UTF-8");
+                    BufferedWriter out = new BufferedWriter(isr);
+                    for (Point p : points) {
+                        out.write("point|"
+                                + AttributeToString("name", p.name) + "|"
+                                + AttributeToString("x", p.x) + "|"
+                                + AttributeToString("y", p.y) + "|"
+                                + AttributeToString("radius", p.radius) + "|"
+                                + AttributeToString("filled", p.filled) + "|"
+                                + AttributeToString("velocity", p.velocity) + "|"
+                                + AttributeToString("angle", p.angle) + "|"
+                                + AttributeToString("fixed", p.fixed) + "|"
+                                + AttributeToString("mass", p.mass) + "|"
+                        );
+                        out.newLine();
+                    };
+                    for (Link l : links) {
+                        out.write("link|"
+                                + l.p1.name + "|"
+                                + l.p2.name + "|"
+                        );
+                        out.newLine();
+                    };
+                    out.close();
+                } catch (IOException i) {
+                    i.printStackTrace();
+                }
+            }
+        }
+
     }
 
     private void AddMenuItem(JMenu menu, String name, String action) {
@@ -907,6 +1044,8 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         AddMenuItem(menuAdd, "Circle ...", "Add Circle");
         AddMenuItem(menuAdd, "Point ...", "Add Point");
         AddMenuItem(menuAdd, "Grid", "Add Grid");
+        AddMenuItem(menuAdd, "Read from File", "Read From File");
+        AddMenuItem(menuAdd, "Save to File", "Save To File");
 
         JMenu menuSelect = new JMenu("Select");
         zMenuBar.add(menuSelect);

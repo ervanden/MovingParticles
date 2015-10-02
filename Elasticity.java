@@ -44,13 +44,19 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
         links = MovingParticles.Drawing.getLinks();
         
         for (Point p : particles) {
-            p.x_init = p.x;
-            p.y_init = p.y;
+            p.x0 = p.x;
+            p.y0 = p.y;
             p.xLastDrawn = p.x;
             p.yLastDrawn = p.y;
             p.trajectory = null;
             p.vx = p.velocity * Math.cos((p.angle / 180) * Math.PI);
             p.vy = p.velocity * Math.sin((p.angle / 180) * Math.PI);
+        }
+        
+        for (Link l : links){
+          l.r0 = (l.p1.x0 - l.p2.x0) * (l.p1.x0 - l.p2.x0)+ (l.p1.y0 - l.p2.y0) * (l.p1.y0 - l.p2.y0);
+          l.r0 = Math.sqrt(l.r0);
+           
         }
 
         pane = new JPanel();
@@ -149,21 +155,21 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
         System.out.println("== state of all particles");
         for (Point p : particles) {
             System.out.printf("%s mass=%5f x=%5f x_init=%5f y=%5f y_init=%5f vx=%5f vy=%5f\n",
-                    p.particleName,
+                    p.name,
                     p.mass,
                     p.x,
-                    p.x_init,
+                    p.x0,
                     p.y,
-                    p.y_init,
+                    p.y0,
                     p.vx,
                     p.vy
             );
         }
         if (p1 != null) {
-            System.out.println("== p1 " + p1.particleName);
+            System.out.println("== p1 " + p1.name);
         }
         if (p2 != null) {
-            System.out.println("== p2 " + p2.particleName);
+            System.out.println("== p2 " + p2.name);
         }
     }
 
@@ -212,9 +218,7 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
             double mass2 = p2.mass;
             double rsquare = (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
             double r = Math.sqrt(rsquare);
-            double r0square = (p1.x_init - p2.x_init) * (p1.x_init - p2.x_init)
-                    + (p1.y_init - p2.y_init) * (p1.y_init - p2.y_init);
-            double r0 = Math.sqrt(r0square);
+            double r0 = link.r0;
 
             double k;
             if (r > r0) {
