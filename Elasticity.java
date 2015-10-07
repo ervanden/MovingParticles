@@ -37,12 +37,12 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
     JLabel viscosityInfo;
 
     JCheckBox gBox;
-   
+
     public Elasticity() {
 
         particles = MovingParticles.Drawing.getPoints();
         links = MovingParticles.Drawing.getLinks();
-        
+
         for (Point p : particles) {
             p.x0 = p.x;
             p.y0 = p.y;
@@ -52,11 +52,11 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
             p.vx = p.velocity * Math.cos((p.angle / 180) * Math.PI);
             p.vy = p.velocity * Math.sin((p.angle / 180) * Math.PI);
         }
-        
-        for (Link l : links){
-          l.r0 = (l.p1.x0 - l.p2.x0) * (l.p1.x0 - l.p2.x0)+ (l.p1.y0 - l.p2.y0) * (l.p1.y0 - l.p2.y0);
-          l.r0 = Math.sqrt(l.r0);
-           
+
+        for (Link l : links) {
+            l.r0 = (l.p1.x0 - l.p2.x0) * (l.p1.x0 - l.p2.x0) + (l.p1.y0 - l.p2.y0) * (l.p1.y0 - l.p2.y0);
+            l.r0 = Math.sqrt(l.r0);
+
         }
 
         pane = new JPanel();
@@ -76,7 +76,7 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
         viscosityInfo = new JLabel("viscosity", JLabel.CENTER);
         sliderViscosity = new JSlider(-3000, 3000, -3000);
         readViscosity();
-        
+
         sliderKStretch.addChangeListener(this);
         sliderKCompress.addChangeListener(this);
         sliderViscosity.addChangeListener(this);
@@ -173,27 +173,67 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
         }
     }
 
-    public ArrayList<Link> collidingParticles() {
-        //       System.out.println("==== colliding particles");
-        ArrayList<Link> l = new ArrayList<>();
+    public static void collidingParticles(ArrayList<Point> particles) {
+        ArrayList<Link> collisions = new ArrayList<>();
         for (int i = 0; i < particles.size(); i++) {
             for (int j = i + 1; j < particles.size(); j++) {
                 Point p1 = particles.get(i);
                 Point p2 = particles.get(j);
-                //               System.out.println("check collision p1=" + p1.particleName + " p2=" + p2.particleName);
                 if (((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y)) < (p1.radius + p2.radius) * (p1.radius + p2.radius)) {
                     Link link = new Link(p1, p2);
-                    l.add(link);
-                    //                   System.out.println("* collision p1=" + p1.particleName + " p2=" + p2.particleName);
+                    collisions.add(link);
                 }
             }
         }
-//        System.out.println("=======================");
-        return l;
+        
+        for (Link l : collisions) {
+
+            Point p1 = l.p1;
+            Point p2 = l.p2;
+
+            if (l.p1.fixed) {
+                p1 = l.p2;
+                p2 = l.p1;
+            }  // if a particle is stationary, make it P2
+
+// M = unit vector from P1 to P2
+// T = unit tangential vector = M*i
+            double xm = p2.x - p1.x;
+            double ym = p2.y - p1.y;
+            double rm = Math.sqrt(xm * xm + ym * ym);
+            double xm1 = xm / rm;
+            double ym1 = ym / rm;
+            double xt1 = -ym1;
+            double yt1 = xm1;
+
+// look at the collision as an observer moving with speed v2.
+// Now P1 collides with P2 which is at rest
+            double wx = p1.vx - p2.vx;
+            double wy = p1.vy - p2.vy;
+
+            double wt = wx * xt1 + wy * yt1; //  speed of P1 in direction of T
+            double wm = wx * xm1 + wy * ym1; //  speed of P1 in direction of M
+
+            if (wm > 0) { // if the particle is moving away, the collision has already happened
+                // Perpendicular speeds are calculated independent from tangential speed
+                // a1 / a2 = how much of the perpendicular speed of P1 is  kept / transferred to P2 
+                double a1 = (p1.mass - p2.mass) / (p1.mass + p2.mass); // ratio speed of P1 after/before collision
+                double a2 = 2 * p1.mass / (p1.mass + p2.mass);   //ratio of speed of P2 after collision / P1 before collision
+
+                if (p2.fixed) {
+                    a1 = -1;
+                    a2 = 0;
+                }
+
+                p1.vx = wt * xt1 + a1 * wm * xm1 + p2.vx;
+                p1.vy = wt * yt1 + a1 * wm * ym1 + p2.vy;
+                p2.vx = a2 * wm * xm1 + p2.vx;
+                p2.vy = a2 * wm * ym1 + p2.vy;
+            }
+        }
     }
 
  //   int steps = 0;
-
     public boolean step(double dt, int resolution) {
         // This method calculates the new position of all particles after time step dt.
         // If no points are added to any trajectory, return false, true otherwise.
@@ -263,83 +303,17 @@ class Elasticity implements Animation, ChangeListener, ItemListener {
                 p.vx = p.vxnew;
                 p.vy = p.vynew;
             } else {
-                p.vx=0;
-                p.vy=0;
+                p.vx = 0;
+                p.vy = 0;
             }
         }
 
-        for (Link l : collidingParticles()) {
-
-            Point p1 = l.p1;
-            Point p2 = l.p2;
-
-            if (l.p1.fixed){p1=l.p2; p2=l.p1;}  // if a particle is stationary, make it P2
-
-// M = unit vector from P1 to P2
-// T = unit tangential vector = M*i
-            double xm = p2.x - p1.x;
-            double ym = p2.y - p1.y;
-            double rm = Math.sqrt(xm * xm + ym * ym);
-            double xm1 = xm / rm;
-            double ym1 = ym / rm;
-            double xt1 = -ym1;
-            double yt1 = xm1;
-
-// look at the collision as an observer moving with speed v2. Now P1 collides with P2 which is at rest
-            double wx = p1.vx - p2.vx;
-            double wy = p1.vy - p2.vy;
-
-            double wt = wx * xt1 + wy * yt1; //  speed of P1 in direction of T
-            double wm = wx * xm1 + wy * ym1; //  speed of P1 in direction of M
-//            System.out.printf("vx1=%f xy1=%f vx2=%f vy2=%f\n", p1.vx, p1.vy, p2.vx, p2.vy);
-//            System.out.printf("wx=%f wy=%f w=%f wt=%f wm=%f\n", wx, wy, w, wt, wm);
-/*
-             if (p1.w == null) {
-             p1.w = MovingParticles.Drawing.addCurve();
-             MovingParticles.Drawing.addPointToCurve(p1.w, 0, 0);
-             MovingParticles.Drawing.addPointToCurve(p1.w, 1, 1);
-             }
-             p1.w.points.get(0).x = p1.x;
-             p1.w.points.get(0).y = p1.y;
-             p1.w.points.get(1).x = p1.x + wx;
-             p1.w.points.get(1).y = p1.y + wy;
-             if (p1.tangent == null) {
-             p1.tangent = MovingParticles.Drawing.addCurve();
-             MovingParticles.Drawing.addPointToCurve(p1.tangent, 0, 0);
-             MovingParticles.Drawing.addPointToCurve(p1.tangent, 1, 1);
-             }
-             p1.tangent.points.get(0).x = p1.x;
-             p1.tangent.points.get(0).y = p1.y;
-             p1.tangent.points.get(1).x = p1.x + wt * xt1;
-             p1.tangent.points.get(1).y = p1.y + wt * yt1;
-             if (p1.normal == null) {
-             p1.normal = MovingParticles.Drawing.addCurve();
-             MovingParticles.Drawing.addPointToCurve(p1.normal, 0, 0);
-             MovingParticles.Drawing.addPointToCurve(p1.normal, 1, 1);
-             }
-             p1.normal.points.get(0).x = p1.x;
-             p1.normal.points.get(0).y = p1.y;
-             p1.normal.points.get(1).x = p1.x + wm * xm1;
-             p1.normal.points.get(1).y = p1.y + wm * ym1;
-             */
-            
-            if (wm>0){
-            // Perpendicular speeds are calculated independent from tangential speed
-            // a1 and a2 = how much of the perpendicular speed of P1 is  kept / transferred to P2 
-            double a1 = (p1.mass - p2.mass) / (p1.mass + p2.mass); // ratio speed of P1 after/before collision
-            double a2 = 2 * p1.mass / (p1.mass + p2.mass);   //ratio of speed of P2 after collision / P1 before collision
-
-            if (p2.fixed){ a1=-1; a2=0;}
-            
-            p1.vx = wt * xt1 + a1 * wm * xm1 + p2.vx;
-            p1.vy = wt * yt1 + a1 * wm * ym1 + p2.vy;
-            p2.vx = a2 * wm * xm1 + p2.vx;
-            p2.vy = a2 * wm * ym1 + p2.vy;
-            }
-
-        }
-
-        // bounce 
+        // calculate new speed after collision
+        
+        collidingParticles(particles);
+        
+        // bounce against the window walls
+        
         for (Point p : particles) {
             double uxmax = t.xScreenToUser((int) t.sxmax_real) - p.radius;
             double uxmin = t.xScreenToUser((int) t.sxmin_real) + p.radius;

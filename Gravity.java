@@ -93,7 +93,11 @@ class Gravity implements Animation {
             p.vx = p.vxnew;
             p.vy = p.vynew;
         }
-
+        
+        // calculate new speed after collision
+        
+        Elasticity.collidingParticles(particles);
+        
         for (Point p : particles) {
 
             double x1, x2, y1, y2;
