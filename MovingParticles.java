@@ -26,7 +26,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
     static JFrame zFrame = new JFrame();
     static JFrame dFrame = new JFrame("Settings");
-    PropertyFrame propertyFrame;
+    PropertyFrame propertyFrame = new PropertyFrame();
 
     JCheckBox labelButton = new JCheckBox("labels");
     JCheckBox lineButton = new JCheckBox("lines");
@@ -34,7 +34,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
     JCheckBox gridButton = new JCheckBox("snap to grid ");
     JCheckBox animateButton = new JCheckBox("animate");
 
-    static ComplexPlane zPlane = new ComplexPlane();
+    static DrawingPlane plane = new DrawingPlane();
 
     AnimationRunner animation = null;
     Thread animateThread = null;
@@ -70,9 +70,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
     boolean firstPoint = true; // tells if mouseDragged event is the first point
     Shape currentShape;
 
-    int minPixelDist = 10;
-    int minPixelDistSquare = minPixelDist * minPixelDist;
-
+    ShapeDialog shapeDialog = new ShapeDialog();
     double xCircle = 0, yCircle = 0; // center of circle
     double xRadius = 0, yRadius = 0; // clicked point to mark radius
 
@@ -80,7 +78,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
     Point cp;
 
     public static void repaint() {
-        zPlane.blitPaint();
+        plane.blitPaint();
     }
 
     public void keyTyped(KeyEvent e) {
@@ -101,7 +99,6 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
     }
 
     public void mouseMoved(MouseEvent e) {
-        ComplexPlane plane = (ComplexPlane) e.getComponent();
         x = e.getX();
         y = e.getY();
 
@@ -110,7 +107,6 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
     }
 
     public void mouseDragged(MouseEvent e) {
-        ComplexPlane plane = (ComplexPlane) e.getComponent();
         x = e.getX();
         y = e.getY();
 
@@ -145,17 +141,28 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
         if (actionAddShape) {
             // add point only if sufficiently far from previous OR if it is the first point 
-            if ((firstPoint) || (!firstPoint && ((x - xprev) * (x - xprev) + (y - yprev) * (y - yprev) > minPixelDistSquare))) {
-                double xUser = transform.xScreenToUser(x);
-                double yUser = transform.yScreenToUser(y);
-                Drawing.addPointToShape(currentShape, xUser, yUser);
-
-                repaint();
+            double xu = transform.xScreenToUser(x);
+            double yu = transform.yScreenToUser(y);
+            if (firstPoint) {
+                Point p = Drawing.addPointToShape(currentShape, xu, yu);
+                p.radius = shapeDialog.pointRadius;
                 xprev = x;
                 yprev = y;
-                firstPoint = false;
-            };
-        };
+            } else {
+                double xpu = transform.xScreenToUser(xprev);
+                double ypu = transform.yScreenToUser(yprev);
+                double minSegmentLength = shapeDialog.segmentLength;
+                if (((xu - xpu) * (xu - xpu) + (yu - ypu) * (yu - ypu))
+                        > minSegmentLength * minSegmentLength) {
+                    Point p = Drawing.addPointToShape(currentShape, xu, yu);
+                    p.radius = shapeDialog.pointRadius;
+                    xprev = x;
+                    yprev = y;
+                }
+            }
+            firstPoint = false;
+            repaint();
+        }
 
         if ((actionMoveAll || actionMoveSelection)) {
             if (firstPoint) {
@@ -178,8 +185,8 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                 repaint();
                 xprev = x;
                 yprev = y;
-            };
-        };
+            }
+        }
 
         if (actionMovePoint) {
 
@@ -278,29 +285,27 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
                 repaint();
 
-            };
-
+            }
         }
-        ; // Select Area       
 
     }
 
     public void mouseClicked(MouseEvent e) {
-        ComplexPlane plane = (ComplexPlane) e.getComponent();
         saySomething("Mouse clicked; # of clicks: "
                 + e.getClickCount(), e);
     }
 
     public void mouseReleased(MouseEvent e) {
-        ComplexPlane plane = (ComplexPlane) e.getComponent();
         saySomething("Mouse released; # of clicks: " + e.getClickCount(), e);
 
         if (actionAddShape) {
             actionAddShape = false;
-            // add terminal point
-            Drawing.addPointToShape(currentShape, transform.xScreenToUser(x),
-                    transform.yScreenToUser(y));
-            repaint();
+            /*           
+             // add terminal point
+             Drawing.addPointToShape(currentShape, transform.xScreenToUser(x),
+             transform.yScreenToUser(y));
+             repaint();
+             */
         }
 
         if (actionMoveAll || actionMoveSelection || actionMovePoint || actionMoveView) {
@@ -314,7 +319,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
             double radius;
 
             radius = Math.sqrt((xRadius - xCircle) * (xRadius - xCircle) + (yRadius - yCircle) * (yRadius - yCircle));
-            gridAngle = Math.sqrt(transform.xScreenToUser(minPixelDist) - transform.xScreenToUser(0)) / radius;
+            gridAngle = Math.sqrt(transform.xScreenToUser(10) - transform.xScreenToUser(0)) / radius;
             if (gridAngle > (Math.PI / 10)) {
                 gridAngle = Math.PI / 10;
             }
@@ -346,12 +351,10 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
     }
 
     public void mouseEntered(MouseEvent e) {
-        ComplexPlane plane = (ComplexPlane) e.getComponent();
         saySomething("Mouse entered", e);
     }
 
     public void mouseExited(MouseEvent e) {
-        ComplexPlane plane = (ComplexPlane) e.getComponent();
         saySomething("Mouse exited", e);
 
         if (actionZoomIn && !firstPoint) {
@@ -377,7 +380,6 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
     }
 
     public void mousePressed(MouseEvent e) {
-        ComplexPlane plane = (ComplexPlane) e.getComponent();
         x = e.getX();
         y = e.getY();
         saySomething("Mouse pressed (" + x + "," + y + ") (# of clicks: " + e.getClickCount() + ")", e);
@@ -495,7 +497,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                 yprev = y;
                 firstPoint = false;
             } else {
-                int pixelDist, nsegments;
+                int nsegments;
                 double xbegin, ybegin, xend, yend, xi, yi;
                 xend = transform.xScreenToUser(x);
                 yend = transform.yScreenToUser(y);
@@ -628,17 +630,20 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
         firstPoint = true;
 
-        if (buttonClicked == "Add Shape") {
-            actionAddShape = true;
-            firstPoint = true;
-            currentShape = Drawing.addShape();
-        }
-
         if (buttonClicked == "Add Line") {
             actionAddLine = true;
             firstPoint = true;
             currentShape = Drawing.addShape();
-        };
+        }
+
+        if (buttonClicked == "Add Shape") {
+            shapeDialog.popUp(zFrame, 1.5, 0.5);
+            if (shapeDialog.validValues) {
+                actionAddShape = true;
+                firstPoint = true;
+                currentShape = Drawing.addShape();
+            }
+        }
 
         if (buttonClicked == "Add Circle") {
             actionAddCircle = true;
@@ -967,7 +972,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
     private void create() {   // Create and set up the windows.
 
-        zPlane.t = transform;
+        plane.t = transform;
 
         transform.setUserSpace(-10, 10, -10, 10);
 
@@ -980,21 +985,21 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         zFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         dFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        zPlane.setBackground(Color.white);
+        plane.setBackground(Color.white);
 
-        zPlane.addMouseListener(this);
-        zPlane.addMouseMotionListener(this);
-        zPlane.addKeyListener(this);
+        plane.addMouseListener(this);
+        plane.addMouseMotionListener(this);
+        plane.addKeyListener(this);
 
-        zFrame.add(zPlane);
+        zFrame.add(plane);
         zFrame.setTitle("space");
         zFrame.setVisible(true);
-        zFrame.add(zPlane);
+        zFrame.add(plane);
 
-        zPlane.createBufferStrategy(2);
-        zPlane.setIgnoreRepaint(true);
+        plane.createBufferStrategy(2);
+        plane.setIgnoreRepaint(true);
 
-        zPlane.blitPaint();
+        plane.blitPaint();
 
 // populate settings frame
         Container pane = dFrame.getContentPane();
@@ -1034,7 +1039,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
         dFrame.pack();
         dFrame.setVisible(true);
 
-// menu bar for zFrame
+
         JMenuBar zMenuBar = new JMenuBar();
 
         JMenu menuAdd = new JMenu("Add");
@@ -1091,9 +1096,10 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
 
         zFrame.setJMenuBar(zMenuBar);
 
-        propertyFrame = new PropertyFrame();
-
-    }  // create
+ //       propertyFrame = new PropertyFrame();
+        repaint();
+        
+    }
 
     public void display() {
         //Schedule a job for the event-dispatching thread:
@@ -1103,8 +1109,7 @@ public class MovingParticles implements ActionListener, MouseListener, MouseMoti
                 create();
             }
         });
-
-    }  // display
+    }
 
 }
 
@@ -1116,6 +1121,6 @@ class MainVisualComplex {
 
         vc.display();
 
-    } // main
+    }
 
 }

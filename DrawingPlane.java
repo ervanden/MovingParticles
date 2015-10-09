@@ -2,23 +2,20 @@
 import java.awt.*;
 import java.awt.image.BufferStrategy;
 
-class ComplexPlane extends Canvas {
+class DrawingPlane extends Canvas {
 
     private static final long serialVersionUID = 1L;
 
     Transform t = MovingParticles.transform;
 
     public void paint(Graphics g) { // never called, we set ignoreRepaint
-
         int h = this.getSize().height;
         int w = this.getSize().width;
-
         t.setScreenSpace(0, w, h, 0);
-        t.graphics = g;
-
+        t.graphics=g;
         MovingParticles.Drawing.draw(t);
 
-    }  // paint 
+    }
 
     public void blitPaint() {
 

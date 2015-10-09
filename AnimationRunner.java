@@ -268,7 +268,7 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
         time = 0;
         steps = 0;
 
-        MovingParticles.zPlane.blitPaint();
+        MovingParticles.plane.blitPaint();
 
     }
 
@@ -357,7 +357,7 @@ public class AnimationRunner implements Runnable, ActionListener, ChangeListener
                         }
                     }
                     sFrame.setTitle(String.format("time: %6.2f steps %d", time, steps));
-                    MovingParticles.zPlane.blitPaint();
+                    MovingParticles.plane.blitPaint();
                 }
             }
             while (suspended && !exitRequested) {

@@ -90,23 +90,23 @@ class Drawing {
         return s;
     }
 
-    public synchronized void addPointToShape(Shape s, double x, double y) {
+    public synchronized Point addPointToShape(Shape s, double x, double y) {
         Point p = new Point(x, y);
         if (s.pEnd == null) {
             s.pEnd = p;
             points.add(p);
-            System.out.println("Added point " + p.name);
+            return p;
         } else {
             double xprev = s.pEnd.x;
             double yprev = s.pEnd.y;
             if (((x - xprev) * (x - xprev) + (y - yprev) * (y - yprev)) > 10e-6) {
                 points.add(p);
-                System.out.println("Added point " + p.name);
                 links.add(new Link(p, s.pEnd));
-                System.out.println("Added link " + p.name + " - " + s.pEnd.name);
                 s.pEnd = p;
+                return p;
             } else {
                 System.out.println("Point too close to previous  : not added to shape");
+                return null;
             }
         }
     }
