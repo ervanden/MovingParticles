@@ -1,0 +1,1052 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <style>
+      body {
+        margin: 0px;
+        padding: 0px;
+      }
+canvas.drawing {
+    border-style: solid;
+    border-width: 5px;
+}
+    </style>
+  </head>
+  <body>
+    <canvas id="myCanvas" width=600 height=600 class="drawing"></canvas>
+
+
+<script>
+
+g_r1=false;
+
+borderWidth = 1;
+prev_t = 0;
+squares = [];
+balls = [];
+
+function pointInRectangle(x,y,s,t) {
+
+    if (x<s){
+        if (-x<s){
+            if (y<t){
+                if (-y<t){
+//console.log("pointInRectangle "+x+" "+y+" "+s+" "+t+" =true");
+                    return true;
+                }
+            }
+        }
+    };
+//console.log("pointInRectangle "+x+" "+y+" "+s+" "+t+" =false");
+    return false;
+}
+                    
+function calculateBouncing(xc,yc,xp,yp,s,t,r) {
+// g_xn, g_yn and g_bounced are set by calculateBouncing()
+
+g_bounced="none";
+g_xn=0;g_yn=0;
+
+if (yp>(t+r)) {
+ g_xn=xc+((t+r)-yc)*(xp-xc)/(yp-yc);
+ g_yn=t+r;
+ if (g_xn>(s+r)) {
+  g_yn=yc+((s+r)-xc)*(yp-yc)/(xp-xc);
+  g_xn=s+r;
+  if (g_yn>t) {
+   g_bounced="topright";
+  } else if (-g_yn>t) {
+   g_bounced="bottomright";
+  } else {
+   g_bounced="right";
+  }
+ } else if (-g_xn>(s+r)) {
+  g_yn=yc+(-(s+r)-xc)*(yp-yc)/(xp-xc);
+  g_xn=-(s+r);
+  if (g_yn>t) {
+   g_bounced="topleft";
+  } else if (-g_yn>t) {
+   g_bounced="bottomleft";
+  } else {
+   g_bounced="left";
+  }
+  
+ } else if (g_xn>s) {
+  g_bounced="topright";
+ } else if (-g_xn>s) {
+  g_bounced="topleft";
+ } else {
+  g_bounced="top";
+ }
+} else if (-yp>(t+r)) {
+ g_xn=xc+(-(t+r)-yc)*(xp-xc)/(yp-yc);
+ g_yn=-(t+r);
+ if (g_xn>(s+r)) {
+  g_yn=yc+((s+r)-xc)*(yp-yc)/(xp-xc);
+  g_xn=s+r;
+  if (g_yn>t) {
+   g_bounced="topright";
+  } else if (-g_yn>t) {
+   g_bounced="bottomright";
+  } else {
+   g_bounced="right";
+  }
+ } else if (-g_xn>(s+r)) {
+  g_yn=yc+(-(s+r)-xc)*(yp-yc)/(xp-xc);
+  g_xn=-(s+r);
+  if (g_yn>t) {
+   g_bounced="topleft";
+  } else if (-g_yn>t) {
+   g_bounced="bottomleft";
+  } else {
+   g_bounced="left";
+  }
+  
+ } else if (g_xn>s) {
+  g_bounced="bottomright";
+ } else if (-g_xn>s) {
+  g_bounced="bottomleft";
+ } else {
+  g_bounced="bottom";
+ }
+} else if (xp>(s+r)) {
+  g_yn=yc+((s+r)-xc)*(yp-yc)/(xp-xc);
+  g_xn=s+r;
+  if (g_yn>t) {
+   g_bounced="topright";
+  } else if (-g_yn>t) {
+   g_bounced="bottomright";
+  } else {
+   g_bounced="right";
+  } 
+ } else if (-xp>(s+r)) {
+  g_yn=yc+(-(s+r)-xc)*(yp-yc)/(xp-xc);
+  g_xn=-(s+r);
+  if (g_yn>t) {
+   g_bounced="topleft";
+  } else if (-g_yn>t) {
+   g_bounced="bottomleft";
+  } else {
+   g_bounced="left";
+  }
+ }
+}
+
+function drawAllShapes(context) {
+    context.lineWidth = 3;
+
+    for (i = 0; i < nsquares; i++) {
+        var xylist = squares[i].xylist;
+        var xo = squares[i].x;
+        var yo = squares[i].y;
+        var a = squares[i].a;
+
+        //(x+iy)* (cosa+isina)= (xcosa-ysina) +i(ycosa+xsina)
+
+        context.strokeStyle = 'black';
+        context.beginPath();
+        var cosa = Math.cos(a);
+        var sina = Math.sin(a);
+        for (var k = 0; k < xylist.length; k++) {
+            x = xylist[k].x;
+            y = xylist[k].y;
+            if (k == 0) {
+                context.moveTo(xo + x * cosa - y * sina, yo + y * cosa + x * sina);
+            } else {
+                context.lineTo(xo + x * cosa - y * sina, yo + y * cosa + x * sina);
+            }
+        }
+        context.closePath();
+        context.fillStyle = squares[i].color;
+        context.fill();
+        context.stroke();
+        context.strokeStyle = 'red';
+        context.beginPath();
+        var x = squares[i].xylist[0].x;
+        var y = squares[i].xylist[0].y;
+        context.arc(xo + x * cosa - y * sina, yo + y * cosa + x * sina, 10, 0, 2 * Math.PI);
+        context.stroke();
+        
+               context.strokeStyle = 'black';
+        context.beginPath();
+        var cosa = Math.cos(a);
+        var sina = Math.sin(a);
+        for (var k = 0; k < xylist.length; k++) {
+            x = xylist[k].x;
+            y = xylist[k].y;
+            if (k == 0) {
+                context.moveTo(xo + x * cosa - y * sina, yo + y * cosa + x * sina);
+            } else {
+                context.lineTo(xo + x * cosa - y * sina, yo + y * cosa + x * sina);
+            }
+        }
+        context.closePath();
+        context.fillStyle = squares[i].color;
+        context.fill();
+        context.stroke();
+        context.strokeStyle = 'red';
+        context.beginPath();
+        var x = squares[i].xylist[0].x;
+        var y = squares[i].xylist[0].y;
+        context.arc(xo + x * cosa - y * sina, yo + y * cosa + x * sina, 10, 0, 2 * Math.PI);
+        context.stroke();
+    }
+
+    context.strokeStyle = 'black';
+    for (i = 0; i < nballs; i++) {
+        context.beginPath();
+        context.arc(balls[i].x, balls[i].y, balls[i].r, 0, 2 * Math.PI);
+        context.fillStyle = balls[i].color;
+        context.fill();
+        context.stroke();
+    }
+
+}
+
+function drawAllShapes2(context) {
+    context.lineWidth = 3;
+
+
+        var xo = 300;
+        var yo = 300;
+
+        context.strokeStyle = 'black';
+        context.beginPath();
+
+        var square=squares[0];
+        var ball=balls[0];
+        var r = ball.r;
+
+        var xylist = square.xylist;
+        for (var k = 0; k < xylist.length; k++) {
+            x = xylist[k].x;
+            y = xylist[k].y;
+if (x>0) x=x+r;
+if (x<0) x=x-r;
+if (y>0) y=y+r;
+if (y<0) y=y-r;
+            if (k == 0) {
+                context.moveTo(xo+x,yo+y);
+            } else {
+                context.lineTo(xo+x,yo+y);
+            }
+        }
+        
+        context.fillStyle = square.color;
+        context.fill();
+        context.stroke();
+
+    context.strokeStyle = 'black';
+    for (i = 0; i < nballs; i++) {
+        context.beginPath();
+        context.arc(balls[i].x, balls[i].y, balls[i].r, 0, 2 * Math.PI);
+        context.fillStyle = balls[i].color;
+        context.fill();
+        context.stroke();
+    }
+
+}
+
+function drawAllShapes2(context) {
+    context.lineWidth = 3;
+
+
+        var xo = 300;
+        var yo = 300;
+
+
+
+        var square=squares[0];
+        var ball=balls[0];
+        var r = ball.r;
+        var s = square.s;
+        var t = square.t;
+
+        context.strokeStyle = 'black';
+        context.beginPath();
+        var xylist = square.xylist;
+        for (var k = 0; k < xylist.length; k++) {
+            x = xylist[k].x;
+            y = xylist[k].y;
+if (x>0) x=x+r;
+if (x<0) x=x-r;
+if (y>0) y=y+r;
+if (y<0) y=y-r;
+            if (k == 0) {
+                context.moveTo(xo+x,yo+y);
+            } else {
+                context.lineTo(xo+x,yo+y);
+            }
+        }
+        context.closePath();
+        context.fillStyle = square.color;
+        context.fill();
+        context.stroke();
+        // echte rectangle
+        context.beginPath();
+                context.moveTo(xo+s,yo+t+r);
+                context.lineTo(xo+s,yo-t-r);
+                context.moveTo(xo-s,yo+t+r);
+                context.lineTo(xo-s,yo-t-r);
+                context.moveTo(xo+s+r,yo+t);
+                context.lineTo(xo-s-r,yo+t);
+                context.moveTo(xo+s+r,yo-t);
+                context.lineTo(xo-s-r,yo-t);
+        context.fillStyle = square.color;
+        context.fill();
+        context.stroke();
+
+
+    var a = square.a;
+    var cosa = Math.cos(-a);
+    var sina = Math.sin(-a);
+
+    for (i = 0; i < nballs; i++) {
+
+        x=balls[i].x;
+        y=balls[i].y;
+        x=x-square.x;
+        y=y-square.y;
+
+if (false) {
+        context.beginPath();
+        context.strokeStyle = 'black';
+        context.arc(xo+x * cosa - y * sina,yo+y * cosa + x * sina, balls[i].r, 0, 2 * Math.PI);
+        context.fillStyle = balls[i].color;
+        context.fill();
+        context.stroke();
+}
+        context.beginPath();
+        context.strokeStyle = 'red';
+        context.arc(xo+x * cosa - y * sina,yo+y * cosa + x * sina, 5, 0, 2 * Math.PI);
+        context.stroke();
+
+        x=balls[i].xprev;
+        y=balls[i].yprev;
+        x=x-square.x;
+        y=y-square.y;
+        context.beginPath();
+        context.strokeStyle = 'blue';
+        context.arc(xo+x * cosa - y * sina,yo+y * cosa + x * sina, 5, 0, 2 * Math.PI);
+        context.stroke();
+    }
+
+}
+
+function collisions(timeslot) {
+
+// SQUARES HITTING WALLS
+
+    for (i = 0; i < nsquares; i++) {
+
+        var square = squares[i];
+        var xylist = square.xylist;
+        var xo = square.x;
+        var yo = square.y;
+        var a = square.a;
+        var vx = square.vx;
+        var vy = square.vy;
+        var vr = square.vr;
+        var m = square.m; // mass
+        var mi = square.mi; // moment of inertia
+
+        var cosa = Math.cos(a);
+        var sina = Math.sin(a);
+
+        for (var k = 0; k < xylist.length; k++) {
+            x = xylist[k].x;
+            y = xylist[k].y;
+            var px = xo + x * cosa - y * sina;
+            var py = yo + y * cosa + x * sina;
+
+            if (py > canvas.height) {
+//       console.log("t= "+timeslot+" point "+k+" crossed y==height "+(py-canvas.height));
+                if (!xylist[k].topbounced) {  // is outside and not bounced yet
+//         console.log("t= "+timeslot+" point "+k+" bounced y==height "+(py-canvas.height));
+//         console.log("VOOR vx= "+vx+" vy="+vy+" vr="+vr); 
+                    xylist[k].topbounced = true;
+                    var rm = px - xo;
+                    var p = -2.0 * (rm * vr + vy) / (rm * rm / mi + 1 / m);
+                    vy = vy + p / m;
+                    vr = vr + (rm * p) / mi;
+//         console.log("NA  vx= "+vx+" vy="+vy+" vr="+vr);
+                }
+            } else {
+                xylist[k].topbounced = false; // is back inside
+            }
+
+
+            if (py < 0) {
+                if (!xylist[k].bottombounced) {
+//         console.log("t= "+timeslot+" point "+k+" bounced y==0 "+py);
+//         console.log("VOOR vx= "+vx+" vy="+vy+" vr="+vr);
+                    xylist[k].bottombounced = true;
+                    var rm = px - xo;
+                    var p = -2.0 * (rm * vr + vy) / (rm * rm / mi + 1 / m);
+                    vy = vy + p / m;
+                    vr = vr + (rm * p) / mi;
+//         console.log("NA  vx= "+vx+" vy="+vy+" vr="+vr);
+                }
+            } else {
+                xylist[k].bottombounced = false;
+            }
+
+            if (px > canvas.width) {
+                //      console.log("t= "+timeslot+" point "+k+" crossed x==width "+(px-canvas.width));
+                if (!xylist[k].rightbounced) {
+                    //        console.log("t= "+timeslot+" point "+k+" bounced x==width "+(px-canvas.width));
+                    //        console.log("VOOR vx= "+vx+" vy="+vy+" vr="+vr);
+                    xylist[k].rightbounced = true;
+                    var rm = py - yo;
+                    var p = 2.0 * (rm * vr - vx) / (rm * rm / mi + 1 / m);
+                    vx = vx + p / m;
+                    vr = vr - (rm * p) / mi;
+//         console.log("NA  vx= "+vx+" vy="+vy+" vr="+vr);
+                }
+            } else {
+                xylist[k].rightbounced = false;
+            }
+
+            if (px < 0) {
+//       console.log("t= "+timeslot+" point "+k+" crossed x==0 "+px); 
+                if (!xylist[k].leftbounced) {
+//         console.log("t= "+timeslot+" point "+k+" bounced x==0 "+px); 
+//         console.log("VOOR vx= "+vx+" vy="+vy+" vr="+vr);
+                    xylist[k].leftbounced = true;
+                    var rm = py - yo;
+                    var p = 2.0 * (rm * vr - vx) / (rm * rm / mi + 1 / m);
+                    vx = vx + p / m;
+                    vr = vr - (rm * p) / mi;
+//         console.log("NA  vx= "+vx+" vy="+vy+" vr="+vr);
+                }
+            } else {
+                xylist[k].leftbounced = false;
+            }
+        }
+
+        square.x = xo;
+        square.y = yo;
+        square.a = a;
+        square.vx = vx;
+        square.vy = vy;
+        square.vr = vr;
+    }
+
+// BALLS HITTING WALLS 
+
+    for (i = 0; i < nballs; i++) {
+        var ball = balls[i];
+        var x = ball.x;
+        var y = ball.y;
+        var r = ball.r;
+        var vx = ball.vx;
+        var vy = ball.vy;
+
+        if ((x < r) && (vx < 0)) {
+            vx = -vx;
+            x = 2 * r - x;
+        }
+        if ((x > (canvas.width - r)) && (vx > 0)) {
+            vx = -vx;
+            x = 2 * (canvas.width - r) - x;
+        }
+
+        if ((y < r) && (vy < 0)) {
+            vy = -vy;
+            y = 2 * r - y;
+        }
+        if ((y > (canvas.height - r)) && (vy > 0)) {
+            vy = -vy;
+            y = 2 * (canvas.height - r) - y;
+        }
+
+        ball.x = x;
+        ball.y = y;
+        ball.vx = vx;
+        ball.vy = vy;
+    }
+
+//  BALLS HITTING BALLS
+
+    for (i = 0; i < nballs; i++) {
+        var x1 = balls[i].x;
+        var y1 = balls[i].y;
+        var r1 = balls[i].r;
+        var vx1 = balls[i].vx;
+        var vy1 = balls[i].vy;
+        var m1 = balls[i].m;
+        for (j = i + 1; j < nballs; j++) {
+            var x2 = balls[j].x;
+            var y2 = balls[j].y;
+            var r2 = balls[j].r;
+            var vx2 = balls[j].vx;
+            var vy2 = balls[j].vy;
+            var m2 = balls[j].m;
+            if (((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1)) < (r2 + r1) * (r2 + r1)) {
+                xm = x2 - x1;
+                ym = y2 - y1;
+                rm = Math.sqrt(xm * xm + ym * ym);
+                xm1 = xm / rm;
+                ym1 = ym / rm;
+                xt1 = -ym1;
+                yt1 = xm1;
+                wx = vx1 - vx2;
+                wy = vy1 - vy2;
+                wt = wx * xt1 + wy * yt1; //  speed of P1 in direction of T
+                wm = wx * xm1 + wy * ym1; //  speed of P1 in direction of M
+
+                if (wm > 0) {
+                    a1 = (m1 - m2) / (m1 + m2);
+                    a2 = 2 * m1 / (m1 + m2);
+                    balls[i].vx = wt * xt1 + a1 * wm * xm1 + vx2;
+                    balls[i].vy = wt * yt1 + a1 * wm * ym1 + vy2;
+                    balls[j].vx = a2 * wm * xm1 + vx2;
+                    balls[j].vy = a2 * wm * ym1 + vy2;
+                }
+            }
+        }
+    }
+
+
+    
+// BALLS HITTING SQUARES
+
+    for (j = 0; j < nballs; j++) {
+        balls[j].color = "white";
+    }
+
+    for (i = 0; i < nsquares; i++) {
+        var square = squares[i];
+        var a = square.a;
+        var xo = square.x;
+        var yo = square.y;
+        var vr = square.vr;
+        var mi = square.mi;
+        var ms = square.m;
+        var s = square.w / 2;
+        var t = square.h / 2;
+        var cosa = Math.cos(a);
+        var sina = Math.sin(a);
+        var cosmina = cosa;
+        var sinmina = -sina;
+        for (j = 0; j < nballs; j++) {
+            var ball = balls[j];
+            var xc = ball.x;
+            var yc = ball.y;
+            var r = ball.r;
+            var mb = ball.m;
+            // transform ball coordinates to initial square position
+            var xr = xc - xo;
+            var yr = yc - yo;
+            var xrr = xr * cosmina - yr * sinmina;
+            var yrr = yr * cosmina + xr * sinmina;
+            // same for previous ball coordinates
+            var xrprev=ball.xprev-xo;
+            var yrprev=ball.yprev-yo;
+            var xrrprev = xrprev * cosmina - yrprev * sinmina;
+            var yrrprev = yrprev * cosmina + xrprev * sinmina;
+
+//console.log("balletje "+j+ " ("+xrr+" "+yrr+") - ("+xrrprev+" "+yrrprev+")");            
+            if (pointInRectangle(xrr,yrr,s+r,t+r)) {
+                if (!pointInRectangle(xrrprev,yrrprev,s+r,t+r)) {
+                    // collision took place
+                    // calculate position of ball when it touched the rectangle
+                    // g_xn, g_yn and g_bounced are set by calculateBouncing()
+                    calculateBouncing(xrr,yrr,xrrprev,yrrprev,s,t,r);
+ //                   console.log(timeslot+" ("+j+") "+g_bounced+" x "+xrrprev+" > "+xrr+" y "+yrrprev+" > "+yrr);
+                   console.log(timeslot+" ("+j+") "+g_bounced);
+//console.log("     balletje "+j+ " ("+xrr+" "+yrr+") - ("+xrrprev+" "+yrrprev+")");
+                }
+            }
+            
+            if (dohits) {
+                
+            // BALLS HITTING SQUARE CORNER
+
+            if (xrr > s) {
+                if (yrr > t) {
+                    if (((xrr - s) * (xrr - s) + (yrr - t) * (yrr - t)) < r * r) {
+                        if (timeslot > (ball.lastbounced + 1)) {
+                            var vr = square.vr;
+                            var vsx = square.vx * cosmina - square.vy * sinmina;
+                            var vsy = square.vy * cosmina + square.vx * sinmina;
+                            var vbx = ball.vx * cosmina - ball.vy * sinmina;
+                            var vby = ball.vy * cosmina + ball.vx * sinmina;
+                            var T = (yrr - t) / (xrr - s);
+                            var Tms = (s * T - t) * (s * T - t);
+                            var Tps = 1 + T * T;
+                            var px = 2 * (vsx - vbx + (vsy - vby) * T + vr * (s * T - t)) / (Tps / ms + Tps / mb + Tms / mi);
+                            var py = px * T;
+
+                                if (g_r1) console.log(timeslot + " BALL HIT TOP RIGHT CORNER px=" + px + " py=" + py);
+
+                            square.vr = vr + (t * px - s * py) / mi;
+                            vsx = vsx - px / ms;
+                            vsy = vsy - py / ms;
+                            vbx = vbx + px / mb;
+                            vby = vby + py / mb;
+                            square.vx = vsx * cosa - vsy * sina;
+                            square.vy = vsy * cosa + vsx * sina;
+                            ball.vx = vbx * cosa - vby * sina;
+                            ball.vy = vby * cosa + vbx * sina;
+                        }
+                        ball.lastbounced = timeslot;
+                    }
+                }
+            }
+
+            if (xrr < -s) {
+                if (yrr > t) {
+                    if (((xrr + s) * (xrr + s) + (yrr - t) * (yrr - t)) < r * r) {
+                        if (timeslot > (ball.lastbounced + 1)) {
+                            var vr = square.vr;
+                            var vsx = square.vx * cosmina - square.vy * sinmina;
+                            var vsy = square.vy * cosmina + square.vx * sinmina;
+                            var vbx = ball.vx * cosmina - ball.vy * sinmina;
+                            var vby = ball.vy * cosmina + ball.vx * sinmina;
+                            // mirror everything over y-axis
+
+                            var rxc = -xrr;
+                            var ryc = yrr;
+                            var rvsx = -vsx;
+                            var rvsy = vsy;
+                            var rvbx = -vbx;
+                            var rvby = vby;
+                            var rvr = -vr;
+                            var T = (ryc - t) / (rxc - s);
+                            var Tms = (s * T - t) * (s * T - t);
+                            var Tps = 1 + T * T;
+                            var px = 2 * (rvsx - rvbx + (rvsy - rvby) * T + rvr * (s * T - t)) / (Tps / ms + Tps / mb + Tms / mi);
+                            var py = px * T;
+
+                            if (g_r1)     console.log(timeslot + " BALL HIT TOP LEFT CORNER px=" + px + " py=" + py);
+
+                            rvr = rvr + (t * px - s * py) / mi;
+                            rvsx = rvsx - px / ms;
+                            rvsy = rvsy - py / ms;
+                            rvbx = rvbx + px / mb;
+                            rvby = rvby + py / mb;
+                            // mirror back
+
+                            vr = -rvr;
+                            vsx = -rvsx;
+                            vsy = rvsy;
+                            vbx = -rvbx;
+                            vby = -rvby;
+                            square.vr = vr;
+                            square.vx = vsx * cosa - vsy * sina;
+                            square.vy = vsy * cosa + vsx * sina;
+                            ball.vx = vbx * cosa - vby * sina;
+                            ball.vy = vby * cosa + vbx * sina;
+                        }
+                        ball.lastbounced = timeslot;
+                    }
+                }
+            }
+
+            if (xrr < -s) {
+                if (yrr < -t) {
+                    if (((xrr + s) * (xrr + s) + (yrr + t) * (yrr + t)) < r * r) {
+                        if (timeslot > (ball.lastbounced + 1)) {
+                            var vr = square.vr;
+                            var vsx = square.vx * cosmina - square.vy * sinmina;
+                            var vsy = square.vy * cosmina + square.vx * sinmina;
+                            var vbx = ball.vx * cosmina - ball.vy * sinmina;
+                            var vby = ball.vy * cosmina + ball.vx * sinmina;
+                            // center ball (xrr,yrr) en snelheden  -180 draaien
+
+                            var rxc = -xrr;
+                            var ryc = -yrr;
+                            var rvsx = -vsx;
+                            var rvsy = -vsy;
+                            var rvbx = -vbx;
+                            var rvby = -vby;
+                            var T = (ryc - t) / (rxc - s);
+                            var Tms = (s * T - t) * (s * T - t);
+                            var Tps = 1 + T * T;
+                            var px = 2 * (rvsx - rvbx + (rvsy - rvby) * T + vr * (s * T - t)) / (Tps / ms + Tps / mb + Tms / mi);
+                            var py = px * T;
+
+                    if (g_r1)             console.log(timeslot + " BALL HIT BOTTOM LEFT CORNER px=" + px + " py=" + py);
+
+                            square.vr = vr + (t * px - s * py) / mi;
+                            rvsx = rvsx - px / ms;
+                            rvsy = rvsy - py / ms;
+                            rvbx = rvbx + px / mb;
+                            rvby = rvby + py / mb;
+                            // snelheden 180 terugdraaien
+
+                            vsx = -rvsx;
+                            vsy = -rvsy;
+                            vbx = -rvbx;
+                            vby = -rvby;
+                            square.vx = vsx * cosa - vsy * sina;
+                            square.vy = vsy * cosa + vsx * sina;
+                            ball.vx = vbx * cosa - vby * sina;
+                            ball.vy = vby * cosa + vbx * sina;
+                        }
+                        ball.lastbounced = timeslot;
+                    }
+                }
+            }
+
+            if (xrr > s) {
+                if (yrr < -t) {
+                    if (((xrr - s) * (xrr - s) + (yrr + t) * (yrr + t)) < r * r) {
+                        if (timeslot > (ball.lastbounced + 1)) {
+                            var vr = square.vr;
+                            var vsx = square.vx * cosmina - square.vy * sinmina;
+                            var vsy = square.vy * cosmina + square.vx * sinmina;
+                            var vbx = ball.vx * cosmina - ball.vy * sinmina;
+                            var vby = ball.vy * cosmina + ball.vx * sinmina;
+                            // mirror over x-axis
+
+                            var rxc = xrr;
+                            var ryc = -yrr;
+                            var rvsx = vsx;
+                            var rvsy = -vsy;
+                            var rvbx = vbx;
+                            var rvby = -vby;
+                            var rvr = -vr;
+                            var T = (ryc - t) / (rxc - s);
+                            var Tms = (s * T - t) * (s * T - t);
+                            var Tps = 1 + T * T;
+                            var px = 2 * (rvsx - rvbx + (rvsy - rvby) * T + rvr * (s * T - t)) / (Tps / ms + Tps / mb + Tms / mi);
+                            var py = px * T;
+                            
+if (g_r1)                    console.log(timeslot + " BALL HIT BOTTOM RIGHT CORNER px=" + px + " py=" + py);
+
+                            rvr = rvr + (t * px - s * py) / mi;
+                            rvsx = rvsx - px / ms;
+                            rvsy = rvsy - py / ms;
+                            rvbx = rvbx + px / mb;
+                            rvby = rvby + py / mb;
+                            // mirror back
+
+                            vr = -rvr;
+                            vsx = rvsx;
+                            vsy = -rvsy;
+                            vbx = rvbx;
+                            vby = -rvby;
+                            square.vr = vr;
+                            square.vx = vsx * cosa - vsy * sina;
+                            square.vy = vsy * cosa + vsx * sina;
+                            ball.vx = vbx * cosa - vby * sina;
+                            ball.vy = vby * cosa + vbx * sina;
+                        }
+                        ball.lastbounced = timeslot;
+                    }
+                }
+            }
+
+
+
+// BALLS HITTING SQUARE SIDE
+
+
+            if (xrr <= s) {
+                if (xrr >= -s) {
+                    if ((yrr <= t + r) && (yrr > 0)) { // ball hit the top of the square
+
+// ball is in the top zone.
+// calculate speed relative to square
+                        var vsy = square.vy * cosmina + square.vx * sinmina;
+                        var vby = ball.vy * cosmina + ball.vx * sinmina;
+                        var vbsy = vby - vsy;
+ //                       console.log(timeslot + " BALL " + j + " in TOP by " + (yrr - t - r) + " vrely=" + vbsy + " bounced=" + ball.topbounced);
+                        if (!ball.topbounced) {  // is inside the rectangle and not bounced yet
+ //                           console.log(timeslot + " BALL " + j + " BOUNCED TOP ");
+                            ball.topbounced = true;
+                            var rm = xrr;
+                            var vr = square.vr;
+                            var vsx = square.vx * cosmina - square.vy * sinmina;
+                            var vsy = square.vy * cosmina + square.vx * sinmina;
+                            var vbx = ball.vx * cosmina - ball.vy * sinmina;
+                            var vby = ball.vy * cosmina + ball.vx * sinmina;
+                            var p = 2.0 * (vsy + rm * square.vr - vby) / (rm * rm / mi + 1 / mb + 1 / ms);
+
+if (g_r1)                                 console.log("BALL " + j + " HIT TOP p=" + p);
+
+                            square.vr = vr - (rm * p) / mi;
+                            vsy = vsy - p / ms;
+                            vby = vby + p / mb;
+                            var vbsy = vby - vsy;
+
+                            square.vx = vsx * cosa - vsy * sina;
+                            square.vy = vsy * cosa + vsx * sina;
+                            ball.vx = vbx * cosa - vby * sina;
+                            ball.vy = vby * cosa + vbx * sina;
+                        }
+                    } else {
+                        ball.topbounced = false;
+                    }
+
+                    if ((yrr >= -t - r) && (yrr < 0)) { // ball hit the bottom of the square
+                        if (!ball.bottombounced) {  // is inside the rectangle and not bounced yet
+                            ball.bottombounced = true;
+                            var rm = xrr;
+                            var vr = square.vr;
+                            var vsx = square.vx * cosmina - square.vy * sinmina;
+                            var vsy = square.vy * cosmina + square.vx * sinmina;
+                            var vbx = ball.vx * cosmina - ball.vy * sinmina;
+                            var vby = ball.vy * cosmina + ball.vx * sinmina;
+                            var p = 2.0 * (-vsy - rm * square.vr + vby) / (rm * rm / mi + 1 / mb + 1 / ms);
+
+if (g_r1)                                 console.log("BALL " + j + " HIT BOTTOM p=" + p);
+
+                            square.vr = vr + (rm * p) / mi;
+                            vsy = vsy + p / ms;
+                            vby = vby - p / mb;
+                            square.vx = vsx * cosa - vsy * sina;
+                            square.vy = vsy * cosa + vsx * sina;
+                            ball.vx = vbx * cosa - vby * sina;
+                            ball.vy = vby * cosa + vbx * sina;
+                        }
+                    } else {
+                        ball.bottombounced = false;
+                    }
+
+                }
+            }
+
+            if (yrr <= t) {
+                if (yrr >= -t) {
+                    if ((xrr <= s + r) && (xrr > 0)) { // ball hit the right of the square
+                        if (!ball.rightbounced) {  // is inside the rectangle and not bounced yet
+                            ball.rightbounced = true;
+                            var rm = yrr;
+                            var vr = square.vr;
+                            var vsx = square.vx * cosmina - square.vy * sinmina;
+                            var vsy = square.vy * cosmina + square.vx * sinmina;
+                            var vbx = ball.vx * cosmina - ball.vy * sinmina;
+                            var vby = ball.vy * cosmina + ball.vx * sinmina;
+                            var p = 2.0 * (vsx - rm * square.vr - vbx) / (rm * rm / mi + 1 / mb + 1 / ms);
+
+if (g_r1)                                 console.log("BALL " + j + " HIT RIGHT p=" + p);
+
+                            square.vr = vr + (rm * p) / mi;
+                            vsx = vsx - p / ms;
+                            vbx = vbx + p / mb;
+                            square.vx = vsx * cosa - vsy * sina;
+                            square.vy = vsy * cosa + vsx * sina;
+                            ball.vx = vbx * cosa - vby * sina;
+                            ball.vy = vby * cosa + vbx * sina;
+                        }
+                    } else {
+                        ball.rightbounced = false;
+                    }
+
+                    if ((xrr >= -s - r) && (xrr < 0)) { // ball hit the left of the square
+                        if (!ball.leftbounced) {  // is inside the rectangle and not bounced yet
+                            ball.leftbounced = true;
+                            var rm = yrr;
+                            var vr = square.vr;
+                            var vsx = square.vx * cosmina - square.vy * sinmina;
+                            var vsy = square.vy * cosmina + square.vx * sinmina;
+                            var vbx = ball.vx * cosmina - ball.vy * sinmina;
+                            var vby = ball.vy * cosmina + ball.vx * sinmina;
+                            var p = 2.0 * (-vsx + rm * square.vr + vbx) / (rm * rm / mi + 1 / mb + 1 / ms);
+
+if (g_r1)                                 console.log("BALL " + j + " HIT LEFT p=" + p);
+
+                            square.vr = vr - (rm * p) / mi;
+                            vsx = vsx + p / ms;
+                            vbx = vbx - p / mb;
+                            square.vx = vsx * cosa - vsy * sina;
+                            square.vy = vsy * cosa + vsx * sina;
+                            ball.vx = vbx * cosa - vby * sina;
+                            ball.vy = vby * cosa + vbx * sina;
+                        }
+                    } else {
+                        ball.leftbounced = false;
+                    }
+                }
+            }
+
+        }
+
+    }
+   } 
+}
+
+
+timeslot = 0;
+function animate(canvas, context) {
+
+    timeslot++;
+    var t = (new Date()).getTime();
+    var dt = 0;
+    if (prev_t > 0) {
+        dt = (t - prev_t) / 1000; // dt is in seconds
+    }
+
+
+    for (i = 0; i < nsquares; i++) {
+
+        var square = squares[i];
+        var xo = square.x;
+        var yo = square.y;
+        var a = square.a;
+        var vx = square.vx;
+        var vy = square.vy;
+        var vr = square.vr;
+
+        xo = (xo + vx * dt);
+        yo = (yo + vy * dt);
+        a = (a + vr * dt);
+
+//        square.xprev = square.x;
+//        square.yprev = square.y;
+        square.x = xo;
+        square.y = yo;
+        square.a = a;
+    }
+
+    for (i = 0; i < nballs; i++) {
+        var ball = balls[i];
+        var x = ball.x;
+        var y = ball.y;
+        var r = ball.r;
+        var vx = ball.vx;
+        var vy = ball.vy;
+        x = (x + vx * dt);
+        y = (y + vy * dt);
+
+        ball.xprev = ball.x;
+        ball.yprev = ball.y;
+        ball.x = x;
+        ball.y = y;
+        ball.vx = vx;
+        ball.vy = vy;
+    }
+
+dohits=true;
+
+    collisions(timeslot);
+
+    prev_t = t;
+
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    drawAllShapes(context);
+
+    window.requestAnimationFrame(function () {
+        animate(canvas, context);
+    });
+}
+
+function calculateInertia(square) {
+    for (i = 0; i < nsquares; i++) {
+        var square = squares[i];
+        var w = square.w;
+        var h = square.h;
+        square.m = w * h;
+        square.mi = square.m * (w * w + h * h) / 12;
+        console.log("m=" + square.m + " mi=" + square.mi);
+    }
+    for (i = 0; i < nballs; i++) {
+        balls[i].m = 3.14 * balls[i].r * balls[i].r;
+        console.log("ball m=" + balls[i].m);
+    }
+}
+
+
+function initializeSquares() {
+    nsquares = squares.length; // global variable;
+    for (i = 0; i < nsquares; i++) {
+        var square = squares[i];
+        var xylist = [];
+        var s = square.w / 2;
+        var t = square.h / 2;
+        xylist.push({x: s, y: t, xprev: s, yprev: t, leftbounced: false, rightbounced: false, topbounced: false, bottombounced: false});
+        xylist.push({x: s, y: -t, xprev: s, yprev: -t, leftbounced: false, rightbounced: false, topbounced: false, bottombounced: false});
+        xylist.push({x: -s, y: -t, xprev: -s, yprev: -t, leftbounced: false, rightbounced: false, topbounced: false, bottombounced: false});
+        xylist.push({x: -s, y: t, xprev: -s, yprev: t, leftbounced: false, rightbounced: false, topbounced: false, bottombounced: false});
+        square.xylist = xylist;
+    }
+}
+
+function initializeBalls() {
+    nballs = balls.length; // global variable;
+    for (i = 0; i < nballs; i++) {
+        var ball = balls[i];
+        ball.leftbounced = false;
+        ball.rightbounced = false;
+        ball.topbounced = false;
+        ball.bottombounced = false;
+        ball.lastbounced = -1;
+        ball.xprev = ball.x;
+        ball.yprev = ball.y;
+    }
+}
+
+var canvas = document.getElementById('myCanvas');
+var context = canvas.getContext('2d');
+// populate squares array
+// linear speed is in pixels/sec
+// angular speed is in rad/sec
+
+var configuration = 1;
+if (configuration == 1) {
+//    var square = {x: 200, y: 200, a: 0, vx: 0, vy: 0, vr: -2 * Math.PI / 16, w: 200, h: 200, m: 0, mi: 0, color: "white"};
+    var square = {x: 300, y: 300, a: 0, vx: 0, vy: 0, vr: 0, w: 100, h: 100, m: 0, mi: 0, color: "white"};
+
+        squares.push(square);
+//    balls.push({x: 450, y: 200, r: 100, vx: -100, vy: -200, lastbounced: -1});
+    balls.push({x: 400, y: 500, r: 100, vx: -111, vy: 207, lastbounced: -1});
+}
+
+
+if (configuration == 2) {
+    var square = {x: 100, y: 300, a: 0, vx: 0, vy: 0, vr: 0, w: 50, h: 500, m: 0, mi: 0, color: "white"};
+    squares.push(square);
+    for (y = 100; y < 599; y = y + 100) {
+//balls.push({x: 300, y: y, r: 40, vx: (Math.random()-0.5)*200, vy: (Math.random()-0.5)*200, lastbounced:-1});
+        balls.push({x: 300, y: y, r: 40, vx: (Math.random() - 0.5) * 500, vy: (Math.random() - 0.5) * 500, lastbounced: -1});
+    }
+}
+
+if (configuration == 3) {
+    var square = {x: 100, y: 300, a: 0, vx: 0, vy: 0, vr: 0, w: 50, h: 500, m: 0, mi: 0, color: "white"};
+    squares.push(square);
+    balls.push({x: 300, y: 200, r: 90, vx: (Math.random() - 0.5) * 500, vy: (Math.random() - 0.5) * 500, lastbounced: -1});
+    balls.push({x: 300, y: 500, r: 90, vx: (Math.random() - 0.5) * 500, vy: (Math.random() - 0.5) * 500, lastbounced: -1});
+    balls.push({x: 500, y: 200, r: 90, vx: (Math.random() - 0.5) * 500, vy: (Math.random() - 0.5) * 500, lastbounced: -1});
+    balls.push({x: 500, y: 500, r: 90, vx: (Math.random() - 0.5) * 500, vy: (Math.random() - 0.5) * 500, lastbounced: -1});
+}
+if (configuration == 4) {
+    var square = {x: 250, y: 250, a: 0, vx: 0, vy: 0, vr: 0, w: 300, h: 300, m: 0, mi: 0, color: "white"};
+    squares.push(square);
+    balls.push({x: 500, y: 100, r: 30, vx: (Math.random() - 0.5) * 700, vy: (Math.random() - 0.5) * 700});
+    balls.push({x: 500, y: 200, r: 30, vx: (Math.random() - 0.5) * 700, vy: (Math.random() - 0.5) * 700});
+    balls.push({x: 500, y: 300, r: 30, vx: (Math.random() - 0.5) * 700, vy: (Math.random() - 0.5) * 700});
+    balls.push({x: 500, y: 400, r: 30, vx: (Math.random() - 0.5) * 700, vy: (Math.random() - 0.5) * 700});
+    balls.push({x: 500, y: 500, r: 30, vx: (Math.random() - 0.5) * 700, vy: (Math.random() - 0.5) * 700});
+    balls.push({x: 400, y: 500, r: 30, vx: (Math.random() - 0.5) * 700, vy: (Math.random() - 0.5) * 700});
+    balls.push({x: 300, y: 500, r: 30, vx: (Math.random() - 0.5) * 700, vy: (Math.random() - 0.5) * 700});
+    balls.push({x: 200, y: 500, r: 30, vx: (Math.random() - 0.5) * 700, vy: (Math.random() - 0.5) * 700});
+    balls.push({x: 100, y: 500, r: 30, vx: (Math.random() - 0.5) * 700, vy: (Math.random() - 0.5) * 700});
+}
+
+
+initializeSquares();
+initializeBalls();
+calculateInertia();
+drawAllShapes(context);
+// wait one second before starting animation
+setTimeout(function () {
+    animate(canvas, context);
+}, 700);
+
+
+
+
+
+
+
+
+
+</script>
+  </body>
+</html>     
+
+
