@@ -18,7 +18,8 @@
 
         <script>
 
-            g_r1 = true;
+            g_r1 = false;
+            g_r2 = false;
             g_view = "normal";
 
             borderWidth = 1;
@@ -41,6 +42,22 @@
                         if (y < t) {
                             if (-y < t) {
                                 //console.log("pointInRectangle "+x+" "+y+" "+s+" "+t+" =true");
+                                return true;
+                            }
+                        }
+                    }
+                }
+                ;
+                //console.log("pointInRectangle "+x+" "+y+" "+s+" "+t+" =false");
+                return false;
+            }
+
+            function pointInCanvas(x, y) {
+
+                if (x < canvas.width) {
+                    if (-x < 0) {
+                        if (y < canvas.height) {
+                            if (-y < 0) {
                                 return true;
                             }
                         }
@@ -290,83 +307,127 @@
                     var cosa = Math.cos(a);
                     var sina = Math.sin(a);
 
+                    var vxnew = 0;
+                    var vynew = 0;
+                        var xy_top = 0;
+                        var xy_bottom = 0;
+                        var xy_left = 0;
+                        var xy_right = 0;
+                        
                     for (var k = 0; k < xylist.length; k++) {
-                        x = xylist[k].x;
-                        y = xylist[k].y;
+                        var xy = xylist[k];
+                        x = xy.x;
+                        y = xy.y;
                         var px = xo + x * cosa - y * sina;
                         var py = yo + y * cosa + x * sina;
+                        var pxprev = xy.pxprev;
+                        var pyprev = xy.pyprev;
+                        xy.pxprev = px;
+                        xy.pyprev = py;
 
-                        if (py > canvas.height) {
-                            //       console.log("t= "+timeslot+" point "+k+" crossed y==height "+(py-canvas.height));
-                            if (!xylist[k].topbounced) {  // is outside and not bounced yet
-                                //         console.log("t= "+timeslot+" point "+k+" bounced y==height "+(py-canvas.height));
-                                //         console.log("VOOR vx= "+vx+" vy="+vy+" vr="+vr); 
-                                xylist[k].topbounced = true;
-                                var rm = px - xo;
-                                var p = -2.0 * (rm * vr + vy) / (rm * rm / mi + 1 / m);
-                                vy = vy + p / m;
-                                vr = vr + (rm * p) / mi;
-                                //         console.log("NA  vx= "+vx+" vy="+vy+" vr="+vr);
-                            }
-                        } else {
-                            xylist[k].topbounced = false; // is back inside
+
+if (false) { // for debugging squares drifting out of canvas
+                        var is_in = "";
+                        var is_top = "";
+                        var is_bottom = "";
+                        var is_left = "";
+                        var is_right = "";
+                        if (pointInCanvas(px, py))
+                            is_in = "in";
+                        if ((py >= canvas.height)) {
+                            is_top = "top";
+                        }
+                        if ((py <= 0)) {
+                            is_bottom = "bottom";
+                        }
+                        if ((px >= canvas.width)) {
+                            is_right = "right";
+                        }
+                        if ((px <= 0)) {
+                            is_left = "left";
+                        }
+console.log(timeslot+" XY("+k+") "+is_in+" "+is_top+" "+is_bottom+" "+is_left+" "+is_right);                        ;
+}
+
+                        if ((py >= canvas.height) && (pyprev < canvas.height)) {
+                            xy_top = xy_top + 1;
+                            var rm = px - xo;
+                            var p = -2.0 * (rm * vr + vy) / (rm * rm / mi + 1 / m);
+                            vynew = vy + p / m;
+                            vr = vr + (rm * p) / mi;
+                            //                           square.y=square.y-(py-canvas.height);
+                            if (g_r2)
+                                console.log(timeslot + " top p= " + p);
                         }
 
-
-                        if (py < 0) {
-                            if (!xylist[k].bottombounced) {
-                                //         console.log("t= "+timeslot+" point "+k+" bounced y==0 "+py);
-                                //         console.log("VOOR vx= "+vx+" vy="+vy+" vr="+vr);
-                                xylist[k].bottombounced = true;
-                                var rm = px - xo;
-                                var p = -2.0 * (rm * vr + vy) / (rm * rm / mi + 1 / m);
-                                vy = vy + p / m;
-                                vr = vr + (rm * p) / mi;
-                                //         console.log("NA  vx= "+vx+" vy="+vy+" vr="+vr);
-                            }
-                        } else {
-                            xylist[k].bottombounced = false;
+                        if ((py <= 0) && (pyprev > 0)) {
+                            xy_bottom = xy_bottom + 1;
+                            var rm = px - xo;
+                            var p = -2.0 * (rm * vr + vy) / (rm * rm / mi + 1 / m);
+                            vynew = vy + p / m;
+                            vr = vr + (rm * p) / mi;
+                            //                                                     square.y=square.y-py;
+                            if (g_r2)
+                                console.log(timeslot + "bottom p= " + p);
                         }
 
-                        if (px > canvas.width) {
-                            //      console.log("t= "+timeslot+" point "+k+" crossed x==width "+(px-canvas.width));
-                            if (!xylist[k].rightbounced) {
-                                //        console.log("t= "+timeslot+" point "+k+" bounced x==width "+(px-canvas.width));
-                                //        console.log("VOOR vx= "+vx+" vy="+vy+" vr="+vr);
-                                xylist[k].rightbounced = true;
-                                var rm = py - yo;
-                                var p = 2.0 * (rm * vr - vx) / (rm * rm / mi + 1 / m);
-                                vx = vx + p / m;
-                                vr = vr - (rm * p) / mi;
-                                //         console.log("NA  vx= "+vx+" vy="+vy+" vr="+vr);
-                            }
-                        } else {
-                            xylist[k].rightbounced = false;
+                        if ((px >= canvas.width) && (pxprev < canvas.width)) {
+                            xy_right = xy_right + 1;
+                            var rm = py - yo;
+                            var p = 2.0 * (rm * vr - vx) / (rm * rm / mi + 1 / m);
+                            vxnew = vx + p / m;
+                            vr = vr - (rm * p) / mi;
+                            //                                                   square.x=square.x-(px-canvas.width);
+                            if (g_r2)
+                                console.log(timeslot + " right p= " + p);
                         }
 
-                        if (px < 0) {
-                            //       console.log("t= "+timeslot+" point "+k+" crossed x==0 "+px); 
-                            if (!xylist[k].leftbounced) {
-                                //         console.log("t= "+timeslot+" point "+k+" bounced x==0 "+px); 
-                                //         console.log("VOOR vx= "+vx+" vy="+vy+" vr="+vr);
-                                xylist[k].leftbounced = true;
-                                var rm = py - yo;
-                                var p = 2.0 * (rm * vr - vx) / (rm * rm / mi + 1 / m);
-                                vx = vx + p / m;
-                                vr = vr - (rm * p) / mi;
-                                //         console.log("NA  vx= "+vx+" vy="+vy+" vr="+vr);
-                            }
-                        } else {
-                            xylist[k].leftbounced = false;
+                        if ((px <= 0) && (pxprev > 0)) {
+
+                            xy_left = xy_left + 1;
+                            var rm = py - yo;
+                            var p = 2.0 * (rm * vr - vx) / (rm * rm / mi + 1 / m);
+                            vxnew = vx + p / m;
+                            vr = vr - (rm * p) / mi;
+                            //                     square.x=square.x-px;
+                            if (g_r2)
+                                console.log(timeslot + " left p= " + p);
                         }
                     }
 
-                    square.x = xo;
-                    square.y = yo;
-                    square.a = a;
-                    square.vx = vx;
-                    square.vy = vy;
-                    square.vr = vr;
+                    if (xy_right == 1) {
+                        square.vx = vxnew;
+                        square.vr = vr;
+                    }
+                    if (xy_left == 1) {
+                        square.vx = vxnew;
+                        square.vr = vr;
+                    }
+                    if (xy_top == 1) {
+                        square.vy = vynew;
+                        square.vr = vr;
+                    }
+                    if (xy_bottom == 1) {
+                        square.vy = vynew;
+                        square.vr = vr;
+                    }
+
+                    if (xy_right > 1) {
+                        square.vx = -square.vx;
+                        square.vr = 0;
+                    }
+                    if (xy_left > 1) {
+                        square.vx = -square.vx;
+                        square.vr = 0;
+                    }
+                    if (xy_top > 1) {
+                        square.vy = -square.vy;
+                        square.vr = 0;
+                    }
+                    if (xy_bottom > 1) {
+                        square.vy = -square.vy;
+                        square.vr = 0;
+                    }
                 }
 
                 // BALLS HITTING WALLS 
@@ -449,7 +510,7 @@
                 // BALLS HITTING SQUARES
 
                 for (j = 0; j < nballs; j++) {
-                    balls[j].color = "white";
+                    balls[j].color = "green";
                 }
 
                 for (i = 0; i < nsquares; i++) {
@@ -489,14 +550,14 @@
                                 // g_xn, g_yn and g_bounced are set by calculateBouncing()
                                 calculateBouncing(xrr, yrr, xrrprev, yrrprev, s, t, r);
                                 //                   console.log(timeslot+" ("+j+") "+g_bounced+" x "+xrrprev+" > "+xrr+" y "+yrrprev+" > "+yrr);
-                                console.log(timeslot + " (" + j + ") " + g_bounced+" "+g_r1);
+//                                console.log(timeslot + " (" + j + ") " + g_bounced );
 
                             } else {
                                 ball.color = "red";
-                                 console.log(timeslot+"     balletje "+j+ " ("+xrr+" "+yrr+") - ("+xrrprev+" "+yrrprev+")");           
+                                //                               console.log(timeslot + "     balletje " + j + " (" + xrr + " " + yrr + ") - (" + xrrprev + " " + yrrprev + ")");
                             }
                         } else {
-                            ball.color = "white";
+                            ball.color = "green";
                         }
 
                         ball.xrrprev = xrr;
@@ -823,10 +884,10 @@
                     var xylist = [];
                     var s = square.w / 2;
                     var t = square.h / 2;
-                    xylist.push({x: s, y: t, leftbounced: false, rightbounced: false, topbounced: false, bottombounced: false});
-                    xylist.push({x: s, y: -t, leftbounced: false, rightbounced: false, topbounced: false, bottombounced: false});
-                    xylist.push({x: -s, y: -t, leftbounced: false, rightbounced: false, topbounced: false, bottombounced: false});
-                    xylist.push({x: -s, y: t, leftbounced: false, rightbounced: false, topbounced: false, bottombounced: false});
+                    xylist.push({x: s, y: t, pxprev: 0, pyprev: 0});
+                    xylist.push({x: s, y: -t, pxprev: 0, pyprev: 0});
+                    xylist.push({x: -s, y: -t, pxprev: 0, pyprev: 0});
+                    xylist.push({x: -s, y: t, pxprev: 0, pyprev: 0});
                     square.xylist = xylist;
                 }
             }
@@ -851,16 +912,16 @@
             // linear speed is in pixels/sec
             // angular speed is in rad/sec
 
-            var configuration = 1;
+            var configuration = 4;
             if (configuration == 1) {
-                var square = {x: 100, y: 300, a: 0, vx: 0, vy: 0, vr: 0, w: 50, h: 350, m: 0, mi: 0, color: "white"};
+                var square = {x: 100, y: 300, a: 0, vx: 0, vy: 0, vr: 0, w: 50, h: 350, m: 0, mi: 0, color: "green"};
                 squares.push(square);
                 balls.push({x: 400, y: 400, r: 140, vx: -151, vy: 197, lastbounced: -1});
             }
 
 
             if (configuration == 2) {
-                var square = {x: 100, y: 300, a: 0, vx: 0, vy: 0, vr: 0, w: 50, h: 500, m: 0, mi: 0, color: "white"};
+                var square = {x: 100, y: 300, a: 0, vx: 0, vy: 0, vr: 0, w: 50, h: 500, m: 0, mi: 0, color: "green"};
                 squares.push(square);
                 for (y = 100; y < 599; y = y + 100) {
                     //balls.push({x: 300, y: y, r: 40, vx: (Math.random()-0.5)*200, vy: (Math.random()-0.5)*200, lastbounced:-1});
@@ -869,7 +930,7 @@
             }
 
             if (configuration == 3) {
-                var square = {x: 100, y: 300, a: 0, vx: 0, vy: 0, vr: 0, w: 50, h: 500, m: 0, mi: 0, color: "white"};
+                var square = {x: 100, y: 300, a: 0, vx: 0, vy: 0, vr: 0, w: 50, h: 500, m: 0, mi: 0, color: "green"};
                 squares.push(square);
                 balls.push({x: 300, y: 200, r: 90, vx: (Math.random() - 0.5) * 500, vy: (Math.random() - 0.5) * 500, lastbounced: -1});
                 balls.push({x: 300, y: 500, r: 90, vx: (Math.random() - 0.5) * 500, vy: (Math.random() - 0.5) * 500, lastbounced: -1});
@@ -877,7 +938,7 @@
                 balls.push({x: 500, y: 500, r: 90, vx: (Math.random() - 0.5) * 500, vy: (Math.random() - 0.5) * 500, lastbounced: -1});
             }
             if (configuration == 4) {
-                var square = {x: 250, y: 250, a: 0, vx: 0, vy: 0, vr: 0, w: 300, h: 300, m: 0, mi: 0, color: "white"};
+                var square = {x: 250, y: 250, a: 0, vx: 0, vy: 0, vr: 0, w: 300, h: 300, m: 0, mi: 0, color: "green"};
                 squares.push(square);
                 balls.push({x: 500, y: 100, r: 30, vx: (Math.random() - 0.5) * 700, vy: (Math.random() - 0.5) * 700});
                 balls.push({x: 500, y: 200, r: 30, vx: (Math.random() - 0.5) * 700, vy: (Math.random() - 0.5) * 700});
