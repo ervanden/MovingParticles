@@ -165,6 +165,14 @@
                 if (g_view == "normal") {
 
                     context.lineWidth = 3;
+                    context.strokeStyle = 'black';
+                    for (i = 0; i < nballs; i++) {
+                        context.beginPath();
+                        context.arc(balls[i].x, balls[i].y, balls[i].r, 0, 2 * Math.PI);
+                        context.fillStyle = balls[i].color;
+                        context.fill();
+                        context.stroke();
+                    }
 
                     for (i = 0; i < nsquares; i++) {
                         var xylist = squares[i].xylist;
@@ -174,7 +182,7 @@
 
                         //(x+iy)* (cosa+isina)= (xcosa-ysina) +i(ycosa+xsina)
 
-                        context.strokeStyle = 'black';
+//                        context.strokeStyle = 'black';
                         context.beginPath();
                         var cosa = Math.cos(a);
                         var sina = Math.sin(a);
@@ -193,19 +201,10 @@
                         context.stroke();
                     }
 
-                    context.strokeStyle = 'black';
-                    for (i = 0; i < nballs; i++) {
-                        context.beginPath();
-                        context.arc(balls[i].x, balls[i].y, balls[i].r, 0, 2 * Math.PI);
-                        context.fillStyle = balls[i].color;
-                        context.fill();
-                        context.stroke();
-                    }
                 }
 
                 if (g_view == "debug") {
                     context.lineWidth = 3;
-
 
                     var xo = 300;
                     var yo = 300;
@@ -309,11 +308,11 @@
 
                     var vxnew = 0;
                     var vynew = 0;
-                        var xy_top = 0;
-                        var xy_bottom = 0;
-                        var xy_left = 0;
-                        var xy_right = 0;
-                        
+                    var xy_top = 0;
+                    var xy_bottom = 0;
+                    var xy_left = 0;
+                    var xy_right = 0;
+
                     for (var k = 0; k < xylist.length; k++) {
                         var xy = xylist[k];
                         x = xy.x;
@@ -325,37 +324,12 @@
                         xy.pxprev = px;
                         xy.pyprev = py;
 
-
-if (false) { // for debugging squares drifting out of canvas
-                        var is_in = "";
-                        var is_top = "";
-                        var is_bottom = "";
-                        var is_left = "";
-                        var is_right = "";
-                        if (pointInCanvas(px, py))
-                            is_in = "in";
-                        if ((py >= canvas.height)) {
-                            is_top = "top";
-                        }
-                        if ((py <= 0)) {
-                            is_bottom = "bottom";
-                        }
-                        if ((px >= canvas.width)) {
-                            is_right = "right";
-                        }
-                        if ((px <= 0)) {
-                            is_left = "left";
-                        }
-console.log(timeslot+" XY("+k+") "+is_in+" "+is_top+" "+is_bottom+" "+is_left+" "+is_right);                        ;
-}
-
                         if ((py >= canvas.height) && (pyprev < canvas.height)) {
                             xy_top = xy_top + 1;
                             var rm = px - xo;
                             var p = -2.0 * (rm * vr + vy) / (rm * rm / mi + 1 / m);
                             vynew = vy + p / m;
                             vr = vr + (rm * p) / mi;
-                            //                           square.y=square.y-(py-canvas.height);
                             if (g_r2)
                                 console.log(timeslot + " top p= " + p);
                         }
@@ -366,7 +340,6 @@ console.log(timeslot+" XY("+k+") "+is_in+" "+is_top+" "+is_bottom+" "+is_left+" 
                             var p = -2.0 * (rm * vr + vy) / (rm * rm / mi + 1 / m);
                             vynew = vy + p / m;
                             vr = vr + (rm * p) / mi;
-                            //                                                     square.y=square.y-py;
                             if (g_r2)
                                 console.log(timeslot + "bottom p= " + p);
                         }
@@ -377,19 +350,16 @@ console.log(timeslot+" XY("+k+") "+is_in+" "+is_top+" "+is_bottom+" "+is_left+" 
                             var p = 2.0 * (rm * vr - vx) / (rm * rm / mi + 1 / m);
                             vxnew = vx + p / m;
                             vr = vr - (rm * p) / mi;
-                            //                                                   square.x=square.x-(px-canvas.width);
                             if (g_r2)
                                 console.log(timeslot + " right p= " + p);
                         }
 
                         if ((px <= 0) && (pxprev > 0)) {
-
                             xy_left = xy_left + 1;
                             var rm = py - yo;
                             var p = 2.0 * (rm * vr - vx) / (rm * rm / mi + 1 / m);
                             vxnew = vx + p / m;
                             vr = vr - (rm * p) / mi;
-                            //                     square.x=square.x-px;
                             if (g_r2)
                                 console.log(timeslot + " left p= " + p);
                         }
@@ -505,13 +475,7 @@ console.log(timeslot+" XY("+k+") "+is_in+" "+is_top+" "+is_bottom+" "+is_left+" 
                     }
                 }
 
-
-
                 // BALLS HITTING SQUARES
-
-                for (j = 0; j < nballs; j++) {
-                    balls[j].color = "green";
-                }
 
                 for (i = 0; i < nsquares; i++) {
                     var square = squares[i];
@@ -527,7 +491,9 @@ console.log(timeslot+" XY("+k+") "+is_in+" "+is_top+" "+is_bottom+" "+is_left+" 
                     var sina = Math.sin(a);
                     var cosmina = cosa;
                     var sinmina = -sina;
+
                     for (j = 0; j < nballs; j++) {
+
                         var ball = balls[j];
                         var xc = ball.x;
                         var yc = ball.y;
@@ -538,261 +504,182 @@ console.log(timeslot+" XY("+k+") "+is_in+" "+is_top+" "+is_bottom+" "+is_left+" 
                         var yr = yc - yo;
                         var xrr = xr * cosmina - yr * sinmina;
                         var yrr = yr * cosmina + xr * sinmina;
-                        // same for previous ball coordinates
 
                         var xrrprev = ball.xrrprev;
                         var yrrprev = ball.yrrprev;
-                        //console.log(timeslot+"     balletje "+j+ " ("+xrr+" "+yrr+") - ("+xrrprev+" "+yrrprev+")");           
+                        ball.xrrprev = xrr;
+                        ball.yrrprev = yrr;
+
+                        g_bounced = "none";
                         if (pointInRectangle(xrr, yrr, s + r, t + r)) {
                             if (!pointInRectangle(xrrprev, yrrprev, s + r, t + r)) {
                                 // collision took place
                                 // calculate position of ball when it touched the rectangle
                                 // g_xn, g_yn and g_bounced are set by calculateBouncing()
                                 calculateBouncing(xrr, yrr, xrrprev, yrrprev, s, t, r);
-                                //                   console.log(timeslot+" ("+j+") "+g_bounced+" x "+xrrprev+" > "+xrr+" y "+yrrprev+" > "+yrr);
-//                                console.log(timeslot + " (" + j + ") " + g_bounced );
+                                //console.log(timeslot+" ("+j+") "+g_bounced+" x "+xrrprev+" > "+xrr+" y "+yrrprev+" > "+yrr);
 
-                            } else {
-                                ball.color = "red";
-                                //                               console.log(timeslot + "     balletje " + j + " (" + xrr + " " + yrr + ") - (" + xrrprev + " " + yrrprev + ")");
+                                var vsx = square.vx * cosmina - square.vy * sinmina;
+                                var vsy = square.vy * cosmina + square.vx * sinmina;
+                                var vbx = ball.vx * cosmina - ball.vy * sinmina;
+                                var vby = ball.vy * cosmina + ball.vx * sinmina;
+
+                                if (g_bounced == "topright") {
+
+                                    var T = (yrr - t) / (xrr - s);
+                                    var Tms = (s * T - t) * (s * T - t);
+                                    var Tps = 1 + T * T;
+                                    var px = 2 * (vsx - vbx + (vsy - vby) * T + vr * (s * T - t)) / (Tps / ms + Tps / mb + Tms / mi);
+                                    var py = px * T;
+
+                                    square.vr = vr + (t * px - s * py) / mi;
+                                    vsx = vsx - px / ms;
+                                    vsy = vsy - py / ms;
+                                    vbx = vbx + px / mb;
+                                    vby = vby + py / mb;
+
+                                    if (g_r1)
+                                        console.log(timeslot + " BALL HIT TOP RIGHT CORNER px=" + px + " py=" + py);
+
+                                } else if (g_bounced == "topleft") {
+
+                                    // mirror everything over y-axis
+
+                                    var rxc = -xrr;
+                                    var ryc = yrr;
+                                    var rvsx = -vsx;
+                                    var rvsy = vsy;
+                                    var rvbx = -vbx;
+                                    var rvby = vby;
+                                    var rvr = -vr;
+                                    var T = (ryc - t) / (rxc - s);
+                                    var Tms = (s * T - t) * (s * T - t);
+                                    var Tps = 1 + T * T;
+                                    var px = 2 * (rvsx - rvbx + (rvsy - rvby) * T + rvr * (s * T - t)) / (Tps / ms + Tps / mb + Tms / mi);
+                                    var py = px * T;
+
+                                    rvr = rvr + (t * px - s * py) / mi;
+                                    rvsx = rvsx - px / ms;
+                                    rvsy = rvsy - py / ms;
+                                    rvbx = rvbx + px / mb;
+                                    rvby = rvby + py / mb;
+                                    // mirror back
+
+                                    vr = -rvr;
+                                    vsx = -rvsx;
+                                    vsy = rvsy;
+                                    vbx = -rvbx;
+                                    vby = -rvby;
+                                    square.vr = vr;
+
+                                    if (g_r1)
+                                        console.log(timeslot + " BALL HIT TOP LEFT CORNER px=" + px + " py=" + py);
+
+                                } else if (g_bounced == "bottomleft") {
+
+                                    // center ball (xrr,yrr) en snelheden  -180 draaien
+
+                                    var rxc = -xrr;
+                                    var ryc = -yrr;
+                                    var rvsx = -vsx;
+                                    var rvsy = -vsy;
+                                    var rvbx = -vbx;
+                                    var rvby = -vby;
+                                    var T = (ryc - t) / (rxc - s);
+                                    var Tms = (s * T - t) * (s * T - t);
+                                    var Tps = 1 + T * T;
+                                    var px = 2 * (rvsx - rvbx + (rvsy - rvby) * T + vr * (s * T - t)) / (Tps / ms + Tps / mb + Tms / mi);
+                                    var py = px * T;
+
+                                    square.vr = vr + (t * px - s * py) / mi;
+                                    rvsx = rvsx - px / ms;
+                                    rvsy = rvsy - py / ms;
+                                    rvbx = rvbx + px / mb;
+                                    rvby = rvby + py / mb;
+                                    // snelheden 180 terugdraaien
+
+                                    vsx = -rvsx;
+                                    vsy = -rvsy;
+                                    vbx = -rvbx;
+                                    vby = -rvby;
+
+                                    if (g_r1)
+                                        console.log(timeslot + " BALL HIT BOTTOM LEFT CORNER px=" + px + " py=" + py);
+
+                                } else if (g_bounced == "bottomright") {
+
+                                    // mirror over x-axis
+
+                                    var rxc = xrr;
+                                    var ryc = -yrr;
+                                    var rvsx = vsx;
+                                    var rvsy = -vsy;
+                                    var rvbx = vbx;
+                                    var rvby = -vby;
+                                    var rvr = -vr;
+                                    var T = (ryc - t) / (rxc - s);
+                                    var Tms = (s * T - t) * (s * T - t);
+                                    var Tps = 1 + T * T;
+                                    var px = 2 * (rvsx - rvbx + (rvsy - rvby) * T + rvr * (s * T - t)) / (Tps / ms + Tps / mb + Tms / mi);
+                                    var py = px * T;
+
+                                    rvr = rvr + (t * px - s * py) / mi;
+                                    rvsx = rvsx - px / ms;
+                                    rvsy = rvsy - py / ms;
+                                    rvbx = rvbx + px / mb;
+                                    rvby = rvby + py / mb;
+                                    // mirror back
+
+                                    vr = -rvr;
+                                    vsx = rvsx;
+                                    vsy = -rvsy;
+                                    vbx = rvbx;
+                                    vby = -rvby;
+                                    square.vr = vr;
+
+                                    if (g_r1)
+                                        console.log(timeslot + " BALL HIT BOTTOM RIGHT CORNER px=" + px + " py=" + py);
+
+                                } else if (g_bounced == "top") {
+                                    var rm = xrr;
+                                    var p = 2.0 * (vsy + rm * square.vr - vby) / (rm * rm / mi + 1 / mb + 1 / ms);
+                                    square.vr = vr - (rm * p) / mi;
+                                    vsy = vsy - p / ms;
+                                    vby = vby + p / mb;
+                                    if (g_r1)
+                                        console.log("BALL " + j + " HIT TOP p=" + p);
+                                } else if (g_bounced == "bottom") {
+                                    var rm = xrr;
+                                    var p = 2.0 * (-vsy - rm * square.vr + vby) / (rm * rm / mi + 1 / mb + 1 / ms);
+                                    square.vr = vr + (rm * p) / mi;
+                                    vsy = vsy + p / ms;
+                                    vby = vby - p / mb;
+                                    if (g_r1)
+                                        console.log("BALL " + j + " HIT BOTTOM p=" + p);
+                                } else if (g_bounced == "left") {
+                                    var rm = yrr;
+                                    var p = 2.0 * (-vsx + rm * square.vr + vbx) / (rm * rm / mi + 1 / mb + 1 / ms);
+                                    square.vr = vr - (rm * p) / mi;
+                                    vsx = vsx + p / ms;
+                                    vbx = vbx - p / mb;
+                                    if (g_r1)
+                                        console.log("BALL " + j + " HIT LEFT p=" + p);
+                                } else if (g_bounced == "right") {
+                                    var rm = yrr;
+                                    var p = 2.0 * (vsx - rm * square.vr - vbx) / (rm * rm / mi + 1 / mb + 1 / ms);
+                                    square.vr = vr + (rm * p) / mi;
+                                    vsx = vsx - p / ms;
+                                    vbx = vbx + p / mb;
+                                    if (g_r1)
+                                        console.log("BALL " + j + " HIT RIGHT p=" + p);
+                                }
+
+                                square.vx = vsx * cosa - vsy * sina;
+                                square.vy = vsy * cosa + vsx * sina;
+                                ball.vx = vbx * cosa - vby * sina;
+                                ball.vy = vby * cosa + vbx * sina;
+
                             }
-                        } else {
-                            ball.color = "green";
-                        }
-
-                        ball.xrrprev = xrr;
-                        ball.yrrprev = yrr;
-
-                        if (dohits) {
-
-                            // BALLS HITTING SQUARE CORNER
-
-                            if (g_bounced == "topright") {
-                                var vr = square.vr;
-                                var vsx = square.vx * cosmina - square.vy * sinmina;
-                                var vsy = square.vy * cosmina + square.vx * sinmina;
-                                var vbx = ball.vx * cosmina - ball.vy * sinmina;
-                                var vby = ball.vy * cosmina + ball.vx * sinmina;
-                                var T = (yrr - t) / (xrr - s);
-                                var Tms = (s * T - t) * (s * T - t);
-                                var Tps = 1 + T * T;
-                                var px = 2 * (vsx - vbx + (vsy - vby) * T + vr * (s * T - t)) / (Tps / ms + Tps / mb + Tms / mi);
-                                var py = px * T;
-
-                                if (g_r1)
-                                    console.log(timeslot + " BALL HIT TOP RIGHT CORNER px=" + px + " py=" + py);
-
-                                square.vr = vr + (t * px - s * py) / mi;
-                                vsx = vsx - px / ms;
-                                vsy = vsy - py / ms;
-                                vbx = vbx + px / mb;
-                                vby = vby + py / mb;
-                                square.vx = vsx * cosa - vsy * sina;
-                                square.vy = vsy * cosa + vsx * sina;
-                                ball.vx = vbx * cosa - vby * sina;
-                                ball.vy = vby * cosa + vbx * sina;
-                            } else if (g_bounced == "topleft") {
-                                var vr = square.vr;
-                                var vsx = square.vx * cosmina - square.vy * sinmina;
-                                var vsy = square.vy * cosmina + square.vx * sinmina;
-                                var vbx = ball.vx * cosmina - ball.vy * sinmina;
-                                var vby = ball.vy * cosmina + ball.vx * sinmina;
-                                // mirror everything over y-axis
-
-                                var rxc = -xrr;
-                                var ryc = yrr;
-                                var rvsx = -vsx;
-                                var rvsy = vsy;
-                                var rvbx = -vbx;
-                                var rvby = vby;
-                                var rvr = -vr;
-                                var T = (ryc - t) / (rxc - s);
-                                var Tms = (s * T - t) * (s * T - t);
-                                var Tps = 1 + T * T;
-                                var px = 2 * (rvsx - rvbx + (rvsy - rvby) * T + rvr * (s * T - t)) / (Tps / ms + Tps / mb + Tms / mi);
-                                var py = px * T;
-
-                                if (g_r1)
-                                    console.log(timeslot + " BALL HIT TOP LEFT CORNER px=" + px + " py=" + py);
-
-                                rvr = rvr + (t * px - s * py) / mi;
-                                rvsx = rvsx - px / ms;
-                                rvsy = rvsy - py / ms;
-                                rvbx = rvbx + px / mb;
-                                rvby = rvby + py / mb;
-                                // mirror back
-
-                                vr = -rvr;
-                                vsx = -rvsx;
-                                vsy = rvsy;
-                                vbx = -rvbx;
-                                vby = -rvby;
-                                square.vr = vr;
-                                square.vx = vsx * cosa - vsy * sina;
-                                square.vy = vsy * cosa + vsx * sina;
-                                ball.vx = vbx * cosa - vby * sina;
-                                ball.vy = vby * cosa + vbx * sina;
-                            } else if (g_bounced == "bottomleft") {
-                                var vr = square.vr;
-                                var vsx = square.vx * cosmina - square.vy * sinmina;
-                                var vsy = square.vy * cosmina + square.vx * sinmina;
-                                var vbx = ball.vx * cosmina - ball.vy * sinmina;
-                                var vby = ball.vy * cosmina + ball.vx * sinmina;
-                                // center ball (xrr,yrr) en snelheden  -180 draaien
-
-                                var rxc = -xrr;
-                                var ryc = -yrr;
-                                var rvsx = -vsx;
-                                var rvsy = -vsy;
-                                var rvbx = -vbx;
-                                var rvby = -vby;
-                                var T = (ryc - t) / (rxc - s);
-                                var Tms = (s * T - t) * (s * T - t);
-                                var Tps = 1 + T * T;
-                                var px = 2 * (rvsx - rvbx + (rvsy - rvby) * T + vr * (s * T - t)) / (Tps / ms + Tps / mb + Tms / mi);
-                                var py = px * T;
-
-                                if (g_r1)
-                                    console.log(timeslot + " BALL HIT BOTTOM LEFT CORNER px=" + px + " py=" + py);
-
-                                square.vr = vr + (t * px - s * py) / mi;
-                                rvsx = rvsx - px / ms;
-                                rvsy = rvsy - py / ms;
-                                rvbx = rvbx + px / mb;
-                                rvby = rvby + py / mb;
-                                // snelheden 180 terugdraaien
-
-                                vsx = -rvsx;
-                                vsy = -rvsy;
-                                vbx = -rvbx;
-                                vby = -rvby;
-                                square.vx = vsx * cosa - vsy * sina;
-                                square.vy = vsy * cosa + vsx * sina;
-                                ball.vx = vbx * cosa - vby * sina;
-                                ball.vy = vby * cosa + vbx * sina;
-                            } else if (g_bounced == "bottomright") {
-                                var vr = square.vr;
-                                var vsx = square.vx * cosmina - square.vy * sinmina;
-                                var vsy = square.vy * cosmina + square.vx * sinmina;
-                                var vbx = ball.vx * cosmina - ball.vy * sinmina;
-                                var vby = ball.vy * cosmina + ball.vx * sinmina;
-                                // mirror over x-axis
-
-                                var rxc = xrr;
-                                var ryc = -yrr;
-                                var rvsx = vsx;
-                                var rvsy = -vsy;
-                                var rvbx = vbx;
-                                var rvby = -vby;
-                                var rvr = -vr;
-                                var T = (ryc - t) / (rxc - s);
-                                var Tms = (s * T - t) * (s * T - t);
-                                var Tps = 1 + T * T;
-                                var px = 2 * (rvsx - rvbx + (rvsy - rvby) * T + rvr * (s * T - t)) / (Tps / ms + Tps / mb + Tms / mi);
-                                var py = px * T;
-
-                                if (g_r1)
-                                    console.log(timeslot + " BALL HIT BOTTOM RIGHT CORNER px=" + px + " py=" + py);
-
-                                rvr = rvr + (t * px - s * py) / mi;
-                                rvsx = rvsx - px / ms;
-                                rvsy = rvsy - py / ms;
-                                rvbx = rvbx + px / mb;
-                                rvby = rvby + py / mb;
-                                // mirror back
-
-                                vr = -rvr;
-                                vsx = rvsx;
-                                vsy = -rvsy;
-                                vbx = rvbx;
-                                vby = -rvby;
-                                square.vr = vr;
-                                square.vx = vsx * cosa - vsy * sina;
-                                square.vy = vsy * cosa + vsx * sina;
-                                ball.vx = vbx * cosa - vby * sina;
-                                ball.vy = vby * cosa + vbx * sina;
-
-                                // BALLS HITTING SQUARE SIDE
-
-                            } else if (g_bounced == "top") {
-                                var rm = xrr;
-                                var vr = square.vr;
-                                var vsx = square.vx * cosmina - square.vy * sinmina;
-                                var vsy = square.vy * cosmina + square.vx * sinmina;
-                                var vbx = ball.vx * cosmina - ball.vy * sinmina;
-                                var vby = ball.vy * cosmina + ball.vx * sinmina;
-                                var p = 2.0 * (vsy + rm * square.vr - vby) / (rm * rm / mi + 1 / mb + 1 / ms);
-
-                                if (g_r1)
-                                    console.log("BALL " + j + " HIT TOP p=" + p);
-
-                                square.vr = vr - (rm * p) / mi;
-                                vsy = vsy - p / ms;
-                                vby = vby + p / mb;
-
-                                square.vx = vsx * cosa - vsy * sina;
-                                square.vy = vsy * cosa + vsx * sina;
-                                ball.vx = vbx * cosa - vby * sina;
-                                ball.vy = vby * cosa + vbx * sina;
-                            } else if (g_bounced == "bottom") {
-                                var rm = xrr;
-                                var vr = square.vr;
-                                var vsx = square.vx * cosmina - square.vy * sinmina;
-                                var vsy = square.vy * cosmina + square.vx * sinmina;
-                                var vbx = ball.vx * cosmina - ball.vy * sinmina;
-                                var vby = ball.vy * cosmina + ball.vx * sinmina;
-                                var p = 2.0 * (-vsy - rm * square.vr + vby) / (rm * rm / mi + 1 / mb + 1 / ms);
-
-                                if (g_r1)
-                                    console.log("BALL " + j + " HIT BOTTOM p=" + p);
-
-                                square.vr = vr + (rm * p) / mi;
-                                vsy = vsy + p / ms;
-                                vby = vby - p / mb;
-                                square.vx = vsx * cosa - vsy * sina;
-                                square.vy = vsy * cosa + vsx * sina;
-                                ball.vx = vbx * cosa - vby * sina;
-                                ball.vy = vby * cosa + vbx * sina;
-                            } else if (g_bounced == "left") {
-                                var rm = yrr;
-                                var vr = square.vr;
-                                var vsx = square.vx * cosmina - square.vy * sinmina;
-                                var vsy = square.vy * cosmina + square.vx * sinmina;
-                                var vbx = ball.vx * cosmina - ball.vy * sinmina;
-                                var vby = ball.vy * cosmina + ball.vx * sinmina;
-                                var p = 2.0 * (-vsx + rm * square.vr + vbx) / (rm * rm / mi + 1 / mb + 1 / ms);
-
-                                if (g_r1)
-                                    console.log("BALL " + j + " HIT LEFT p=" + p);
-
-                                square.vr = vr - (rm * p) / mi;
-                                vsx = vsx + p / ms;
-                                vbx = vbx - p / mb;
-                                square.vx = vsx * cosa - vsy * sina;
-                                square.vy = vsy * cosa + vsx * sina;
-                                ball.vx = vbx * cosa - vby * sina;
-                                ball.vy = vby * cosa + vbx * sina;
-                            } else if (g_bounced == "right") {
-                                var rm = yrr;
-                                var vr = square.vr;
-                                var vsx = square.vx * cosmina - square.vy * sinmina;
-                                var vsy = square.vy * cosmina + square.vx * sinmina;
-                                var vbx = ball.vx * cosmina - ball.vy * sinmina;
-                                var vby = ball.vy * cosmina + ball.vx * sinmina;
-                                var p = 2.0 * (vsx - rm * square.vr - vbx) / (rm * rm / mi + 1 / mb + 1 / ms);
-
-                                if (g_r1)
-                                    console.log("BALL " + j + " HIT RIGHT p=" + p);
-
-                                square.vr = vr + (rm * p) / mi;
-                                vsx = vsx - p / ms;
-                                vbx = vbx + p / mb;
-                                square.vx = vsx * cosa - vsy * sina;
-                                square.vy = vsy * cosa + vsx * sina;
-                                ball.vx = vbx * cosa - vby * sina;
-                                ball.vy = vby * cosa + vbx * sina;
-                            }
-
                         }
                     }
                 }
@@ -811,42 +698,17 @@ console.log(timeslot+" XY("+k+") "+is_in+" "+is_top+" "+is_bottom+" "+is_left+" 
 
 
                 for (i = 0; i < nsquares; i++) {
-
                     var square = squares[i];
-                    var xo = square.x;
-                    var yo = square.y;
-                    var a = square.a;
-                    var vx = square.vx;
-                    var vy = square.vy;
-                    var vr = square.vr;
-
-                    xo = (xo + vx * dt);
-                    yo = (yo + vy * dt);
-                    a = (a + vr * dt);
-
-                    square.x = xo;
-                    square.y = yo;
-                    square.a = a;
+                    square.x = (square.x + square.vx * dt);
+                    square.y = (square.y + square.vy * dt);
+                    square.a = (square.a + square.vr * dt);
                 }
 
                 for (i = 0; i < nballs; i++) {
                     var ball = balls[i];
-                    var x = ball.x;
-                    var y = ball.y;
-                    var r = ball.r;
-                    var vx = ball.vx;
-                    var vy = ball.vy;
-                    x = (x + vx * dt);
-                    y = (y + vy * dt);
-
-                    ball.x = x;
-                    ball.y = y;
-                    ball.vx = vx;
-                    ball.vy = vy;
+                    ball.x = (ball.x + ball.vx * dt);
+                    ball.y = (ball.y + ball.vy * dt);
                 }
-
-                dohits = true;
-                g_bounced = "none";
 
                 collisions(timeslot);
 
@@ -912,11 +774,11 @@ console.log(timeslot+" XY("+k+") "+is_in+" "+is_top+" "+is_bottom+" "+is_left+" 
             // linear speed is in pixels/sec
             // angular speed is in rad/sec
 
-            var configuration = 4;
+            var configuration = 1;
             if (configuration == 1) {
-                var square = {x: 100, y: 300, a: 0, vx: 0, vy: 0, vr: 0, w: 50, h: 350, m: 0, mi: 0, color: "green"};
+                var square = {x: 100, y: 300, a: 0, vx: 0, vy: 0, vr: 0, w: 150, h: 150, m: 0, mi: 0, color: "green"};
                 squares.push(square);
-                balls.push({x: 400, y: 400, r: 140, vx: -151, vy: 197, lastbounced: -1});
+                balls.push({x: 400, y: 400, r: 100, vx: -151, vy: 197, lastbounced: -1});
             }
 
 
@@ -938,17 +800,17 @@ console.log(timeslot+" XY("+k+") "+is_in+" "+is_top+" "+is_bottom+" "+is_left+" 
                 balls.push({x: 500, y: 500, r: 90, vx: (Math.random() - 0.5) * 500, vy: (Math.random() - 0.5) * 500, lastbounced: -1});
             }
             if (configuration == 4) {
-                var square = {x: 250, y: 250, a: 0, vx: 0, vy: 0, vr: 0, w: 300, h: 300, m: 0, mi: 0, color: "green"};
+                var square = {x: 250, y: 250, a: 0, vx: 0, vy: 0, vr: 0, w: 100, h: 300, m: 0, mi: 0, color: "green"};
                 squares.push(square);
-                balls.push({x: 500, y: 100, r: 30, vx: (Math.random() - 0.5) * 700, vy: (Math.random() - 0.5) * 700});
-                balls.push({x: 500, y: 200, r: 30, vx: (Math.random() - 0.5) * 700, vy: (Math.random() - 0.5) * 700});
-                balls.push({x: 500, y: 300, r: 30, vx: (Math.random() - 0.5) * 700, vy: (Math.random() - 0.5) * 700});
-                balls.push({x: 500, y: 400, r: 30, vx: (Math.random() - 0.5) * 700, vy: (Math.random() - 0.5) * 700});
-                balls.push({x: 500, y: 500, r: 30, vx: (Math.random() - 0.5) * 700, vy: (Math.random() - 0.5) * 700});
-                balls.push({x: 400, y: 500, r: 30, vx: (Math.random() - 0.5) * 700, vy: (Math.random() - 0.5) * 700});
-                balls.push({x: 300, y: 500, r: 30, vx: (Math.random() - 0.5) * 700, vy: (Math.random() - 0.5) * 700});
-                balls.push({x: 200, y: 500, r: 30, vx: (Math.random() - 0.5) * 700, vy: (Math.random() - 0.5) * 700});
-                balls.push({x: 100, y: 500, r: 30, vx: (Math.random() - 0.5) * 700, vy: (Math.random() - 0.5) * 700});
+                balls.push({x: 500, y: 100, r: 30, vx: (Math.random() - 0.5) * 900, vy: (Math.random() - 0.5) * 900});
+                balls.push({x: 500, y: 200, r: 30, vx: (Math.random() - 0.5) * 900, vy: (Math.random() - 0.5) * 900});
+                balls.push({x: 500, y: 300, r: 30, vx: (Math.random() - 0.5) * 900, vy: (Math.random() - 0.5) * 900});
+                balls.push({x: 500, y: 400, r: 30, vx: (Math.random() - 0.5) * 900, vy: (Math.random() - 0.5) * 900});
+                balls.push({x: 500, y: 500, r: 30, vx: (Math.random() - 0.5) * 900, vy: (Math.random() - 0.5) * 900});
+                balls.push({x: 400, y: 500, r: 30, vx: (Math.random() - 0.5) * 900, vy: (Math.random() - 0.5) * 900});
+                balls.push({x: 300, y: 500, r: 30, vx: (Math.random() - 0.5) * 900, vy: (Math.random() - 0.5) * 900});
+                balls.push({x: 200, y: 500, r: 30, vx: (Math.random() - 0.5) * 900, vy: (Math.random() - 0.5) * 900});
+                balls.push({x: 100, y: 500, r: 30, vx: (Math.random() - 0.5) * 900, vy: (Math.random() - 0.5) * 900});
             }
 
 
@@ -959,7 +821,7 @@ console.log(timeslot+" XY("+k+") "+is_in+" "+is_top+" "+is_bottom+" "+is_left+" 
             // wait one second before starting animation
             setTimeout(function () {
                 animate(canvas, context);
-            }, 700);
+            }, 900);
 
 
 
