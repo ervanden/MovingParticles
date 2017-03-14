@@ -13,19 +13,72 @@
         </style>
     </head>
     <body>
-        <canvas id="myCanvas" width=600 height=600 class="drawing" onclick="canvasclick(event)"></canvas>
 
+        <table>
+            <tr>
+                <td>
+                    <canvas id="myCanvas" width=600 height=600 class="drawing" onclick="canvasclick(event)"></canvas>
+                </td> 
+                <td>      
+                    <form id="form">
+                        ball radius: <input id="balls_r" type="text" name="balls_r"><br>
+                        box width: <input id="box_w" type="number" name="box_w"><br>
+                        box height: <input id="box_h" type="number" name="box_h"><br><br>
+                        <input type="button" onclick="myFunction()" value="Start">
+                    </form>
+                </td> 
+            </tr>
+        </table>
 
         <script>
 
-            g_r1 = false;
-            g_r2 = false;
-            g_view = "normal";
 
-            borderWidth = 1;
-            prev_t = 0;
-            squares = [];
-            balls = [];
+            function myFunction() {
+
+                var balls_r = document.getElementById("balls_r").value;
+                balls_r = balls_r.split(/[ ,]+/);
+                var box_w = document.getElementById("box_w").value;
+                var box_h = document.getElementById("box_h").value;
+                
+                canvas = document.getElementById('myCanvas');
+                context = canvas.getContext('2d');
+
+                var xc = canvas.width / 2;
+                var yc = canvas.height / 2;
+
+                g_r1 = false;
+                g_r2 = false;
+                g_view = "normal";
+                g_stopAnimation = false;
+
+                // populate squares array
+                // linear speed is in pixels/sec
+                // angular speed is in rad/sec   
+
+                squares = [];
+                balls = [];
+
+                squares.push({x: xc, y: yc, a: 0, vx: 0, vy: 0, vr: 0, w: box_w, h: box_h, m: 0, mi: 0, color: "green"});
+                for (var i = 0; i < balls_r.length; i++) {
+                    var r =parseInt(balls_r[i]);
+                    balls.push({x: xc, y: yc, r: r, vx: (Math.random() - 0.5) * 900, vy: (Math.random() - 0.5) * 900});
+                }
+                initializeSquares();
+                initializeBalls();
+                calculateInertia();
+                g_stopAnimation = true;
+                setTimeout(function () {
+                    g_stopAnimation = false;
+                    prev_t = 0;
+                    animate(canvas, context);
+                }, 500);
+            }
+        </script>
+
+        <script>
+
+
+
 
             function canvasclick(event) {
                 console.log("clicked " + event.x + " " + event.y);
@@ -41,14 +94,30 @@
                     if (-x < s) {
                         if (y < t) {
                             if (-y < t) {
-                                //console.log("pointInRectangle "+x+" "+y+" "+s+" "+t+" =true");
                                 return true;
                             }
                         }
                     }
                 }
-                ;
-                //console.log("pointInRectangle "+x+" "+y+" "+s+" "+t+" =false");
+                return false;
+            }
+            
+                        function pointInZone(x, y, s, t, r) {
+
+                if (x < s+r) {
+                    if (-x < s+r) {
+                        if (y < t+r) {
+                            if (-y < t+r) {
+                     if ((x<s)&&(-x<s)) return true;
+                     if ((y<t)&&(-y<t)) return true;  
+                     if (((x-s)*(x-s)+(y-t)*(y-t))<=r*r) return true;
+                     if (((x+s)*(x+s)+(y-t)*(y-t))<=r*r) return true;
+                     if (((x-s)*(x-s)+(y+t)*(y+t))<=r*r) return true;
+                     if (((x+s)*(x+s)+(y+t)*(y+t))<=r*r) return true;
+                            }
+                        }
+                    }
+                }
                 return false;
             }
 
@@ -63,8 +132,6 @@
                         }
                     }
                 }
-                ;
-                //console.log("pointInRectangle "+x+" "+y+" "+s+" "+t+" =false");
                 return false;
             }
 
@@ -689,6 +756,13 @@
             timeslot = 0;
             function animate(canvas, context) {
 
+                if (g_stopAnimation) {
+                    // a new set of shapes is created. Clear current canvas and draw the new shapes
+                    context.clearRect(0, 0, canvas.width, canvas.height);
+                    drawAllShapes(context);
+                    return;
+                }
+
                 timeslot++;
                 var t = (new Date()).getTime();
                 var dt = 0;
@@ -767,69 +841,6 @@
                     ball.yrrprev = 0;
                 }
             }
-
-            var canvas = document.getElementById('myCanvas');
-            var context = canvas.getContext('2d');
-            // populate squares array
-            // linear speed is in pixels/sec
-            // angular speed is in rad/sec
-
-            var configuration = 1;
-            if (configuration == 1) {
-                var square = {x: 100, y: 300, a: 0, vx: 0, vy: 0, vr: 0, w: 150, h: 150, m: 0, mi: 0, color: "green"};
-                squares.push(square);
-                balls.push({x: 400, y: 400, r: 100, vx: -151, vy: 197, lastbounced: -1});
-            }
-
-
-            if (configuration == 2) {
-                var square = {x: 100, y: 300, a: 0, vx: 0, vy: 0, vr: 0, w: 50, h: 500, m: 0, mi: 0, color: "green"};
-                squares.push(square);
-                for (y = 100; y < 599; y = y + 100) {
-                    //balls.push({x: 300, y: y, r: 40, vx: (Math.random()-0.5)*200, vy: (Math.random()-0.5)*200, lastbounced:-1});
-                    balls.push({x: 300, y: y, r: 40, vx: (Math.random() - 0.5) * 500, vy: (Math.random() - 0.5) * 500, lastbounced: -1});
-                }
-            }
-
-            if (configuration == 3) {
-                var square = {x: 100, y: 300, a: 0, vx: 0, vy: 0, vr: 0, w: 50, h: 500, m: 0, mi: 0, color: "green"};
-                squares.push(square);
-                balls.push({x: 300, y: 200, r: 90, vx: (Math.random() - 0.5) * 500, vy: (Math.random() - 0.5) * 500, lastbounced: -1});
-                balls.push({x: 300, y: 500, r: 90, vx: (Math.random() - 0.5) * 500, vy: (Math.random() - 0.5) * 500, lastbounced: -1});
-                balls.push({x: 500, y: 200, r: 90, vx: (Math.random() - 0.5) * 500, vy: (Math.random() - 0.5) * 500, lastbounced: -1});
-                balls.push({x: 500, y: 500, r: 90, vx: (Math.random() - 0.5) * 500, vy: (Math.random() - 0.5) * 500, lastbounced: -1});
-            }
-            if (configuration == 4) {
-                var square = {x: 250, y: 250, a: 0, vx: 0, vy: 0, vr: 0, w: 100, h: 300, m: 0, mi: 0, color: "green"};
-                squares.push(square);
-                balls.push({x: 500, y: 100, r: 30, vx: (Math.random() - 0.5) * 900, vy: (Math.random() - 0.5) * 900});
-                balls.push({x: 500, y: 200, r: 30, vx: (Math.random() - 0.5) * 900, vy: (Math.random() - 0.5) * 900});
-                balls.push({x: 500, y: 300, r: 30, vx: (Math.random() - 0.5) * 900, vy: (Math.random() - 0.5) * 900});
-                balls.push({x: 500, y: 400, r: 30, vx: (Math.random() - 0.5) * 900, vy: (Math.random() - 0.5) * 900});
-                balls.push({x: 500, y: 500, r: 30, vx: (Math.random() - 0.5) * 900, vy: (Math.random() - 0.5) * 900});
-                balls.push({x: 400, y: 500, r: 30, vx: (Math.random() - 0.5) * 900, vy: (Math.random() - 0.5) * 900});
-                balls.push({x: 300, y: 500, r: 30, vx: (Math.random() - 0.5) * 900, vy: (Math.random() - 0.5) * 900});
-                balls.push({x: 200, y: 500, r: 30, vx: (Math.random() - 0.5) * 900, vy: (Math.random() - 0.5) * 900});
-                balls.push({x: 100, y: 500, r: 30, vx: (Math.random() - 0.5) * 900, vy: (Math.random() - 0.5) * 900});
-            }
-
-
-            initializeSquares();
-            initializeBalls();
-            calculateInertia();
-            drawAllShapes(context);
-            // wait one second before starting animation
-            setTimeout(function () {
-                animate(canvas, context);
-            }, 900);
-
-
-
-
-
-
-
-
 
         </script>
     </body>
