@@ -21,10 +21,10 @@
                 </td> 
                 <td>      
                     <form id="form">
-                        ball radius: <input id="balls_r" type="text" name="balls_r"><br>
-                        box width: <input id="box_w" type="number" name="box_w"><br>
-                        box height: <input id="box_h" type="number" name="box_h"><br><br>
-                        <input type="button" onclick="myFunction()" value="Start">
+                        ball radius: <input id="balls_r" type="text" name="balls_r" value="100"><br>
+                        box width: <input id="box_w" type="number" name="box_w" value=100><br>
+                        box height: <input id="box_h" type="number" name="box_h" value=100><br><br>
+                        <input type="button" onclick="newAnimation()" value="Start">
                     </form>
                 </td> 
             </tr>
@@ -33,13 +33,13 @@
         <script>
 
 
-            function myFunction() {
+            function newAnimation() {
 
                 var balls_r = document.getElementById("balls_r").value;
                 balls_r = balls_r.split(/[ ,]+/);
                 var box_w = document.getElementById("box_w").value;
                 var box_h = document.getElementById("box_h").value;
-                
+
                 canvas = document.getElementById('myCanvas');
                 context = canvas.getContext('2d');
 
@@ -60,7 +60,7 @@
 
                 squares.push({x: xc, y: yc, a: 0, vx: 0, vy: 0, vr: 0, w: box_w, h: box_h, m: 0, mi: 0, color: "green"});
                 for (var i = 0; i < balls_r.length; i++) {
-                    var r =parseInt(balls_r[i]);
+                    var r = parseInt(balls_r[i]);
                     balls.push({x: xc, y: yc, r: r, vx: (Math.random() - 0.5) * 900, vy: (Math.random() - 0.5) * 900});
                 }
                 initializeSquares();
@@ -101,19 +101,25 @@
                 }
                 return false;
             }
-            
-                        function pointInZone(x, y, s, t, r) {
 
-                if (x < s+r) {
-                    if (-x < s+r) {
-                        if (y < t+r) {
-                            if (-y < t+r) {
-                     if ((x<s)&&(-x<s)) return true;
-                     if ((y<t)&&(-y<t)) return true;  
-                     if (((x-s)*(x-s)+(y-t)*(y-t))<=r*r) return true;
-                     if (((x+s)*(x+s)+(y-t)*(y-t))<=r*r) return true;
-                     if (((x-s)*(x-s)+(y+t)*(y+t))<=r*r) return true;
-                     if (((x+s)*(x+s)+(y+t)*(y+t))<=r*r) return true;
+            function pointInZone(x, y, s, t, r) {
+
+                if (x < s + r) {
+                    if (-x < s + r) {
+                        if (y < t + r) {
+                            if (-y < t + r) {
+                                if ((x < s) && (-x < s))
+                                    return true;
+                                if ((y < t) && (-y < t))
+                                    return true;
+                                if (((x - s) * (x - s) + (y - t) * (y - t)) <= r * r)
+                                    return true;
+                                if (((x + s) * (x + s) + (y - t) * (y - t)) <= r * r)
+                                    return true;
+                                if (((x - s) * (x - s) + (y + t) * (y + t)) <= r * r)
+                                    return true;
+                                if (((x + s) * (x + s) + (y + t) * (y + t)) <= r * r)
+                                    return true;
                             }
                         }
                     }
@@ -279,8 +285,8 @@
                     var square = squares[0];
                     var ball = balls[0];
                     var r = ball.r;
-                    var s = square.s;
-                    var t = square.t;
+                    var s = square.w / 2;
+                    var t = square.h / 2;
 
                     context.strokeStyle = 'black';
                     context.beginPath();
@@ -302,6 +308,7 @@
                             context.lineTo(xo + x, yo + y);
                         }
                     }
+
                     context.closePath();
                     context.fillStyle = square.color;
                     context.fill();
@@ -318,6 +325,19 @@
                     context.lineTo(xo - s - r, yo - t);
                     context.fillStyle = square.color;
                     context.stroke();
+                    
+                    if (false) {
+                        context.fillStyle = "yellow";
+                        for (var px = 1; px < 600; px = px + 2) {
+                            for (var py = 1; py < 600; py = py + 2) {
+                                if (pointInZone(px - xo, py - yo, s, t, r))
+                                    context.fillRect(px, py, 2, 2);
+                            }
+                        }
+                        context.stroke();
+                    }
+
+
 
                     var a = square.a;
                     var cosa = Math.cos(-a);
@@ -578,8 +598,10 @@
                         ball.yrrprev = yrr;
 
                         g_bounced = "none";
-                        if (pointInRectangle(xrr, yrr, s + r, t + r)) {
-                            if (!pointInRectangle(xrrprev, yrrprev, s + r, t + r)) {
+                        if (pointInZone(xrr, yrr, s, t, r)) {
+                            if (!pointInZone(xrrprev, yrrprev, s, t, r)) {
+                                //                       if (pointInRectangle(xrr, yrr, s + r, t + r)) {
+                                //                           if (!pointInRectangle(xrrprev, yrrprev, s + r, t + r)) {
                                 // collision took place
                                 // calculate position of ball when it touched the rectangle
                                 // g_xn, g_yn and g_bounced are set by calculateBouncing()
