@@ -46,7 +46,7 @@
                 var xc = canvas.width / 2;
                 var yc = canvas.height / 2;
 
-                g_r1 = false;
+                g_r1 = true;
                 g_r2 = false;
                 g_view = "normal";
                 g_stopAnimation = false;
@@ -126,6 +126,67 @@
                 }
                 return false;
             }
+
+            function pointInZone2(x, y, s, t, r) {
+
+
+
+                if (x > s) {
+                    if (y > t) {
+                        if (x < s + r) {
+                            if (y < t + r) {
+                                if (((x - s) * (x - s) + (y - t) * (y - t)) <= r * r) {
+                                    return "IN";
+                                }
+                            }
+                        }
+                        return "TR";
+                    } else if (-y>t){
+                         if (x < s + r) {
+                            if (-y < t + r) {
+                                if (((x - s) * (x - s) + (y + t) * (y + t)) <= r * r) {
+                                    return "IN";
+                                }
+                            }
+                        }
+                        return "BR";                       
+                    }
+                } else if (-x > s) {
+                    if (y > t) {
+                        if (-x < s + r) {
+                            if (y < t + r) {
+                                if (((x + s) * (x + s) + (y - t) * (y - t)) <= r * r) {
+                                    return "IN";
+                                }
+                            }
+                        }
+                        return "TL";
+                    } else if (-y>t){
+                         if (-x < s + r) {
+                            if (-y < t + r) {
+                                if (((x + s) * (x + s) + (y + t) * (y + t)) <= r * r) {
+                                    return "IN";
+                                }
+                            }
+                        }
+                        return "BL";                       
+                    }
+                }
+                if (x>s+r) {
+                    return "R";
+                } else                 if (-x>s+r) {
+                    return "L";
+                } else                 if (y>t+r) {
+                    return "T";
+                } else                 if (-y>t+r) {
+                    return "B";
+                }
+                return "IN"
+
+
+            }
+
+
 
             function pointInCanvas(x, y) {
 
@@ -325,13 +386,22 @@
                     context.lineTo(xo - s - r, yo - t);
                     context.fillStyle = square.color;
                     context.stroke();
-                    
-                    if (false) {
-                        context.fillStyle = "yellow";
+
+                    if (true) {
+
                         for (var px = 1; px < 600; px = px + 2) {
                             for (var py = 1; py < 600; py = py + 2) {
-                                if (pointInZone(px - xo, py - yo, s, t, r))
-                                    context.fillRect(px, py, 2, 2);
+                                                        context.fillStyle = "white";
+                                if (pointInZone2(px - xo, py - yo, s, t, r)=="TR") context.fillStyle = "yellow";
+                                 if (pointInZone2(px - xo, py - yo, s, t, r)=="BR") context.fillStyle = "blue";
+                                if (pointInZone2(px - xo, py - yo, s, t, r)=="TL") context.fillStyle = "cyan";                        
+                                 if (pointInZone2(px - xo, py - yo, s, t, r)=="BL") context.fillStyle = "red";  
+                                if (pointInZone2(px - xo, py - yo, s, t, r)=="R") context.fillStyle = "khaki";
+                                 if (pointInZone2(px - xo, py - yo, s, t, r)=="L") context.fillStyle = "pink";
+                                if (pointInZone2(px - xo, py - yo, s, t, r)=="T") context.fillStyle = "salmon";                        
+                                 if (pointInZone2(px - xo, py - yo, s, t, r)=="B") context.fillStyle = "purple";
+                                  if (pointInZone2(px - xo, py - yo, s, t, r)=="IN") context.fillStyle = "greenyellow";
+                        context.fillRect(px, py, 2, 2);
                             }
                         }
                         context.stroke();
@@ -597,7 +667,14 @@
                         ball.xrrprev = xrr;
                         ball.yrrprev = yrr;
 
+                        var zone=pointInZone2(xrr, yrr, s, t, r);
+                        var zoneprev=ball.zone;
+                        ball.zone=zone;
+
                         g_bounced = "none";
+
+                        console.log(timeslot + " " + pointInZone(xrr, yrr, s, t, r) + " " + pointInZone(xrrprev, yrrprev, s, t, r));
+
                         if (pointInZone(xrr, yrr, s, t, r)) {
                             if (!pointInZone(xrrprev, yrrprev, s, t, r)) {
                                 //                       if (pointInRectangle(xrr, yrr, s + r, t + r)) {
@@ -606,7 +683,7 @@
                                 // calculate position of ball when it touched the rectangle
                                 // g_xn, g_yn and g_bounced are set by calculateBouncing()
                                 calculateBouncing(xrr, yrr, xrrprev, yrrprev, s, t, r);
-                                //console.log(timeslot+" ("+j+") "+g_bounced+" x "+xrrprev+" > "+xrr+" y "+yrrprev+" > "+yrr);
+                                console.log(timeslot + " (" + j + ") " + g_bounced + " x " + xrrprev + " > " + xrr + " y " + yrrprev + " > " + yrr);
 
                                 var vsx = square.vx * cosmina - square.vy * sinmina;
                                 var vsy = square.vy * cosmina + square.vx * sinmina;
