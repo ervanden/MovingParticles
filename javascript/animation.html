@@ -21,9 +21,9 @@
                 </td> 
                 <td>      
                     <form id="form">
-                        ball radius: <input id="balls_r" type="text" name="balls_r" value="100"><br>
-                        box width: <input id="box_w" type="number" name="box_w" value=100><br>
-                        box height: <input id="box_h" type="number" name="box_h" value=100><br><br>
+                        ball radius: <input id="balls_r" type="text" name="balls_r" value="70 70 70"><br>
+                        box width: <input id="box_w" type="number" name="box_w" value=250><br>
+                        box height: <input id="box_h" type="number" name="box_h" value=200><br><br>
                         <input type="button" onclick="newAnimation()" value="Start">
                     </form>
                 </td> 
@@ -46,10 +46,14 @@
                 var xc = canvas.width / 2;
                 var yc = canvas.height / 2;
 
-                g_r1 = false;
+                g_r1 = false;   // report collisions ball-square
                 g_r2 = false;
+                g_r3 = false;   // report zone in each time slot
+                g_showspeed=false;
                 g_view = "normal";
                 g_stopAnimation = false;
+                
+                g_slowdown = -100;  // slow down for 10 steps
 
                 // populate squares array
                 // linear speed is in pixels/sec
@@ -61,7 +65,7 @@
                 squares.push({x: xc, y: yc, a: 0, vx: 0, vy: 0, vr: 0, w: box_w, h: box_h, m: 0, mi: 0, color: "green"});
                 for (var i = 0; i < balls_r.length; i++) {
                     var r = parseInt(balls_r[i]);
-                    balls.push({x: xc, y: yc, r: r, vx: (Math.random() - 0.5) * 900, vy: (Math.random() - 0.5) * 900});
+                    balls.push({x: xc, y: yc, r: r, vx: (Math.random() - 0.5) * 900, vy: (Math.random() - 0.5) * 900, color: "green"});
                 }
                 initializeSquares();
                 initializeBalls();
@@ -88,48 +92,9 @@
                     g_view = "normal";
                 }
             }
-            function pointInRectangle(x, y, s, t) {
 
-                if (x < s) {
-                    if (-x < s) {
-                        if (y < t) {
-                            if (-y < t) {
-                                return true;
-                            }
-                        }
-                    }
-                }
-                return false;
-            }
 
             function pointInZone(x, y, s, t, r) {
-
-                if (x < s + r) {
-                    if (-x < s + r) {
-                        if (y < t + r) {
-                            if (-y < t + r) {
-                                if ((x < s) && (-x < s))
-                                    return true;
-                                if ((y < t) && (-y < t))
-                                    return true;
-                                if (((x - s) * (x - s) + (y - t) * (y - t)) <= r * r)
-                                    return true;
-                                if (((x + s) * (x + s) + (y - t) * (y - t)) <= r * r)
-                                    return true;
-                                if (((x - s) * (x - s) + (y + t) * (y + t)) <= r * r)
-                                    return true;
-                                if (((x + s) * (x + s) + (y + t) * (y + t)) <= r * r)
-                                    return true;
-                            }
-                        }
-                    }
-                }
-                return false;
-            }
-
-            function pointInZone2(x, y, s, t, r) {
-
-
 
                 if (x > s) {
                     if (y > t) {
@@ -188,111 +153,6 @@
 
 
 
-            function pointInCanvas(x, y) {
-
-                if (x < canvas.width) {
-                    if (-x < 0) {
-                        if (y < canvas.height) {
-                            if (-y < 0) {
-                                return true;
-                            }
-                        }
-                    }
-                }
-                return false;
-            }
-
-            function calculateBouncing(xc, yc, xp, yp, s, t, r) {
-                // g_xn, g_yn and g_bounced are set by calculateBouncing()
-
-                g_bounced = "none";
-                g_xn = 0;
-                g_yn = 0;
-
-                if (yp > (t + r)) {
-                    g_xn = xc + ((t + r) - yc) * (xp - xc) / (yp - yc);
-                    g_yn = t + r;
-                    if (g_xn > (s + r)) {
-                        g_yn = yc + ((s + r) - xc) * (yp - yc) / (xp - xc);
-                        g_xn = s + r;
-                        if (g_yn > t) {
-                            g_bounced = "topright";
-                        } else if (-g_yn > t) {
-                            g_bounced = "bottomright";
-                        } else {
-                            g_bounced = "right";
-                        }
-                    } else if (-g_xn > (s + r)) {
-                        g_yn = yc + (-(s + r) - xc) * (yp - yc) / (xp - xc);
-                        g_xn = -(s + r);
-                        if (g_yn > t) {
-                            g_bounced = "topleft";
-                        } else if (-g_yn > t) {
-                            g_bounced = "bottomleft";
-                        } else {
-                            g_bounced = "left";
-                        }
-
-                    } else if (g_xn > s) {
-                        g_bounced = "topright";
-                    } else if (-g_xn > s) {
-                        g_bounced = "topleft";
-                    } else {
-                        g_bounced = "top";
-                    }
-                } else if (-yp > (t + r)) {
-                    g_xn = xc + (-(t + r) - yc) * (xp - xc) / (yp - yc);
-                    g_yn = -(t + r);
-                    if (g_xn > (s + r)) {
-                        g_yn = yc + ((s + r) - xc) * (yp - yc) / (xp - xc);
-                        g_xn = s + r;
-                        if (g_yn > t) {
-                            g_bounced = "topright";
-                        } else if (-g_yn > t) {
-                            g_bounced = "bottomright";
-                        } else {
-                            g_bounced = "right";
-                        }
-                    } else if (-g_xn > (s + r)) {
-                        g_yn = yc + (-(s + r) - xc) * (yp - yc) / (xp - xc);
-                        g_xn = -(s + r);
-                        if (g_yn > t) {
-                            g_bounced = "topleft";
-                        } else if (-g_yn > t) {
-                            g_bounced = "bottomleft";
-                        } else {
-                            g_bounced = "left";
-                        }
-
-                    } else if (g_xn > s) {
-                        g_bounced = "bottomright";
-                    } else if (-g_xn > s) {
-                        g_bounced = "bottomleft";
-                    } else {
-                        g_bounced = "bottom";
-                    }
-                } else if (xp > (s + r)) {
-                    g_yn = yc + ((s + r) - xc) * (yp - yc) / (xp - xc);
-                    g_xn = s + r;
-                    if (g_yn > t) {
-                        g_bounced = "topright";
-                    } else if (-g_yn > t) {
-                        g_bounced = "bottomright";
-                    } else {
-                        g_bounced = "right";
-                    }
-                } else if (-xp > (s + r)) {
-                    g_yn = yc + (-(s + r) - xc) * (yp - yc) / (xp - xc);
-                    g_xn = -(s + r);
-                    if (g_yn > t) {
-                        g_bounced = "topleft";
-                    } else if (-g_yn > t) {
-                        g_bounced = "bottomleft";
-                    } else {
-                        g_bounced = "left";
-                    }
-                }
-            }
 
             function drawAllShapes(context) {
 
@@ -301,18 +161,33 @@
                     context.lineWidth = 3;
                     context.strokeStyle = 'black';
                     for (i = 0; i < nballs; i++) {
+                        var ball = balls[i];
                         context.beginPath();
-                        context.arc(balls[i].x, balls[i].y, balls[i].r, 0, 2 * Math.PI);
-                        context.fillStyle = balls[i].color;
+                        context.arc(ball.x, ball.y, ball.r, 0, 2 * Math.PI);
+                        //                       console.log(i+" color "+balls[i].color);
+                        context.fillStyle = ball.color;
                         context.fill();
                         context.stroke();
+                        context.font = "30px Arial";
+                        context.fillStyle = "red";
+                        context.textAlign = "center";
+                        context.fillText(i, ball.x, ball.y);
+
+                        if (g_showspeed) {
+                            context.beginPath();
+                            context.moveTo(ball.x, ball.y);
+                            context.lineTo(ball.x + 0.2 * ball.vx, ball.y + 0.2 * ball.vy);
+                            context.stroke();
+                        }
+
                     }
 
                     for (i = 0; i < nsquares; i++) {
-                        var xylist = squares[i].xylist;
-                        var xo = squares[i].x;
-                        var yo = squares[i].y;
-                        var a = squares[i].a;
+                        var square = squares[i];
+                        var xylist = square.xylist;
+                        var xo = square.x;
+                        var yo = square.y;
+                        var a = square.a;
 
                         //(x+iy)* (cosa+isina)= (xcosa-ysina) +i(ycosa+xsina)
 
@@ -333,6 +208,12 @@
                         context.fillStyle = squares[i].color;
                         context.fill();
                         context.stroke();
+                        if (g_showspeed) {
+                            context.beginPath();
+                            context.moveTo(square.x, square.y);
+                            context.lineTo(square.x + 0.2 * square.vx, square.y + 0.2 * square.vy);
+                            context.stroke();
+                        }
                     }
 
                 }
@@ -392,23 +273,23 @@
                         for (var px = 1; px < 600; px = px + 2) {
                             for (var py = 1; py < 600; py = py + 2) {
                                 context.fillStyle = "white";
-                                if (pointInZone2(px - xo, py - yo, s, t, r) == "TR")
+                                if (pointInZone(px - xo, py - yo, s, t, r) == "TR")
                                     context.fillStyle = "yellow";
-                                if (pointInZone2(px - xo, py - yo, s, t, r) == "BR")
+                                if (pointInZone(px - xo, py - yo, s, t, r) == "BR")
                                     context.fillStyle = "blue";
-                                if (pointInZone2(px - xo, py - yo, s, t, r) == "TL")
+                                if (pointInZone(px - xo, py - yo, s, t, r) == "TL")
                                     context.fillStyle = "cyan";
-                                if (pointInZone2(px - xo, py - yo, s, t, r) == "BL")
+                                if (pointInZone(px - xo, py - yo, s, t, r) == "BL")
                                     context.fillStyle = "red";
-                                if (pointInZone2(px - xo, py - yo, s, t, r) == "R")
+                                if (pointInZone(px - xo, py - yo, s, t, r) == "R")
                                     context.fillStyle = "khaki";
-                                if (pointInZone2(px - xo, py - yo, s, t, r) == "L")
+                                if (pointInZone(px - xo, py - yo, s, t, r) == "L")
                                     context.fillStyle = "pink";
-                                if (pointInZone2(px - xo, py - yo, s, t, r) == "T")
+                                if (pointInZone(px - xo, py - yo, s, t, r) == "T")
                                     context.fillStyle = "salmon";
-                                if (pointInZone2(px - xo, py - yo, s, t, r) == "B")
+                                if (pointInZone(px - xo, py - yo, s, t, r) == "B")
                                     context.fillStyle = "purple";
-                                if (pointInZone2(px - xo, py - yo, s, t, r) == "IN")
+                                if (pointInZone(px - xo, py - yo, s, t, r) == "IN")
                                     context.fillStyle = "greenyellow";
                                 context.fillRect(px, py, 2, 2);
                             }
@@ -676,14 +557,18 @@
                         ball.xrrprev = xrr;
                         ball.yrrprev = yrr;
 
-                        var zone = pointInZone2(xrr, yrr, s, t, r);
+                        var zone = pointInZone(xrr, yrr, s, t, r);
                         var zoneprev = ball.zone;
                         ball.zone = zone;
 
-                        //console.log(timeslot + " (" + j + ") " + zone + "  " + zoneprev);
+                        if (g_r3)
+                            console.log(timeslot + " (" + j + ") " + zone + "  " + zoneprev);
 
                         if (zone == "IN") {
-                            if (zoneprev != "IN") {
+                            if (zoneprev == "IN") {
+                                console.log(timeslot + " (" + j + ") x,y=" + xc + "," + yc);
+                                g_slowdown = timeslot;
+                            } else {
 
                                 var vsx = square.vx * cosmina - square.vy * sinmina;
                                 var vsy = square.vy * cosmina + square.vx * sinmina;
@@ -869,6 +754,7 @@
                     dt = (t - prev_t) / 1000; // dt is in seconds
                 }
 
+// if ((timeslot-g_slowdown)<300) dt=dt*0.2;
 
                 for (i = 0; i < nsquares; i++) {
                     var square = squares[i];
